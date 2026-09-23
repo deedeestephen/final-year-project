@@ -12,3 +12,12 @@ build/
 .idea/
 *.iml
 *.log
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+.coverage
+htmlcov/
+var/
+.gradle/
+local.properties
