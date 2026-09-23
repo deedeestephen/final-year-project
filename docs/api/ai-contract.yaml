@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: PCa mHealth AI Services contract (Layer 4)
+  version: 0.1.0
+  description: |
+    Internal contract between the backend AI broker (Layer 3) and ai-services (Layer 4).
+    Frozen at v0 in Phase 3; implemented in Phases 11-13. Only the backend may call it
+    (internal network + `Authorization: Bearer <AI_SERVICE_TOKEN>`).
+
+    Rules that every implementation must follow:
+    - Inputs are de-identified references (storage keys, record ids, clinical values). No names,
+      national IDs or phone numbers ever cross this boundary (NFR-10).
+    - Every result carries `provenance` (`MOCK` | `RESEARCH_MODEL`), the model versions used and
+      a `disclaimer`. A `MOCK` result must use the disclaimer
+      "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."
+    - Explanations are either an artifact reference or an explicit `unavailableReason` (NFR-09).
+      Explanation values are never invented.
+    - Performance metrics are reported only from stored evaluation runs; otherwise `evaluation` is null.
+servers:
+  - url: http://ai-services:8000
+paths:
+  /v1/health:
+    get:
+      summary: Liveness and mode
+      security: []
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service, mode, clinical_models_loaded]
+                properties:
+                  status: { type: string, enum: [ok] }
+                  service: { type: string, enum: [pca-mhealth-ai-services] }
+                  mode: { type: string, enum: [development-mock, research-model] }
+                  clinical_models_loaded: { type: boolean }
+  /v1/models:
+    get:
+      summary: Registered model versions
+      responses:
+        '200':
+          description: Model registry snapshot
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ModelInfo' }
+  /v1/infer:
+    post:
+      summary: Run multi-modal inference for one job (UC-05)
+      description: Synchronous for small inputs; the broker enforces a timeout and marks the job TIMED_OUT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InferenceRequest' }
+      responses:
+        '200':
+          description: Inference result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InferenceResult' }
+        '422':
+          description: Inputs insufficient for any module
+components:
+  securitySchemes:
+    serviceToken: { type: http, scheme: bearer }
+  schemas:
+    Provenance:
+      type: string
+      enum: [MOCK, RESEARCH_MODEL]
+    ModelInfo:
+      type: object
+      required: [name, architecture, version, provenance]
+      properties:
+        name: { type: string }
+        architecture: { type: string, enum: [UNET, RESNET50, ANN, PATCH_CNN_MIL, XGBOOST_FUSION] }
+        version: { type: string }
+        provenance: { $ref: '#/components/schemas/Provenance' }
+        evaluation:
+          type: object
+          nullable: true
+          description: Present only when backed by a stored evaluation run.
+    ClinicalInputs:
+      type: object
+      description: ANN clinical module inputs (proposal §3.3.3 module 3). All optional; XGBoost fusion tolerates missing features.
+      properties:
+        ageYears: { type: integer, minimum: 18, maximum: 120 }
+        psaNgMl: { type: number, minimum: 0 }
+        freePsaNgMl: { type: number, minimum: 0 }
+        dreFinding: { type: string, enum: [NORMAL, ENLARGED_SMOOTH, NODULAR, INDURATED, NOT_PERFORMED] }
+        piradsScore: { type: integer, minimum: 1, maximum: 5 }
+        prostateVolumeMl: { type: number, exclusiveMinimum: true, minimum: 0 }
+        biopsyHistory: { type: string, enum: [NONE, PRIOR_NEGATIVE, PRIOR_POSITIVE, UNKNOWN] }
+        familyHistory: { type: boolean }
+    ImagingInput:
+      type: object
+      required: [storageKey, modality]
+      properties:
+        storageKey: { type: string }
+        modality: { type: string, enum: [MRI, TRUS, CT] }
+    SlideInput:
+      type: object
+      required: [storageKey]
+      properties:
+        storageKey: { type: string }
+        stain: { type: string }
+    InferenceRequest:
+      type: object
+      required: [jobId, patientRef, inputs]
+      properties:
+        jobId: { type: string, format: uuid }
+        patientRef: { type: string, description: Opaque pseudonymous reference, not a patient id }
+        inputs:
+          type: object
+          properties:
+            clinical: { $ref: '#/components/schemas/ClinicalInputs' }
+            imaging: { type: array, items: { $ref: '#/components/schemas/ImagingInput' } }
+            histopathology: { type: array, items: { $ref: '#/components/schemas/SlideInput' } }
+    Explanation:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [GRADCAM, SHAP, MIL_ATTENTION] }
+        module: { type: string }
+        storageKey: { type: string, nullable: true }
+        values:
+          type: object
+          nullable: true
+          description: SHAP feature contributions, only when computed from a real model.
+        unavailableReason: { type: string, nullable: true }
+    InferenceResult:
+      type: object
+      required: [jobId, provenance, disclaimer, modelVersions, outputs, explanations]
+      properties:
+        jobId: { type: string, format: uuid }
+        provenance: { $ref: '#/components/schemas/Provenance' }
+        disclaimer: { type: string }
+        modelVersions:
+          type: object
+          additionalProperties: { type: string }
+        outputs:
+          type: object
+          properties:
+            pcaProbability: { type: number, minimum: 0, maximum: 1, nullable: true }
+            probabilityInterval:
+              type: array
+              nullable: true
+              items: { type: number }
+              minItems: 2
+              maxItems: 2
+            gleasonGradeGroup: { type: integer, minimum: 1, maximum: 5, nullable: true }
+            segmentationMaskKey: { type: string, nullable: true }
+            modulesUsed: { type: array, items: { type: string } }
+            modulesSkipped:
+              type: array
+              items:
+                type: object
+                properties:
+                  module: { type: string }
+                  reason: { type: string }
+        explanations:
+          type: array
+          items: { $ref: '#/components/schemas/Explanation' }
+security:
+  - serviceToken: []

@@ -75,3 +75,18 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Idempotent sync storage (UC-02) | `sync_operations.idempotency_key` unique | `postgres.int-spec.ts` | Verified |
 | Synthetic-only seed data | `prisma/seed.ts` (`is_synthetic`) | `postgres.int-spec.ts` › seed | Verified |
 | Password hashing Argon2id | seed uses argon2id m=64MiB t=3 p=1 | `postgres.int-spec.ts` › seed | Verified (auth flow: Ph.4) |
+
+## Phase 3 additions (API gateway foundation, Layer 2)
+
+| Requirement (proposal §3.3 L2) | Implementation | Test | Status |
+|---|---|---|---|
+| OpenAPI 3.0 RESTful endpoints, API versioning | `/api/v1` URI versioning; `src/openapi.ts`; committed `docs/api/openapi.json` (CI checks it is current) | `app.e2e-spec.ts` › OpenAPI, routing | Verified |
+| Input payload validation & sanitisation | global ValidationPipe; `@IsSafeText` | `app.e2e-spec.ts` › validation; `safe-text.spec.ts` | Verified |
+| Rate limiting & throttling | ThrottlerGuard (global) | `app.e2e-spec.ts` › rate limiting | Verified |
+| CORS policy | allow-list, closed by default | `app.e2e-spec.ts` › CORS | Verified |
+| Centralised error handling | `AllExceptionsFilter` + `toErrorBody` | `error-mapping.spec.ts`, e2e | Verified |
+| Security headers | helmet (HSTS, CSP) | e2e › security headers | Verified |
+| Health / readiness (UC-10 basis) | `/api/v1/health`, `/api/v1/health/ready` | unit, e2e, real-DB integration | Verified |
+| AI layer isolated behind a contract (§3.3.1) | `docs/api/ai-contract.yaml` v0 (frozen) | contract tests in Ph.11 | Specified |
+| JWT authentication middleware, RBAC enforcement | — | — | Planned (Ph.4) |
+| TLS 1.3 | reverse proxy | — | Planned (Ph.15) |

@@ -20,7 +20,9 @@
     "src/infrastructure/mongo/**/*.ts",
     "!src/infrastructure/mongo/migrate.ts",
     "src/infrastructure/storage/s3-object-storage.ts",
-    "src/infrastructure/vector/qdrant-vector-store.ts"
+    "src/infrastructure/vector/qdrant-vector-store.ts",
+    "src/infrastructure/database/prisma.service.ts",
+    "src/infrastructure/database/mongo.service.ts"
   ],
   "coverageDirectory": "coverage-db",
   "coverageReporters": [

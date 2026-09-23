@@ -89,4 +89,24 @@ describe('LocalObjectStorage', () => {
       storage.get(generateObjectKey('imaging', '.dcm')),
     ).rejects.toThrow(/not found/);
   });
+
+  it('removes a partially written object when the upload stream fails', async () => {
+    const key = generateObjectKey('imaging', '.dcm');
+    const failing = new Readable({
+      read() {
+        this.push(Buffer.from('partial'));
+        this.destroy(new Error('connection dropped'));
+      },
+    });
+    await expect(storage.put(key, failing, {})).rejects.toThrow(
+      /connection dropped/,
+    );
+    expect(await storage.exists(key)).toBe(false);
+  });
+
+  it('reports stat of a missing object as not found', async () => {
+    await expect(
+      storage.stat(generateObjectKey('imaging', '.dcm')),
+    ).rejects.toThrow(/not found/);
+  });
 });

@@ -1,4 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import {
+  ApiOkResponse,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
+import type { Response } from 'express';
+import { MongoService } from '../../infrastructure/database/mongo.service';
+import { PrismaService } from '../../infrastructure/database/prisma.service';
 
 export interface HealthStatus {
   status: 'ok';
@@ -6,14 +15,68 @@ export interface HealthStatus {
   timestamp: string;
 }
 
+export type DependencyState = 'up' | 'down';
+
+export interface ReadinessStatus {
+  status: 'ok' | 'unavailable';
+  checks: { postgres: DependencyState; mongodb: DependencyState };
+}
+
+export const READINESS_TIMEOUT_MS = 3_000;
+
+async function probe(check: () => Promise<void>): Promise<DependencyState> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('timeout')),
+      READINESS_TIMEOUT_MS,
+    );
+  });
+  try {
+    await Promise.race([check(), timeout]);
+    return 'up';
+  } catch {
+    return 'down';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+@ApiTags('health')
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mongo: MongoService,
+  ) {}
+
+  /** Liveness: the process is running. No dependency checks. */
   @Get()
+  @ApiOkResponse({ description: 'Process is alive' })
   check(): HealthStatus {
     return {
       status: 'ok',
       service: 'pca-mhealth-backend',
       timestamp: new Date().toISOString(),
     };
+  }
+
+  /** Readiness: the databases the API depends on are reachable. */
+  @Get('ready')
+  @ApiOkResponse({ description: 'All dependencies reachable' })
+  @ApiServiceUnavailableResponse({
+    description: 'At least one dependency is down',
+  })
+  async ready(
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ReadinessStatus> {
+    const [postgres, mongodb] = await Promise.all([
+      probe(() => this.prisma.ping()),
+      probe(() => this.mongo.ping()),
+    ]);
+    const ok = postgres === 'up' && mongodb === 'up';
+    res.status(ok ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
+    return { status: ok ? 'ok' : 'unavailable', checks: { postgres, mongodb } };
   }
 }

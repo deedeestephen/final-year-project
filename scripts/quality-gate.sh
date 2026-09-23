@@ -23,12 +23,12 @@ py() {
 backend() {
   step "backend"
   cd "$ROOT/backend"
-  run "backend format" npx prettier --check "src/**/*.ts" "test/**/*.ts"
-  run "backend lint" npx eslint "{src,test}/**/*.ts"
+  run "backend format" npx prettier --check "src/**/*.ts" "test/**/*.ts" "prisma/**/*.ts" "tools/**/*.ts"
+  run "backend lint" npx eslint "{src,test,prisma,tools}/**/*.ts"
   run "backend typecheck" npx tsc --noEmit -p tsconfig.json
   if [ -f prisma/schema.prisma ]; then run "prisma validate" npx prisma validate; fi
-  run "backend unit tests" npx jest --coverage
-  run "backend e2e tests" npx jest --config test/jest-e2e.json --runInBand
+  run "backend unit + e2e tests (coverage >= 80%)" npx jest --config test/jest-coverage.json --coverage
+  run "openapi document up to date" npm run -s openapi:check
   run "backend build" npx nest build
   run "backend npm audit" npm audit --audit-level=high --omit=dev
 }

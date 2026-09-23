@@ -54,3 +54,23 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 
 ## Dependency hygiene
 - `npm audit`, `pip-audit`, `flutter pub outdated`, Dependabot in CI.
+
+## Implementation status (updated each phase; "Verified" = automated test passes)
+
+| Control | Where | Status |
+|---|---|---|
+| Config validated at startup; secrets never echoed in errors | `backend/src/config/app-config.ts` | Verified (Ph.3) |
+| Security headers: HSTS 1y, CSP `default-src 'none'`, `frame-ancestors 'none'`, nosniff, no `X-Powered-By` | `configure-app.ts` (helmet) | Verified (Ph.3, e2e) |
+| CORS closed by default, explicit allow-list (required in production), no credentials | `configure-app.ts` | Verified (Ph.3, e2e) |
+| Global rate limiting (default 120/min per client) with `429 RATE_LIMITED` + `Retry-After`; health exempt | `@nestjs/throttler` in `app.module.ts` | Verified (Ph.3, e2e). Stricter auth limits: Ph.4 |
+| Input validation: whitelist + reject unknown properties, typed DTOs, submitted values not echoed | `common/http/validation.ts` | Verified (Ph.3, e2e) |
+| Input sanitisation: `@IsSafeText()` rejects markup/control characters in free text | `common/validation/safe-text.ts` | Verified (Ph.3, unit) |
+| Body size limit (default 1 MB) and malformed-JSON handling | `configure-app.ts`, `http-middleware.ts` | Verified (Ph.3, e2e) |
+| Central error envelope; no stack traces, SQL or values leaked; DB errors mapped (409/404/400) | `common/http/error-mapping.ts`, filter | Verified (Ph.3) |
+| Request ids (validated incoming or generated) for tracing | `http-middleware.ts` | Verified (Ph.3) |
+| Log redaction of auth headers, cookies, passwords, tokens, identifiers; no query strings logged | `common/logging/logger-options.ts` | Verified (Ph.3, unit) |
+| AES-256-GCM column encryption + HMAC lookup | `common/crypto/field-crypto.ts` | Verified (Ph.2) |
+| Append-only, hash-chained audit log | DB migration | Verified (Ph.2) |
+| Traversal-proof object keys, write-once objects | `infrastructure/storage` | Verified (Ph.2) |
+| Argon2id password hashing, JWT, refresh rotation, lockout, RBAC guard | — | Planned (Ph.4) |
+| TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |
