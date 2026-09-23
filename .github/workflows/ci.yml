@@ -18,6 +18,42 @@ jobs:
       - run: npm ci
       - run: ../scripts/quality-gate.sh backend
 
+  database:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: backend } }
+    env:
+      # Throwaway CI-only credentials for ephemeral service containers (not secrets).
+      DATABASE_URL: postgresql://pca:ci-postgres@localhost:5432/pca_mhealth?schema=public
+      MONGO_URL: mongodb://pca:ci-mongo@localhost:27018/pca_mhealth?authSource=admin
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: ciminio
+      S3_SECRET_KEY: ci-minio-secret
+      QDRANT_URL: http://localhost:6333
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: pca, POSTGRES_PASSWORD: ci-postgres, POSTGRES_DB: pca_mhealth }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U pca" --health-interval 5s --health-retries 10
+      mongo:
+        image: mongo:7
+        env: { MONGO_INITDB_ROOT_USERNAME: pca, MONGO_INITDB_ROOT_PASSWORD: ci-mongo }
+        ports: ["27018:27017"]
+      qdrant:
+        image: qdrant/qdrant:v1.15.4
+        ports: ["6333:6333"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start MinIO (service containers cannot pass a start command)
+        working-directory: .
+        run: |
+          image=$(grep -oE 'quay.io/minio/minio@sha256:[0-9a-f]+' infrastructure/docker-compose.yml)
+          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=ciminio -e MINIO_ROOT_PASSWORD=ci-minio-secret "$image" server /data
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
+      - run: npm ci
+      - run: ../scripts/quality-gate.sh db
+
   ai-services:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: ai-services } }

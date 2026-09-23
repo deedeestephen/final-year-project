@@ -1,0 +1,40 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": "test/db/.*\\.int-spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "globalSetup": "<rootDir>/test/db/global-setup.ts",
+  "globalTeardown": "<rootDir>/test/db/global-teardown.ts",
+  "setupFiles": [
+    "<rootDir>/test/db/setup-env.ts"
+  ],
+  "testTimeout": 60000,
+  "collectCoverageFrom": [
+    "src/infrastructure/mongo/**/*.ts",
+    "!src/infrastructure/mongo/migrate.ts",
+    "src/infrastructure/storage/s3-object-storage.ts",
+    "src/infrastructure/vector/qdrant-vector-store.ts"
+  ],
+  "coverageDirectory": "coverage-db",
+  "coverageReporters": [
+    "text",
+    "text-summary",
+    "json-summary",
+    "lcovonly"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    }
+  }
+}

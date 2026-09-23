@@ -1,0 +1,515 @@
+// Relational schema (Layer 5, PostgreSQL). See docs/database.md.
+// Large files (DICOM, WSI) are never stored here; only object-storage keys and metadata.
+// CHECK constraints, the append-only audit trigger and hash chain are added in raw SQL migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity and access
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  LOCKED
+  DISABLED
+}
+
+model User {
+  id                 String     @id @default(uuid()) @db.Uuid
+  email              String     @unique // stored lower-cased by the application
+  passwordHash       String     @map("password_hash")
+  displayName        String     @map("display_name")
+  status             UserStatus @default(ACTIVE)
+  failedLoginCount   Int        @default(0) @map("failed_login_count")
+  lockedUntil        DateTime?  @map("locked_until") @db.Timestamptz(3)
+  lastLoginAt        DateTime?  @map("last_login_at") @db.Timestamptz(3)
+  mustChangePassword Boolean    @default(false) @map("must_change_password")
+  facilityId         String?    @map("facility_id") @db.Uuid
+  isSynthetic        Boolean    @default(false) @map("is_synthetic")
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility            Facility?            @relation(fields: [facilityId], references: [id])
+  roles               UserRole[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  notifications       Notification[]
+  patientProfile      Patient?             @relation("PatientAccount")
+
+  @@index([facilityId])
+  @@map("users")
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String           @unique // PATIENT | CLINICIAN | PATHOLOGIST | ADMIN
+  description String
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        String           @unique // e.g. "patient:read"
+  description String
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  permissionId String     @map("permission_id") @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+/// Opaque refresh tokens: only a SHA-256 hash is stored. Rotated on every use;
+/// reuse of a rotated token revokes the whole family (theft detection).
+model RefreshToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  tokenHash    String    @unique @map("token_hash")
+  familyId     String    @map("family_id") @db.Uuid
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(3)
+  replacedById String?   @map("replaced_by_id") @db.Uuid
+  userAgent    String?   @map("user_agent")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Facilities and patients
+// ---------------------------------------------------------------------------
+
+enum FacilityType {
+  REFERRAL_HOSPITAL
+  PROVINCIAL_HOSPITAL
+  DISTRICT_HOSPITAL
+  HEALTH_CENTRE
+  SCREENING_SITE
+}
+
+/// Region class used for fairness monitoring (proposal §3.7.3).
+enum RegionClass {
+  URBAN
+  PERI_URBAN
+  RURAL
+}
+
+model Facility {
+  id          String       @id @default(uuid()) @db.Uuid
+  code        String       @unique
+  name        String
+  type        FacilityType
+  province    String
+  district    String
+  regionClass RegionClass  @map("region_class")
+  isSynthetic Boolean      @default(false) @map("is_synthetic")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  users           User[]
+  patients        Patient[]
+  clinicalRecords ClinicalRecord[]
+
+  @@map("facilities")
+}
+
+/// Direct identifiers are encrypted at column level (AES-256-GCM, app-managed key).
+/// national_id_hmac allows exact-match lookup without storing the ID in clear.
+model Patient {
+  id             String      @id @default(uuid()) @db.Uuid
+  facilityId     String      @map("facility_id") @db.Uuid
+  userId         String?     @unique @map("user_id") @db.Uuid
+  mrn            String // facility medical record number
+  givenNameEnc   Bytes       @map("given_name_enc")
+  familyNameEnc  Bytes       @map("family_name_enc")
+  nationalIdEnc  Bytes?      @map("national_id_enc")
+  nationalIdHmac String?     @unique @map("national_id_hmac")
+  phoneEnc       Bytes?      @map("phone_enc")
+  dateOfBirth    DateTime    @map("date_of_birth") @db.Date
+  regionClass    RegionClass @map("region_class")
+  district       String?
+  isSynthetic    Boolean     @default(false) @map("is_synthetic")
+  version        Int         @default(1)
+  clientUuid     String?     @unique @map("client_uuid") @db.Uuid
+  createdById    String      @map("created_by_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility        Facility                 @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+  account         User?                    @relation("PatientAccount", fields: [userId], references: [id], onDelete: SetNull)
+  clinicalRecords ClinicalRecord[]
+  consents        Consent[]
+  imagingStudies  ImagingStudy[]
+  specimens       HistopathologySpecimen[]
+  aiJobs          AiJob[]
+
+  @@unique([facilityId, mrn])
+  @@index([facilityId])
+  @@map("patients")
+}
+
+// ---------------------------------------------------------------------------
+// Clinical data
+// ---------------------------------------------------------------------------
+
+enum DreFinding {
+  NORMAL
+  ENLARGED_SMOOTH
+  NODULAR
+  INDURATED
+  NOT_PERFORMED
+}
+
+enum BiopsyHistory {
+  NONE
+  PRIOR_NEGATIVE
+  PRIOR_POSITIVE
+  UNKNOWN
+}
+
+model ClinicalRecord {
+  id               String        @id @default(uuid()) @db.Uuid
+  patientId        String        @map("patient_id") @db.Uuid
+  facilityId       String        @map("facility_id") @db.Uuid
+  recordedById     String        @map("recorded_by_id") @db.Uuid
+  encounterDate    DateTime      @map("encounter_date") @db.Date
+  psaNgMl          Decimal?      @map("psa_ng_ml") @db.Decimal(8, 3)
+  freePsaNgMl      Decimal?      @map("free_psa_ng_ml") @db.Decimal(8, 3)
+  dreFinding       DreFinding    @map("dre_finding")
+  piradsScore      Int?          @map("pirads_score")
+  prostateVolumeMl Decimal?      @map("prostate_volume_ml") @db.Decimal(6, 1)
+  biopsyHistory    BiopsyHistory @default(UNKNOWN) @map("biopsy_history")
+  familyHistory    Boolean?      @map("family_history")
+  symptoms         Json? // structured lower-urinary-tract symptoms
+  notes            String?
+  version          Int           @default(1)
+  clientUuid       String?       @unique @map("client_uuid") @db.Uuid
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  patient  Patient  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, encounterDate])
+  @@map("clinical_records")
+}
+
+enum ConsentType {
+  DATA_PROCESSING
+  AI_ANALYSIS
+  RESEARCH_USE
+  EHR_SHARING
+}
+
+enum ConsentStatus {
+  GRANTED
+  WITHDRAWN
+}
+
+enum ConsentMethod {
+  WRITTEN
+  VERBAL_WITNESSED
+  DIGITAL
+}
+
+model Consent {
+  id                 String        @id @default(uuid()) @db.Uuid
+  patientId          String        @map("patient_id") @db.Uuid
+  type               ConsentType
+  status             ConsentStatus
+  method             ConsentMethod
+  consentTextVersion String        @map("consent_text_version")
+  grantedAt          DateTime      @map("granted_at") @db.Timestamptz(3)
+  withdrawnAt        DateTime?     @map("withdrawn_at") @db.Timestamptz(3)
+  capturedById       String        @map("captured_by_id") @db.Uuid
+  version            Int           @default(1)
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, type])
+  @@map("consents")
+}
+
+// ---------------------------------------------------------------------------
+// Imaging and histopathology (metadata only; files live in object storage)
+// ---------------------------------------------------------------------------
+
+enum ImagingModality {
+  MRI
+  TRUS
+  CT
+}
+
+enum FileStatus {
+  UPLOADING
+  QUARANTINED
+  VALIDATED
+  REJECTED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model ImagingStudy {
+  id                String          @id @default(uuid()) @db.Uuid
+  patientId         String          @map("patient_id") @db.Uuid
+  modality          ImagingModality
+  storageKey        String          @unique @map("storage_key")
+  sha256            String
+  sizeBytes         BigInt          @map("size_bytes")
+  mimeType          String          @map("mime_type")
+  studyInstanceUid  String?         @map("study_instance_uid")
+  seriesInstanceUid String?         @map("series_instance_uid")
+  status            FileStatus      @default(UPLOADING)
+  rejectionReason   String?         @map("rejection_reason")
+  uploadedById      String          @map("uploaded_by_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId])
+  @@map("imaging_studies")
+}
+
+model HistopathologySpecimen {
+  id               String     @id @default(uuid()) @db.Uuid
+  patientId        String     @map("patient_id") @db.Uuid
+  storageKey       String     @unique @map("storage_key")
+  sha256           String
+  sizeBytes        BigInt     @map("size_bytes")
+  format           String // e.g. SVS, TIFF, NDPI
+  stain            String?
+  biopsyDate       DateTime?  @map("biopsy_date") @db.Date
+  status           FileStatus @default(UPLOADING)
+  gleasonPrimary   Int?       @map("gleason_primary")
+  gleasonSecondary Int?       @map("gleason_secondary")
+  isupGradeGroup   Int?       @map("isup_grade_group")
+  reviewedById     String?    @map("reviewed_by_id") @db.Uuid
+  uploadedById     String     @map("uploaded_by_id") @db.Uuid
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId])
+  @@map("histopathology_specimens")
+}
+
+// ---------------------------------------------------------------------------
+// AI (registry, jobs, explainability). Full reports live in MongoDB (ai_reports).
+// ---------------------------------------------------------------------------
+
+enum ModelArchitecture {
+  UNET
+  RESNET50
+  ANN
+  PATCH_CNN_MIL
+  XGBOOST_FUSION
+}
+
+/// MOCK = development placeholder, never a clinical result.
+enum ModelProvenance {
+  MOCK
+  RESEARCH_MODEL
+}
+
+enum ModelStatus {
+  REGISTERED
+  ACTIVE
+  RETIRED
+}
+
+model AiModel {
+  id           String            @id @default(uuid()) @db.Uuid
+  name         String
+  architecture ModelArchitecture
+  version      String
+  provenance   ModelProvenance
+  status       ModelStatus       @default(REGISTERED)
+  artifactUri  String?           @map("artifact_uri")
+  /// Only populated from a stored, real evaluation run. Never hand-entered metrics.
+  evaluation   Json?
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  artifacts ExplainabilityArtifact[]
+
+  @@unique([name, version])
+  @@map("ai_models")
+}
+
+enum AiJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  TIMED_OUT
+}
+
+model AiJob {
+  id            String      @id @default(uuid()) @db.Uuid
+  patientId     String      @map("patient_id") @db.Uuid
+  requestedById String      @map("requested_by_id") @db.Uuid
+  status        AiJobStatus @default(QUEUED)
+  inputs        Json // references only (record ids, storage keys), never raw identifiers
+  modelVersions Json?       @map("model_versions")
+  reportId      String?     @map("report_id") // MongoDB ai_reports _id
+  error         String?
+  startedAt     DateTime?   @map("started_at") @db.Timestamptz(3)
+  finishedAt    DateTime?   @map("finished_at") @db.Timestamptz(3)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  patient   Patient                  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  artifacts ExplainabilityArtifact[]
+
+  @@index([patientId, createdAt])
+  @@index([status])
+  @@map("ai_jobs")
+}
+
+enum ExplanationKind {
+  GRADCAM
+  SHAP
+  MIL_ATTENTION
+}
+
+/// Either a stored artifact or an explicit reason it is unavailable (NFR-09).
+model ExplainabilityArtifact {
+  id                String          @id @default(uuid()) @db.Uuid
+  jobId             String          @map("job_id") @db.Uuid
+  modelId           String?         @map("model_id") @db.Uuid
+  kind              ExplanationKind
+  storageKey        String?         @map("storage_key")
+  unavailableReason String?         @map("unavailable_reason")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  job   AiJob    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  model AiModel? @relation(fields: [modelId], references: [id], onDelete: SetNull)
+
+  @@index([jobId])
+  @@map("explainability_artifacts")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications, synchronisation, audit
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String
+  title     String
+  body      String
+  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+enum SyncOperationType {
+  CREATE
+  UPDATE
+}
+
+enum SyncResult {
+  APPLIED
+  CONFLICT
+  REJECTED
+}
+
+/// One row per client operation. idempotency_key makes retries safe (UC-02).
+model SyncOperation {
+  id               String            @id @default(uuid()) @db.Uuid
+  idempotencyKey   String            @unique @map("idempotency_key")
+  userId           String            @map("user_id") @db.Uuid
+  deviceId         String            @map("device_id")
+  entityType       String            @map("entity_type")
+  entityId         String?           @map("entity_id") @db.Uuid
+  operation        SyncOperationType
+  baseVersion      Int?              @map("base_version")
+  resultingVersion Int?              @map("resulting_version")
+  result           SyncResult
+  conflictDetail   Json?             @map("conflict_detail")
+  clientTimestamp  DateTime          @map("client_timestamp") @db.Timestamptz(3)
+  receivedAt       DateTime          @default(now()) @map("received_at") @db.Timestamptz(3)
+
+  @@index([userId, receivedAt])
+  @@map("sync_operations")
+}
+
+enum AuditOutcome {
+  SUCCESS
+  DENIED
+  FAILURE
+}
+
+/// Append-only (UPDATE/DELETE blocked by trigger). Each row stores the previous
+/// row's hash; seq, prev_hash and row_hash are assigned by a BEFORE INSERT trigger.
+model AuditLog {
+  seq         BigInt       @id @default(autoincrement())
+  occurredAt  DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  actorUserId String?      @map("actor_user_id") @db.Uuid
+  actorRole   String?      @map("actor_role")
+  action      String
+  entityType  String       @map("entity_type")
+  entityId    String?      @map("entity_id")
+  outcome     AuditOutcome
+  requestId   String?      @map("request_id")
+  ip          String?
+  details     Json?
+  prevHash    String       @default("") @map("prev_hash")
+  rowHash     String       @default("") @map("row_hash")
+
+  @@index([entityType, entityId])
+  @@index([actorUserId, occurredAt])
+  @@map("audit_logs")
+}

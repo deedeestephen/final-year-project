@@ -17,12 +17,22 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:mongo:migrate": "ts-node --transpile-only src/infrastructure/mongo/migrate.ts",
+    "db:validate": "prisma validate",
+    "test:db": "jest --config ./test/jest-db.json --runInBand"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1138.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@prisma/client": "6.19.3",
+    "argon2": "0.45.1",
+    "mongodb": "7.6.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -42,6 +52,7 @@
     "globals": "^17.0.0",
     "jest": "^30.0.0",
     "prettier": "^3.4.2",
+    "prisma": "6.19.3",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
@@ -65,7 +76,10 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!main.ts",
-      "!**/*.module.ts"
+      "!**/*.module.ts",
+      "!infrastructure/mongo/**",
+      "!infrastructure/storage/s3-object-storage.ts",
+      "!infrastructure/vector/qdrant-vector-store.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
@@ -83,5 +97,8 @@
         "statements": 80
       }
     }
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2"
   }
 }

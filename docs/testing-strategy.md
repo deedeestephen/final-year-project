@@ -39,3 +39,7 @@ fixtures and screenshots.
 package, plus `npm audit --audit-level=high`, `pip-audit`, and a secret scan (gitleaks). CI (GitHub Actions) runs the same
 script on every push. A phase may not close while the gate fails, unless the failure is recorded as a known non-blocking
 issue in the development log.
+
+## Database test isolation and coverage split (added in Phase 2)
+- `npm run test:db` creates a **new database per run** (`pca_mhealth_<runId>_test`), applies migrations with the additive `prisma migrate deploy`, and drops only that database at the end. Automation never runs `prisma migrate reset` (Prisma forbids agents from doing so without the owner's explicit consent, and a fresh DB per run makes it unnecessary).
+- Coverage is gated per suite: the unit suite covers pure code (drivers for live services excluded), and the DB suite gates `src/infrastructure/{mongo,storage/s3,vector/qdrant}` at 80% lines/branches/functions. Only the tiny `mongo/migrate.ts` CLI wrapper is outside both.

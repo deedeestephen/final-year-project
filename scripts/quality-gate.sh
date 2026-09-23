@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
-# Usage: scripts/quality-gate.sh [backend|ai|mobile|all]   (default: all)
+# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|all]   (default: all)
+# The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -30,6 +31,14 @@ backend() {
   run "backend e2e tests" npx jest --config test/jest-e2e.json --runInBand
   run "backend build" npx nest build
   run "backend npm audit" npm audit --audit-level=high --omit=dev
+}
+
+db() {
+  step "database (PostgreSQL, MongoDB, MinIO, Qdrant)"
+  cd "$ROOT/backend"
+  run "prisma validate" npx prisma validate
+  run "db migrate deploy" npx prisma migrate deploy
+  run "db integration tests" npx jest --config test/jest-db.json --runInBand --coverage
 }
 
 ai() {
@@ -63,9 +72,10 @@ secrets() {
 
 case "$TARGET" in
   backend) backend ;;
+  db) db ;;
   ai) ai ;;
   mobile) mobile ;;
-  all) backend; ai; mobile; secrets ;;
+  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; secrets ;;
   *) echo "unknown target $TARGET"; exit 2 ;;
 esac
 
