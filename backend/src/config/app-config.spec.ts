@@ -1,8 +1,10 @@
+import { TEST_JWT_ENV } from '../../test/fixtures/test-keys';
 import { loadConfig } from './app-config';
 
 const base = {
   DATABASE_URL: 'postgresql://pca:super-secret-pw@localhost:5432/pca_mhealth',
   MONGO_URL: 'mongodb://pca:super-secret-pw@localhost:27018/pca_mhealth',
+  ...TEST_JWT_ENV,
 };
 
 describe('loadConfig', () => {

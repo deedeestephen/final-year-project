@@ -76,7 +76,7 @@ describe('API gateway (e2e)', () => {
       expect(res.headers['content-security-policy']).toContain(
         "frame-ancestors 'none'",
       );
-      expect(res.headers['x-frame-options']).toBeDefined();
+      expect(res.headers['x-frame-options']).toBe('DENY');
       expect(res.headers['x-powered-by']).toBeUndefined();
     });
   });

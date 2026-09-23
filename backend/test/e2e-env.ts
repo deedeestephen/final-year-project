@@ -1,3 +1,5 @@
+import { TEST_JWT_ENV } from './fixtures/test-keys';
+
 // Environment for gateway e2e tests. Database URLs point at closed ports and are
 // never contacted: PrismaService and MongoService are replaced by fakes.
 Object.assign(process.env, {
@@ -8,4 +10,6 @@ Object.assign(process.env, {
   JSON_BODY_LIMIT: '1kb',
   RATE_LIMIT_MAX: '20',
   RATE_LIMIT_TTL_MS: '60000',
+  AUTH_RATE_LIMIT_MAX: '10',
+  ...TEST_JWT_ENV,
 });

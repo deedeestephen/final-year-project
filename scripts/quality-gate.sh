@@ -27,7 +27,8 @@ backend() {
   run "backend lint" npx eslint "{src,test,prisma,tools}/**/*.ts"
   run "backend typecheck" npx tsc --noEmit -p tsconfig.json
   if [ -f prisma/schema.prisma ]; then run "prisma validate" npx prisma validate; fi
-  run "backend unit + e2e tests (coverage >= 80%)" npx jest --config test/jest-coverage.json --coverage
+  run "backend unit tests" npx jest
+  run "backend e2e tests" npx jest --config test/jest-e2e.json
   run "openapi document up to date" npm run -s openapi:check
   run "backend build" npx nest build
   run "backend npm audit" npm audit --audit-level=high --omit=dev
@@ -38,7 +39,7 @@ db() {
   cd "$ROOT/backend"
   run "prisma validate" npx prisma validate
   run "db migrate deploy" npx prisma migrate deploy
-  run "db integration tests" npx jest --config test/jest-db.json --runInBand --coverage
+  run "all tests incl. database (coverage >= 80%)" npx jest --config test/jest-all.json --runInBand --coverage
 }
 
 ai() {

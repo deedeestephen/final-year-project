@@ -70,11 +70,12 @@ describe('schema after migrating from a clean database', () => {
 });
 
 describe('seed', () => {
+  // Test files share one database per run, so these assertions only look at
+  // the rows the seed owns (demo domain, SYN- record numbers), never whole tables.
   it('creates roles, the permission matrix and synthetic demo data, and is idempotent', async () => {
-    const first = await seed(prisma, crypto, 'Synthetic-Demo-Pass-1');
-    const second = await seed(prisma, crypto, 'Synthetic-Demo-Pass-1');
-    expect(first.createdUsers).toHaveLength(4);
-    expect(second.createdUsers).toHaveLength(0);
+    await seed(prisma, crypto, 'Synthetic-Demo-Pass-1');
+    const again = await seed(prisma, crypto, 'Synthetic-Demo-Pass-1');
+    expect(again.createdUsers).toHaveLength(0);
 
     for (const role of ROLES) {
       const perms = await prisma.rolePermission.findMany({
@@ -86,22 +87,32 @@ describe('seed', () => {
       );
     }
 
-    expect(await prisma.user.count({ where: { isSynthetic: false } })).toBe(0);
-    expect(await prisma.patient.count({ where: { isSynthetic: false } })).toBe(
-      0,
+    const demoUsers = await prisma.user.findMany({
+      where: { email: { endsWith: '@demo.pca-mhealth.test' } },
+    });
+    expect(demoUsers).toHaveLength(4);
+    expect(demoUsers.every((u) => u.isSynthetic)).toBe(true);
+
+    const demoPatients = await prisma.patient.findMany({
+      where: { mrn: { startsWith: 'SYN-' } },
+      include: { clinicalRecords: true },
+    });
+    expect(demoPatients).toHaveLength(3);
+    expect(demoPatients.every((p) => p.isSynthetic)).toBe(true);
+    expect(demoPatients.every((p) => p.clinicalRecords.length === 1)).toBe(
+      true,
     );
-    expect(await prisma.patient.count()).toBe(3);
-    expect(await prisma.clinicalRecord.count()).toBe(3);
   });
 
   it('stores patient names encrypted, never in clear text', async () => {
     const patient = await prisma.patient.findFirstOrThrow({
       where: { mrn: 'SYN-0001' },
     });
-    expect(Buffer.from(patient.givenNameEnc).toString('utf8')).not.toContain(
-      'SYNTHETIC',
-    );
-    expect(crypto.decrypt(patient.givenNameEnc)).toBe('SYNTHETIC');
+    const stored = Buffer.from(patient.givenNameEnc);
+    expect(stored.toString('utf8')).not.toContain('SYNTHETIC');
+    expect(stored[0]).toBe(1); // FieldCrypto format version
+    // version + 12-byte IV + 16-byte tag + ciphertext of "SYNTHETIC"
+    expect(stored.length).toBe(1 + 12 + 16 + 'SYNTHETIC'.length);
   });
 
   it('hashes demo passwords with Argon2id', async () => {

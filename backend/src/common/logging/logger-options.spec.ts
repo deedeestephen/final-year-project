@@ -1,3 +1,4 @@
+import { TEST_BASE_ENV } from '../../../test/fixtures/test-keys';
 import { Writable } from 'node:stream';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import pino from 'pino';
@@ -87,10 +88,7 @@ describe('resolveRequestId', () => {
 });
 
 describe('loggerOptions', () => {
-  const env = {
-    DATABASE_URL: 'postgresql://u:p@h:5432/d',
-    MONGO_URL: 'mongodb://u:p@h:27018/d',
-  };
+  const env = TEST_BASE_ENV;
 
   it('is silent in tests and pretty only in development', () => {
     const test = loggerOptions(loadConfig({ ...env, NODE_ENV: 'test' }))

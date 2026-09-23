@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { IsNumber, IsString, Length, Min } from 'class-validator';
 import { AppModule } from '../src/app.module';
+import { Public } from '../src/modules/access/access.decorators';
 import { loadConfig } from '../src/config/app-config';
 import { configureApp } from '../src/configure-app';
 import { MongoService } from '../src/infrastructure/database/mongo.service';
@@ -20,6 +21,7 @@ export class EchoDto {
 }
 
 /** Routes that exist only in tests, to exercise gateway behaviour. */
+@Public()
 @Controller('test')
 export class GatewayTestController {
   @Post('echo')

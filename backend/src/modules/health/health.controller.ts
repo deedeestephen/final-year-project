@@ -6,6 +6,7 @@ import {
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
+import { Public } from '../access/access.decorators';
 import { MongoService } from '../../infrastructure/database/mongo.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 
@@ -43,6 +44,7 @@ async function probe(check: () => Promise<void>): Promise<DependencyState> {
 }
 
 @ApiTags('health')
+@Public()
 @SkipThrottle()
 @Controller('health')
 export class HealthController {

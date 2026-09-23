@@ -72,5 +72,16 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | AES-256-GCM column encryption + HMAC lookup | `common/crypto/field-crypto.ts` | Verified (Ph.2) |
 | Append-only, hash-chained audit log | DB migration | Verified (Ph.2) |
 | Traversal-proof object keys, write-once objects | `infrastructure/storage` | Verified (Ph.2) |
-| Argon2id password hashing, JWT, refresh rotation, lockout, RBAC guard | — | Planned (Ph.4) |
+| Argon2id hashing (64 MiB, t=3), NIST-style length policy + common-password denylist | `modules/auth/password.ts` | Verified (Ph.4) |
+| EdDSA access JWT (15 min), algorithm pinned, iss/aud/exp/typ checked; `alg:none`, tampered, foreign-key and expired tokens rejected | `modules/auth/token.service.ts` | Verified (Ph.4, unit + integration) |
+| Account and session re-checked in the DB on every request (disable/logout effective immediately) | `AuthService.authenticate`, `JwtAuthGuard` | Verified (Ph.4) |
+| Opaque refresh tokens (SHA-256 stored), rotated on every use; reuse revokes the whole family and is audited; race-safe conditional update | `AuthService.refresh` | Verified (Ph.4) |
+| Lockout after 5 failures (15 min), counter reset on success, lockout audited | `AuthService.login` | Verified (Ph.4) |
+| No account enumeration: identical login error for unknown/wrong/disabled accounts, dummy Argon2 verification for timing, forgot-password always 202 | `AuthService` | Verified (Ph.4) |
+| Deny-by-default authentication (`@Public()` opt-out) and RBAC permissions guard; denials audited | `modules/access/*` | Verified (Ph.4) |
+| Self-registration creates PATIENT only; role self-assignment and mass assignment rejected | `RegisterDto`, validation pipe | Verified (Ph.4) |
+| Temporary passwords must be changed before any other action | `JwtAuthGuard` (`PASSWORD_CHANGE_REQUIRED`) | Verified (Ph.4) |
+| Password reset: single-use, 30-min, hashed token; newest link only; all sessions revoked on reset | `AuthService.resetPassword` | Verified (Ph.4) |
+| Stricter rate limit on auth routes (default 10/min) | `AppThrottlerGuard` | Verified (Ph.4) |
+| Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |

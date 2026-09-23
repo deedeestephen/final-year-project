@@ -52,6 +52,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
       - run: npm ci
+      - name: Generate throwaway JWT and field-encryption keys for this CI run
+        run: node ../scripts/gen-keys.mjs >> "$GITHUB_ENV"
       - run: ../scripts/quality-gate.sh db
 
   ai-services:

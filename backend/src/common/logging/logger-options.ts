@@ -56,6 +56,8 @@ export function loggerOptions(config: AppConfig): Params {
           method: req.method,
           path: req.url.split('?')[0],
         }),
+        // Status only: response headers add noise and can carry cookies.
+        res: (res: { statusCode: number }) => ({ statusCode: res.statusCode }),
       },
       autoLogging: {
         ignore: (req) => (req.url ?? '').includes('/health'),

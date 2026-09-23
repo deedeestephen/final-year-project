@@ -1,3 +1,4 @@
+import { TEST_BASE_ENV } from '../test/fixtures/test-keys';
 import { VersioningType } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { loadConfig } from './config/app-config';
@@ -15,10 +16,7 @@ function fakeApp() {
   };
 }
 
-const env = {
-  DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
-  MONGO_URL: 'mongodb://u:p@localhost:27018/db',
-};
+const env = TEST_BASE_ENV;
 
 describe('configureApp', () => {
   it('serves every route under /api with URI versioning defaulting to v1', () => {

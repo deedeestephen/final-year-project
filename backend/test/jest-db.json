@@ -15,28 +15,5 @@
   "setupFiles": [
     "<rootDir>/test/db/setup-env.ts"
   ],
-  "testTimeout": 60000,
-  "collectCoverageFrom": [
-    "src/infrastructure/mongo/**/*.ts",
-    "!src/infrastructure/mongo/migrate.ts",
-    "src/infrastructure/storage/s3-object-storage.ts",
-    "src/infrastructure/vector/qdrant-vector-store.ts",
-    "src/infrastructure/database/prisma.service.ts",
-    "src/infrastructure/database/mongo.service.ts"
-  ],
-  "coverageDirectory": "coverage-db",
-  "coverageReporters": [
-    "text",
-    "text-summary",
-    "json-summary",
-    "lcovonly"
-  ],
-  "coverageThreshold": {
-    "global": {
-      "branches": 80,
-      "functions": 80,
-      "lines": 80,
-      "statements": 80
-    }
-  }
+  "testTimeout": 60000
 }

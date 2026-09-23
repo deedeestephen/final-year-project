@@ -7,7 +7,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 
 | ID | Requirement (summary) | Component | Implementation | Test | Phase | Status |
 |---|---|---|---|---|---|---|
-| FR-01 | JWT auth + RBAC for 4 roles; lockout after 5 failed logins | L2/L3 auth | backend/src/modules/auth, gateway guards | auth e2e + security tests | 4 | Planned |
+| FR-01 | JWT auth + RBAC for 4 roles; lockout after 5 failed logins | L2/L3 auth | `modules/auth`, `modules/access` (JwtAuthGuard, PermissionsGuard), `modules/users` | `test/db/auth.int-spec.ts` (25 tests), `token.service.spec.ts`, `password.spec.ts` | 4 | **Verified** |
 | FR-02 | Capture/transmit demographics, PSA, DRE, history encrypted over TLS 1.3 | L1 forms, L3 clinical | mobile/features/clinical, backend/modules/clinical | API + widget tests | 5, 9 | Planned |
 | FR-03 | Full offline entry, AES-256 SQLite cache, conflict-resolving sync | L1 sync, L3 sync | mobile/core/sync, backend/modules/sync | offline/sync test suite | 6 | Planned |
 | FR-04 | Accept & validate DICOM MRI/TRUS/CT, archive, queue for CNN | L3 imaging, L5 object store | backend/modules/imaging | upload validation tests | 10 | Planned |
@@ -16,7 +16,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | FR-07 | RAG chatbot, ≤2 s, English/Bemba/Nyanja | L4 RAG + L3 chatbot | ai-services/rag, backend/modules/chatbot | retrieval/safety/multilingual tests | 13 | Planned |
 | FR-08 | Render AI report: probability, Gleason, heatmap, CI, recommendations | L1 report viewer | mobile/features/ai_report | widget tests | 9 | Planned |
 | FR-09 | De-identified FHIR R4 JSON export (SmartCare Pro) | L3 fhir | backend/modules/fhir | serialization tests | 14 | Planned |
-| FR-10 | Immutable timestamped audit log of access/modify/AI/export | L3 audit, L5 | DB layer: `prisma/migrations/*_constraints_and_audit` (append-only triggers + SHA-256 chain + `audit_logs_verify_chain()`); app-side audit writes: Phase 4 | `test/db/postgres.int-spec.ts` › audit log | 2, 4 | **DB layer Verified**; app writes Planned |
+| FR-10 | Immutable timestamped audit log of access/modify/AI/export | L3 audit, L5 | DB layer: `prisma/migrations/*_constraints_and_audit` (append-only triggers + SHA-256 chain + `audit_logs_verify_chain()`); `modules/audit/audit.service.ts` writes auth, access-denied and user-admin events (fail-closed) | `postgres.int-spec.ts` › audit log; `auth.int-spec.ts` | 2, 4 | **Verified** for auth/admin events; clinical, AI and export events as those modules land |
 | FR-11 | Disaggregated AI metrics (age, region, stage) | L4 fairness | ai-services/fairness | unit tests; shows "Evaluation data not yet available" | 12 | Planned |
 | FR-12 | Retraining support, model registry, A/B before promotion | L4 registry | ai-services/registry, ai_models table | registry tests | 11 | Planned (registry only; retraining pipeline documented) |
 
@@ -24,7 +24,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 
 | UC | Name | Covered by | Status |
 |---|---|---|---|
-| UC-01 | Registration & authentication | FR-01 | Planned |
+| UC-01 | Registration & authentication | FR-01 | **Verified (backend)**; app screens Ph.7 |
 | UC-02 | Offline clinical data capture | FR-02, FR-03 | Planned |
 | UC-03 | Imaging upload & validation | FR-04 | Planned |
 | UC-04 | Histopathology slide submission | Phase 10 (WSI) + Phase 11 Patch-CNN provider | Planned |
@@ -32,7 +32,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | UC-06 | Diagnostic report delivery | FR-08 | Planned |
 | UC-07 | Chatbot interaction | FR-07 | Planned |
 | UC-08 | National EHR export | FR-09 | Planned |
-| UC-09 | Administration & RBAC | FR-01, FR-10, admin module | Planned |
+| UC-09 | Administration & RBAC | FR-01, FR-10, `modules/users` | **Partial:** user lifecycle, role assignment, unlock and audit Verified; audit-log viewer Ph.15 |
 | UC-10 | Infrastructure monitoring | Prometheus `/metrics` endpoint; Grafana documented | Planned (partial) |
 | UC-11 | Population analytics | de-identified aggregate report endpoint | Planned (stretch) |
 | UC-12 | Model retraining & deployment | FR-12 | Planned (partial) |
@@ -90,3 +90,14 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | AI layer isolated behind a contract (§3.3.1) | `docs/api/ai-contract.yaml` v0 (frozen) | contract tests in Ph.11 | Specified |
 | JWT authentication middleware, RBAC enforcement | — | — | Planned (Ph.4) |
 | TLS 1.3 | reverse proxy | — | Planned (Ph.15) |
+
+## Phase 4 additions (authentication & authorisation)
+
+| Requirement | Implementation | Test | Status |
+|---|---|---|---|
+| JWT authentication middleware (L2) | global `JwtAuthGuard`, deny by default | `auth.int-spec.ts` › access tokens | Verified |
+| RBAC enforcement at the gateway (L2, NFR-01) | global `PermissionsGuard` + permission catalogue | `auth.int-spec.ts` › role-based access control | Verified |
+| Lockout after 5 failures (UC-01) | `AuthService.login` | `auth.int-spec.ts` › login | Verified |
+| Session tokens expire and can be revoked (UC-01) | 15-min access JWT, refresh rotation, logout, family revocation | `auth.int-spec.ts` › sessions | Verified |
+| Password reset architecture | hashed single-use tokens + `ResetDelivery` interface | `auth.int-spec.ts` › password reset | Verified (delivery channel: development only) |
+| Admin user lifecycle (UC-09) | `/api/v1/users` (list/get/create/update, unlock, disable) | `auth.int-spec.ts` › administrator tests | Verified |

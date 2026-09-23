@@ -46,6 +46,22 @@ const schema = z
       .default('info'),
     TRUST_PROXY: bool.default(false),
     API_DOCS_ENABLED: bool.optional(),
+    // Authentication (Phase 4). Keys: base64 of PEM (scripts/gen-keys.mjs).
+    JWT_PRIVATE_KEY_BASE64: z.string().min(1),
+    JWT_PUBLIC_KEY_BASE64: z.string().min(1),
+    JWT_ISSUER: z.string().min(1).default('pca-mhealth'),
+    JWT_AUDIENCE: z.string().min(1).default('pca-mhealth-app'),
+    ACCESS_TOKEN_TTL_SEC: z.coerce
+      .number()
+      .int()
+      .min(60)
+      .max(3600)
+      .default(900),
+    REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),
+    LOGIN_MAX_ATTEMPTS: z.coerce.number().int().min(3).max(20).default(5),
+    LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+    AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+    PASSWORD_RESET_TTL_MIN: z.coerce.number().int().min(5).max(240).default(30),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && env.CORS_ORIGINS.length === 0) {
@@ -68,6 +84,18 @@ export interface AppConfig {
   logLevel: string;
   trustProxy: boolean;
   apiDocsEnabled: boolean;
+  auth: {
+    jwtPrivateKeyPem: string;
+    jwtPublicKeyPem: string;
+    issuer: string;
+    audience: string;
+    accessTokenTtlSec: number;
+    refreshTokenTtlDays: number;
+    loginMaxAttempts: number;
+    lockoutMinutes: number;
+    rateLimitMax: number;
+    passwordResetTtlMin: number;
+  };
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -95,5 +123,22 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
     logLevel: e.LOG_LEVEL,
     trustProxy: e.TRUST_PROXY,
     apiDocsEnabled: e.API_DOCS_ENABLED ?? e.NODE_ENV !== 'production',
+    auth: {
+      jwtPrivateKeyPem: Buffer.from(
+        e.JWT_PRIVATE_KEY_BASE64,
+        'base64',
+      ).toString('utf8'),
+      jwtPublicKeyPem: Buffer.from(e.JWT_PUBLIC_KEY_BASE64, 'base64').toString(
+        'utf8',
+      ),
+      issuer: e.JWT_ISSUER,
+      audience: e.JWT_AUDIENCE,
+      accessTokenTtlSec: e.ACCESS_TOKEN_TTL_SEC,
+      refreshTokenTtlDays: e.REFRESH_TOKEN_TTL_DAYS,
+      loginMaxAttempts: e.LOGIN_MAX_ATTEMPTS,
+      lockoutMinutes: e.LOCKOUT_MINUTES,
+      rateLimitMax: e.AUTH_RATE_LIMIT_MAX,
+      passwordResetTtlMin: e.PASSWORD_RESET_TTL_MIN,
+    },
   };
 }

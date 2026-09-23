@@ -26,6 +26,7 @@ export function configureApp(
   app.use(
     helmet({
       hsts: { maxAge: 31_536_000, includeSubDomains: true },
+      frameguard: { action: 'deny' },
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'none'"],

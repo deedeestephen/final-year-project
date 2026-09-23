@@ -4,6 +4,7 @@
  *   npm run openapi:check          fail if the committed file is out of date
  * No database connection is made: clients connect lazily and are never used.
  */
+import { generateKeyPairSync } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { NestFactory } from '@nestjs/core';
@@ -28,6 +29,18 @@ async function main(): Promise<void> {
   process.env.DATABASE_URL ??=
     'postgresql://openapi:openapi@127.0.0.1:1/openapi';
   process.env.MONGO_URL ??= 'mongodb://openapi:openapi@127.0.0.1:1/openapi';
+  if (!process.env.JWT_PRIVATE_KEY_BASE64) {
+    const keys = generateKeyPairSync('ed25519', {
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+      publicKeyEncoding: { type: 'spki', format: 'pem' },
+    });
+    process.env.JWT_PRIVATE_KEY_BASE64 = Buffer.from(keys.privateKey).toString(
+      'base64',
+    );
+    process.env.JWT_PUBLIC_KEY_BASE64 = Buffer.from(keys.publicKey).toString(
+      'base64',
+    );
+  }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: false,

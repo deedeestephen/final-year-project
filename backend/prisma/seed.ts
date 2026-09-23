@@ -8,6 +8,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaClient, Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { FieldCrypto } from '../src/common/crypto/field-crypto';
+import { ARGON2_OPTIONS } from '../src/modules/auth/password';
 import {
   PERMISSIONS,
   ROLES,
@@ -18,13 +19,6 @@ import {
 
 export const SYNTHETIC_FACILITY_CODE = 'SYN-LSK-001';
 export const DEMO_EMAIL_DOMAIN = 'demo.pca-mhealth.test';
-
-export const ARGON2_OPTIONS: argon2.HashOptions & { raw?: false } = {
-  type: argon2.argon2id,
-  memoryCost: 65536,
-  timeCost: 3,
-  parallelism: 1,
-};
 
 const DEMO_USERS: { role: RoleName; email: string; displayName: string }[] = [
   {
