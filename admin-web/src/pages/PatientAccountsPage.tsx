@@ -73,38 +73,46 @@ export function PatientAccountsPage() {
 
   return (
     <>
-      <h1>Patient accounts</h1>
-      <p>
-        Link a patient&apos;s app account to their clinic record so they can see
-        their own results. Linking needs the same NRC on both.
-      </p>
-      <div className="toolbar" role="group" aria-label="Show">
-        {(['unlinked', 'linked', 'all'] as Filter[]).map((f) => (
-          <button
-            key={f}
-            className={filter === f ? 'primary' : ''}
-            aria-pressed={filter === f}
-            onClick={() => {
-              setFilter(f);
-              setPage(1);
-            }}
-          >
-            {f === 'unlinked'
-              ? 'Not linked'
-              : f === 'linked'
-                ? 'Linked'
-                : 'All'}
-          </button>
-        ))}
+      <div className="page-header">
+        <div>
+          <h1>Patient accounts</h1>
+          <p className="lead">
+            Link a patient&apos;s app account to their clinic record so they can
+            see their own results. Linking needs the same NRC on both.
+          </p>
+        </div>
+      </div>
+      <div className="toolbar">
+        <div className="segmented" role="group" aria-label="Show">
+          {(['unlinked', 'linked', 'all'] as Filter[]).map((f) => (
+            <button
+              key={f}
+              aria-pressed={filter === f}
+              onClick={() => {
+                setFilter(f);
+                setPage(1);
+              }}
+            >
+              {f === 'unlinked'
+                ? 'Not linked'
+                : f === 'linked'
+                  ? 'Linked'
+                  : 'All'}
+            </button>
+          ))}
+        </div>
       </div>
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
       {accounts.isError && (
         <Notice kind="error">{errorMessage(accounts.error)}</Notice>
       )}
       {accounts.isPending ? (
-        <p>Loading…</p>
+        <p className="muted">Loading…</p>
       ) : accounts.data?.items.length === 0 ? (
-        <p>No accounts here.</p>
+        <div className="card">
+          <p className="card-title">No accounts here.</p>
+          <p className="muted">New patient sign-ups appear under Not linked.</p>
+        </div>
       ) : (
         <table className="table">
           <thead>
@@ -112,21 +120,28 @@ export function PatientAccountsPage() {
               <th>Name</th>
               <th>Identity</th>
               <th>Clinic record</th>
-              <th />
+              <th>
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {accounts.data?.items.map((a) => (
               <tr key={a.userId}>
                 <td data-label="Name">
-                  {a.displayName}
+                  <strong>{a.displayName}</strong>
                   <br />
                   <span className="muted">{a.email}</span>
                 </td>
                 <td data-label="Identity">
-                  {a.idDocumentType
-                    ? `${a.idDocumentType === 'NRC' ? 'NRC' : 'Passport'} ${a.idNumberMasked}`
-                    : '—'}
+                  {a.idDocumentType ? (
+                    <>
+                      {a.idDocumentType === 'NRC' ? 'NRC' : 'Passport'}{' '}
+                      <span className="mono">{a.idNumberMasked}</span>
+                    </>
+                  ) : (
+                    '—'
+                  )}
                   {a.phoneMasked && (
                     <>
                       <br />
@@ -135,13 +150,22 @@ export function PatientAccountsPage() {
                   )}
                 </td>
                 <td data-label="Clinic record">
-                  {a.linked
-                    ? `${a.linked.mrn} at ${a.linked.facilityName}`
-                    : 'Not linked'}
-                </td>
-                <td>
                   {a.linked ? (
-                    <button onClick={() => setUnlinking(a)}>Unlink</button>
+                    <>
+                      <span className="badge ACTIVE">Linked</span>
+                      <br />
+                      <span className="mono">{a.linked.mrn}</span> at{' '}
+                      {a.linked.facilityName}
+                    </>
+                  ) : (
+                    <span className="badge LOCKED">Not linked</span>
+                  )}
+                </td>
+                <td className="actions-cell">
+                  {a.linked ? (
+                    <button className="danger" onClick={() => setUnlinking(a)}>
+                      Unlink
+                    </button>
                   ) : (
                     <button
                       className="primary"
@@ -161,15 +185,13 @@ export function PatientAccountsPage() {
         </table>
       )}
       {total > 50 && (
-        <div
-          className="toolbar"
-          style={{ marginTop: '1rem', alignItems: 'center' }}
-        >
+        <div className="pager">
           <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </button>
-          <span>
-            Page {page} of {pages}
+          <span className="muted">
+            Page <span className="num">{page}</span> of{' '}
+            <span className="num">{pages}</span>
           </span>
           <button
             disabled={page >= pages}
@@ -219,7 +241,7 @@ export function PatientAccountsPage() {
             <>
               <button onClick={() => setUnlinking(null)}>Cancel</button>
               <button
-                className="primary"
+                className="danger"
                 onClick={() => {
                   unlink.mutate(unlinking.userId);
                   setUnlinking(null);

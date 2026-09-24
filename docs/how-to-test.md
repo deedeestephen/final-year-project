@@ -141,6 +141,9 @@ The admin page is now a **website on your PC**, not part of the phone app. `dev-
 2. Sign in with **`admin@demo.pca-mhealth.test`** and the **demo password** from Part 1.
 3. The first time, it asks you to **choose a new password** (12 or more letters). **Write it down.** If you lose it, run `dev-up.ps1 -ResetDemoPasswords`.
 
+- [ ] **The look.** Clean white cards on a light grey page, dark text, **emerald green** buttons, and a thin Zambian flag stripe under the top bar (the design from your "Clinical Field Health" file).
+- [ ] **No internet.** Turn off your PC's Wi-Fi for a moment.
+  → An amber strip at the top: *"You are offline. Changes cannot be saved until the connection returns."* Turn Wi-Fi back on: a green *"Back online."* shows for a few seconds.
 - [ ] **Only admins get in.** Try signing in on the website as `clinician@demo.pca-mhealth.test`.
   → *"This portal is for administrators. Clinicians and patients use the mobile app."*
 - [ ] **Phone app.** Sign in on the pretend phone as the admin.

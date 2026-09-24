@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useConnection } from './online';
 
 /** Zambian flag colours; decorative only. */
 export function NationalStripe() {
@@ -12,11 +13,49 @@ export function NationalStripe() {
   );
 }
 
+/** Product mark and name; "Admin" says which surface this is. */
+export function Brand({ subtitle }: { subtitle?: string }) {
+  return (
+    <span className="brand">
+      <span className="brand-mark" aria-hidden="true">
+        PCa
+      </span>
+      <span className="brand-name">
+        <span className="brand-long">PCa mHealth </span>Admin
+        {subtitle && <small>{subtitle}</small>}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Sticky connection banner. The portal keeps nothing on the device, so while
+ * offline it says plainly that changes cannot be saved.
+ */
+export function ConnectionBanner() {
+  const { online, justReconnected } = useConnection();
+  if (!online) {
+    return (
+      <div className="connection-banner offline" role="status">
+        You are offline. Changes cannot be saved until the connection returns.
+      </div>
+    );
+  }
+  if (justReconnected) {
+    return (
+      <div className="connection-banner online" role="status">
+        Back online.
+      </div>
+    );
+  }
+  return null;
+}
+
 export function Notice({
   kind,
   children,
 }: {
-  kind: 'error' | 'success' | 'info';
+  kind: 'error' | 'success' | 'info' | 'warning';
   children: ReactNode;
 }) {
   return (
@@ -107,12 +146,10 @@ export function TemporaryPasswordDialog({
         </>
       }
     >
-      <p>For {email}. It is shown only once.</p>
-      <p
-        className="mono"
-        style={{ fontSize: '1.3rem' }}
-        data-testid="temp-password"
-      >
+      <p>
+        For <strong>{email}</strong>. It is shown only once.
+      </p>
+      <p className="mono secret-box" data-testid="temp-password">
         {password}
       </p>
       <p className="muted">

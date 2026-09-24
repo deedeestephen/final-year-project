@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from '../auth/session-context';
-import { NationalStripe } from './ui';
+import { Brand, NationalStripe } from './ui';
 import { NOT_OFFICIAL } from './messages';
 
 const NAV = [
@@ -15,7 +15,7 @@ export function Layout() {
   const { session, signOut } = useSession();
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const email = session.status === 'signedIn' ? session.user.email : '';
+  const user = session.status === 'signedIn' ? session.user : null;
 
   return (
     <div className="app">
@@ -32,8 +32,13 @@ export function Layout() {
           >
             Menu
           </button>
-          <span className="brand">PCa mHealth · Admin</span>
-          <span className="who">{email}</span>
+          <Brand subtitle="Administration" />
+          {user && (
+            <span className="who">
+              <strong>{user.displayName}</strong>
+              <span>{user.email}</span>
+            </span>
+          )}
           <button onClick={() => void signOut()}>Sign out</button>
         </div>
         <NationalStripe />
@@ -43,6 +48,9 @@ export function Layout() {
         className={`sidebar${open ? ' open' : ''}`}
         aria-label="Main"
       >
+        <span className="nav-label" aria-hidden="true">
+          Manage
+        </span>
         {NAV.map((item) => (
           <NavLink
             key={item.to}

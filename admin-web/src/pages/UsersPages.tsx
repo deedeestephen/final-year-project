@@ -40,7 +40,13 @@ export function UsersPage() {
   return (
     <>
       <div className="page-header">
-        <h1>Users</h1>
+        <div>
+          <h1>Users</h1>
+          <p className="lead">
+            Everyone who can sign in. Open an account to change its roles,
+            facility or status.
+          </p>
+        </div>
         <Link className="button primary" to="/users/new">
           Add staff user
         </Link>
@@ -78,15 +84,20 @@ export function UsersPage() {
             </option>
           ))}
         </select>
-        <button type="submit">Search</button>
+        <button className="secondary" type="submit">
+          Search
+        </button>
       </form>
       {users.isError && (
         <Notice kind="error">{errorMessage(users.error)}</Notice>
       )}
       {users.isPending ? (
-        <p>Loading…</p>
+        <p className="muted">Loading…</p>
       ) : users.data && users.data.items.length === 0 ? (
-        <p>No users found.</p>
+        <div className="card">
+          <p className="card-title">No users found</p>
+          <p className="muted">Try another name, email or role.</p>
+        </div>
       ) : (
         <table className="table">
           <thead>
@@ -108,7 +119,9 @@ export function UsersPage() {
                   e.key === 'Enter' && navigate(`/users/${u.id}`)
                 }
               >
-                <td data-label="Name">{u.displayName}</td>
+                <td data-label="Name">
+                  <strong>{u.displayName}</strong>
+                </td>
                 <td data-label="Email">{u.email}</td>
                 <td data-label="Roles">
                   {u.roles.map((r) => ROLE_LABELS[r]).join(', ')}
@@ -122,15 +135,14 @@ export function UsersPage() {
         </table>
       )}
       {users.data && users.data.total > PAGE_SIZE && (
-        <div
-          className="toolbar"
-          style={{ marginTop: '1rem', alignItems: 'center' }}
-        >
+        <div className="pager">
           <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </button>
-          <span>
-            Page {page} of {pages} · {users.data.total} accounts
+          <span className="muted">
+            Page <span className="num">{page}</span> of{' '}
+            <span className="num">{pages}</span> ·{' '}
+            <span className="num">{users.data.total}</span> accounts
           </span>
           <button
             disabled={page >= pages}
@@ -152,7 +164,7 @@ export function UserDetailPage() {
   });
   if (user.isError)
     return <Notice kind="error">{errorMessage(user.error)}</Notice>;
-  if (!user.data) return <p>Loading…</p>;
+  if (!user.data) return <p className="muted">Loading…</p>;
   // Keyed by id so a refetch after saving keeps the confirmation message.
   return <UserForm key={user.data.id} user={user.data} />;
 }
@@ -235,32 +247,33 @@ function UserForm({ user }: { user: User }) {
 
   return (
     <>
-      <p>
-        <Link to="/users">← Users</Link>
-      </p>
+      <Link className="back-link" to="/users">
+        ← Users
+      </Link>
       <div className="page-header">
-        <h1>{user.displayName}</h1>
+        <div>
+          <h1>{user.displayName}</h1>
+          <p>
+            {user.email}
+            <br />
+            <span className="muted">
+              {user.lastLoginAt
+                ? `Last sign-in ${new Date(user.lastLoginAt).toLocaleString()}`
+                : 'Never signed in'}
+              {user.mustChangePassword
+                ? ' · must choose a new password at next sign-in'
+                : ''}
+            </span>
+          </p>
+        </div>
         <StatusBadge status={user.status} />
       </div>
-      <p>
-        {user.email}
-        <br />
-        <span className="muted">
-          {user.lastLoginAt
-            ? `Last sign-in ${new Date(user.lastLoginAt).toLocaleString()}`
-            : 'Never signed in'}
-          {user.mustChangePassword
-            ? ' · must choose a new password at next sign-in'
-            : ''}
-        </span>
-      </p>
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
-      <form className="card" onSubmit={submit}>
+      <form onSubmit={submit}>
         <div className="grid-2">
-          <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-            <legend style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-              Roles
-            </legend>
+          <fieldset className="card fieldset">
+            <legend className="card-title">Roles</legend>
+            <p className="muted">What this person may do.</p>
             {ROLES.map((r) => (
               <label key={r} className="checkbox">
                 <input
@@ -274,17 +287,20 @@ function UserForm({ user }: { user: User }) {
                     )
                   }
                 />
-                {ROLE_LABELS[r]}
+                <span>{ROLE_LABELS[r]}</span>
               </label>
             ))}
           </fieldset>
-          <div>
+          <div className="card">
+            <p className="card-title">Access</p>
+            <p className="muted">
+              Where they work and whether they can sign in.
+            </p>
             <div className="field">
-              <label htmlFor="facility">
-                Facility (which patients they can see)
-              </label>
+              <label htmlFor="facility">Facility</label>
               <select
                 id="facility"
+                aria-describedby="facility-hint"
                 value={facilityId}
                 onChange={(e) => setFacilityId(e.target.value)}
               >
@@ -295,6 +311,10 @@ function UserForm({ user }: { user: User }) {
                   </option>
                 ))}
               </select>
+              <span id="facility-hint" className="hint">
+                Clinicians and pathologists only see patients of their own
+                facility.
+              </span>
             </div>
             <label className="checkbox">
               <input
@@ -303,26 +323,51 @@ function UserForm({ user }: { user: User }) {
                 disabled={isSelf}
                 onChange={(e) => setActive(e.target.checked)}
               />
-              Account active (turning this off signs the person out everywhere)
+              <span>
+                Account active
+                <span className="hint">
+                  {isSelf
+                    ? 'You cannot switch off your own account.'
+                    : 'Turning this off signs the person out everywhere.'}
+                </span>
+              </span>
             </label>
           </div>
         </div>
-        <button className="primary" type="submit" disabled={save.isPending}>
-          Save changes
-        </button>
+        <div className="toolbar" style={{ marginTop: '1rem' }}>
+          <button className="primary" type="submit" disabled={save.isPending}>
+            Save changes
+          </button>
+        </div>
       </form>
-      <div className="toolbar" style={{ marginTop: '1rem' }}>
-        {user.status === 'LOCKED' && (
-          <button onClick={() => unlock.mutate()} disabled={unlock.isPending}>
-            Unlock account
-          </button>
-        )}
-        {!isSelf && (
-          <button onClick={() => reset.mutate()} disabled={reset.isPending}>
-            Reset password
-          </button>
-        )}
-      </div>
+      {(user.status === 'LOCKED' || !isSelf) && (
+        <div className="card" style={{ marginTop: '1rem' }}>
+          <p className="card-title">Account actions</p>
+          <p className="muted">
+            A reset gives a one-time password and signs the person out
+            everywhere.
+          </p>
+          <div className="toolbar" style={{ marginBottom: 0 }}>
+            {user.status === 'LOCKED' && (
+              <button
+                onClick={() => unlock.mutate()}
+                disabled={unlock.isPending}
+              >
+                Unlock account
+              </button>
+            )}
+            {!isSelf && (
+              <button
+                className="danger"
+                onClick={() => reset.mutate()}
+                disabled={reset.isPending}
+              >
+                Reset password
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {temp && (
         <TemporaryPasswordDialog
           email={user.email}
@@ -379,13 +424,17 @@ export function CreateUserPage() {
 
   return (
     <>
-      <p>
-        <Link to="/users">← Users</Link>
-      </p>
-      <h1>Add staff user</h1>
-      <p className="muted">
-        Patients create their own accounts in the mobile app.
-      </p>
+      <Link className="back-link" to="/users">
+        ← Users
+      </Link>
+      <div className="page-header">
+        <div>
+          <h1>Add staff user</h1>
+          <p className="lead">
+            Patients create their own accounts in the mobile app.
+          </p>
+        </div>
+      </div>
       {error && <Notice kind="error">{error}</Notice>}
       <form className="card" onSubmit={submit} noValidate>
         <div className="grid-2">
@@ -407,8 +456,8 @@ export function CreateUserPage() {
             />
           </div>
         </div>
-        <fieldset style={{ border: 'none', padding: 0 }}>
-          <legend style={{ fontWeight: 600 }}>Roles</legend>
+        <fieldset className="fieldset field">
+          <legend className="card-title">Roles</legend>
           {ROLES.filter((r) => r !== 'PATIENT').map((r) => (
             <label key={r} className="checkbox">
               <input
@@ -420,7 +469,7 @@ export function CreateUserPage() {
                   )
                 }
               />
-              {ROLE_LABELS[r]}
+              <span>{ROLE_LABELS[r]}</span>
             </label>
           ))}
         </fieldset>

@@ -14,11 +14,8 @@
   - over 900 px: a fixed sidebar
   - under 900 px: a Menu button opens the sidebar
   - under 700 px: tables become stacked cards, each value labelled
-  - buttons at least 44 px tall; inputs 48 px
-- **The design follows ADR-004:**
-  - the same Zambian flag tokens, text-safe variants and fonts
-  - the same "not an official government service" notice
-  - no emblem
+  - buttons at least 48 px tall; inputs 52 px (ADR-006)
+- **Design:** the "Clinical Field Health" design system (ADR-006), with the Zambian flag stripe, the "not an official government service" notice and no emblem, as in ADR-004.
 
 ## How the portal signs in (web session)
 The mobile app keeps its refresh token in encrypted storage. A browser has no equivalent place that page scripts cannot reach, so:

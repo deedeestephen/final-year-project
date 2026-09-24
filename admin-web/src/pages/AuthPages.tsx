@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { ApiError } from '../api/client';
 import { useSession } from '../auth/session-context';
-import { NationalStripe, Notice } from '../components/ui';
+import { Brand, NationalStripe, Notice } from '../components/ui';
 import { errorMessage, NOT_OFFICIAL } from '../components/messages';
 
 function AuthShell({
@@ -14,10 +14,13 @@ function AuthShell({
   return (
     <div className="auth-page">
       <NationalStripe />
-      <main className="auth-card">
-        <h1>{title}</h1>
-        {children}
-        <p className="muted footer-note">{NOT_OFFICIAL}</p>
+      <main className="auth-main">
+        <div className="auth-card">
+          <Brand subtitle="Administration" />
+          <h1>{title}</h1>
+          {children}
+          <p className="muted footer-note">{NOT_OFFICIAL}</p>
+        </div>
       </main>
     </div>
   );
@@ -60,7 +63,9 @@ export function LoginPage() {
 
   return (
     <AuthShell title="Admin sign in">
-      <p>PCa mHealth administration portal.</p>
+      <p className="lead">
+        For administrators. Clinicians and patients use the mobile app.
+      </p>
       {(error ?? reason) && <Notice kind="error">{error ?? reason}</Notice>}
       <form onSubmit={submit} noValidate>
         <div className="field">
@@ -124,7 +129,9 @@ export function ChangePasswordPage() {
 
   return (
     <AuthShell title="Choose a new password">
-      <p>For your security, set your own password before you continue.</p>
+      <p className="lead">
+        For your security, set your own password before you continue.
+      </p>
       {error && <Notice kind="error">{error}</Notice>}
       <form onSubmit={submit} noValidate>
         <div className="field">
@@ -138,14 +145,18 @@ export function ChangePasswordPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="new">New password (12 or more characters)</label>
+          <label htmlFor="new">New password</label>
           <input
+            aria-describedby="new-hint"
             id="new"
             type="password"
             autoComplete="new-password"
             value={next}
             onChange={(e) => setNext(e.target.value)}
           />
+          <span id="new-hint" className="hint">
+            12 or more characters. A short sentence is easy to remember.
+          </span>
         </div>
         <div className="field">
           <label htmlFor="confirm">Confirm new password</label>

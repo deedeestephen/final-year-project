@@ -491,3 +491,42 @@ Owner decisions:
 | The "Saved" message vanished after saving a role or user | the editor was keyed on the data, so the refetch remounted it | key by id; update the selection from the server's answer |
 | The "Account active" checkbox shrank next to wrapped text | flex item shrink | `flex: none` |
 | Tried: `relationJoins` and a larger DB pool to speed up signed-in requests | the Node process was about 60% idle under load; the database round trips in Docker/WSL2 are the limit here | neither changed throughput, so both were left out (recorded in scalability.md) |
+
+## 2026-09-24: Owner request: admin website in the "Clinical Field Health" design
+
+**Asked for:** design the admin page using the owner's design file, "Clinical Field Health" (a Markdown design specification).
+
+**Done** (ADR-006, `admin-web/` only; the mobile app keeps ADR-004):
+- New tokens in `index.css`:
+  - Slate ink on a Slate 50 canvas, white cards with 1–1.5 px borders
+  - Clinical Emerald `#047857` for actions and positive states, amber for warnings, red `#b91c1c` for critical
+  - Plus Jakarta Sans everywhere
+  - 48 px buttons, 52 px inputs, 24 px checkboxes in 48 px rows
+  - 8 / 12 / 16 px radii, pill status chips, 1120 px maximum width
+- Components:
+  - a brand mark and the signed-in person in the top bar
+  - an emerald active-menu accent
+  - pages with lead text and headers; cards for Roles, Access and Account actions
+  - segmented filter buttons, "Locked" labels on fixed permissions
+  - danger (red outline) styling for Reset password and Unlink
+  - record cards on phones
+- **New:** a sticky connection banner, amber offline and emerald after reconnecting. It says plainly that nothing can be saved offline.
+- The unused Inter font was removed.
+
+**Decisions:**
+- The file's front-matter tokens contradict its written sections, so the written sections were used.
+- Its bright emerald `#059669` and amber `#d97706` fail WCAG AA as text, so they are decoration only. Text uses `#047857` and `#b45309`.
+- The Zambian flag stripe and the "not an official government service" notice are kept.
+
+**Tests:** admin-web 37 Vitest tests. New ones:
+- `contrast.test.ts` reads the tokens from the stylesheet and checks 16 text pairs reach 4.5:1
+- `online.test.tsx` covers the offline banner
+
+Edge screenshots at 1440, 820 and 375 px against the live backend: every page, the offline banner, no horizontal scrolling.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| The contrast test saw no tokens | with `css: false`, Vitest turns `?raw` CSS imports into an empty string | read the file with `fs` |
+| The brand wrapped onto three lines on a 375 px phone | Menu + name + Sign out are too wide | show only the mark and "Admin" under 480 px |
+| The role filter stayed narrow on phones | a more specific `.toolbar select` rule won | the phone rule now names inputs and selects |

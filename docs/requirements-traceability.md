@@ -168,4 +168,4 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Limits shared across API instances (horizontal scaling) | `RedisThrottlerStorage` (atomic Lua counter), fail-open if Redis is down | `rate-limit.int-spec.ts` (two instances, one Redis; unreachable Redis) | Verified |
 | Clients back off under load | App `SyncEngine` waits `max(backoff, Retry-After)`; portal shows the wait time and never auto-retries 4xx | `sync_test.dart` (Retry-After), `App.test.tsx` (rate-limit message) | Verified |
 | Fast search with many accounts | `pg_trgm` GIN indexes on user email and name (migration `20260924150000_user_search_trgm`) | migration applied in the DB test run | Verified |
-
+| Admin website follows the owner's "Clinical Field Health" design (owner request) | ADR-006; tokens in `admin-web/src/index.css`; connection banner | `contrast.test.ts` (16 text pairs at least 4.5:1), `online.test.tsx`; Edge screenshots at 1440, 820 and 375 px | Verified |

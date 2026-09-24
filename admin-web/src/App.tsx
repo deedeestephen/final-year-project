@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { useSession } from './auth/session-context';
 import { Layout } from './components/Layout';
+import { ConnectionBanner } from './components/ui';
 import { ChangePasswordPage, LoginPage } from './pages/AuthPages';
 import { PatientAccountsPage } from './pages/PatientAccountsPage';
 import { RolePermissionsPage, RolesPage } from './pages/RolesPages';
@@ -21,6 +22,15 @@ function NotFound() {
 
 /** Chooses what to show from the session: sign in, new password, or the portal. */
 export default function App() {
+  return (
+    <>
+      <ConnectionBanner />
+      <Screens />
+    </>
+  );
+}
+
+function Screens() {
   const { session } = useSession();
   const queryClient = useQueryClient();
 

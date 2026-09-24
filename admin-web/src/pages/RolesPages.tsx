@@ -34,23 +34,28 @@ export function RolesPage() {
   const roles = useQuery({ queryKey: ['roles'], queryFn: adminApi.roles });
   return (
     <>
-      <h1>Roles &amp; permissions</h1>
-      <p>
-        A role is a set of permissions. Changes apply to everyone with the role
-        the next time their app talks to the server, and are recorded in the
-        audit log.
-      </p>
+      <div className="page-header">
+        <div>
+          <h1>Roles &amp; permissions</h1>
+          <p className="lead">
+            A role is a set of permissions. Changes apply to everyone with the
+            role on their next request, and are recorded in the audit log.
+          </p>
+        </div>
+      </div>
       {roles.isError && (
         <Notice kind="error">{errorMessage(roles.error)}</Notice>
       )}
-      {roles.isPending && <p>Loading…</p>}
+      {roles.isPending && <p className="muted">Loading…</p>}
       <table className="table">
         <thead>
           <tr>
             <th>Role</th>
             <th>Permissions</th>
             <th>Accounts</th>
-            <th />
+            <th>
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -62,12 +67,17 @@ export function RolesPage() {
                 <span className="muted">{r.description}</span>
               </td>
               <td data-label="Permissions">
-                {r.permissions.length}
-                {r.customised ? ' · customised' : ''}
+                <span className="num">{r.permissions.length}</span>{' '}
+                {r.customised && (
+                  <span className="badge neutral">Customised</span>
+                )}
               </td>
-              <td data-label="Accounts">{r.userCount}</td>
-              <td>
+              <td data-label="Accounts">
+                <span className="num">{r.userCount}</span>
+              </td>
+              <td className="actions-cell">
                 <Link
+                  className="button"
                   to={`/roles/${r.name}`}
                   aria-label={`Edit ${ROLE_LABELS[r.name]}`}
                 >
@@ -151,11 +161,21 @@ function PermissionEditor({
 
   return (
     <>
-      <p>
-        <Link to="/roles">← Roles &amp; permissions</Link>
-      </p>
-      <h1>{ROLE_LABELS[role.name as Role]}</h1>
-      <p>{role.description}</p>
+      <Link className="back-link" to="/roles">
+        ← Roles &amp; permissions
+      </Link>
+      <div className="page-header">
+        <div>
+          <h1>{ROLE_LABELS[role.name as Role]}</h1>
+          <p className="lead">{role.description}</p>
+        </div>
+        <span className="muted">
+          <span className="num">{selected.size}</span> of{' '}
+          <span className="num">{catalogue.length}</span> permissions ·{' '}
+          <span className="num">{role.userCount}</span> account
+          {role.userCount === 1 ? '' : 's'}
+        </span>
+      </div>
       {role.name === 'PATIENT' && (
         <Notice kind="info">
           For safety, patients can only be given permissions about themselves.
@@ -164,10 +184,8 @@ function PermissionEditor({
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
       <div className="grid-2">
         {[...groups.entries()].map(([group, permissions]) => (
-          <fieldset key={group} className="card" style={{ margin: 0 }}>
-            <legend style={{ fontWeight: 700, padding: '0 0.25rem' }}>
-              {group}
-            </legend>
+          <fieldset key={group} className="card fieldset">
+            <legend className="card-title">{group}</legend>
             {permissions.map((p) => {
               const locked = lockReason(p.code);
               return (
@@ -187,10 +205,14 @@ function PermissionEditor({
                   />
                   <span>
                     {p.description}
-                    <br />
-                    <span className="muted mono">
-                      {p.code}
-                      {locked ? ` · ${locked}` : ''}
+                    <span className="hint">
+                      <span className="mono">{p.code}</span>
+                      {locked && (
+                        <>
+                          {' '}
+                          · <strong>Locked:</strong> {locked}
+                        </>
+                      )}
                     </span>
                   </span>
                 </label>
@@ -199,7 +221,7 @@ function PermissionEditor({
           </fieldset>
         ))}
       </div>
-      <div className="toolbar" style={{ marginTop: '1rem' }}>
+      <div className="toolbar" style={{ marginTop: '1.5rem' }}>
         <button
           className="primary"
           onClick={() => setConfirming(true)}
