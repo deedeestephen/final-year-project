@@ -1,4 +1,16 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { APP_CONFIG, type AppConfig } from '../../config/app-config';
 import {
   ApiAcceptedResponse,
   ApiBearerAuth,
@@ -33,11 +45,21 @@ import {
   type LoginResult,
   type SessionTokens,
 } from './auth.service';
+import {
+  clearRefreshCookie,
+  isWebClient,
+  readRefreshCookie,
+  setRefreshCookie,
+  withoutRefreshToken,
+} from './web-session';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
+  ) {}
 
   @Post('register')
   @Public()
@@ -54,24 +76,53 @@ export class AuthController {
   @Public()
   @AuthRateLimited()
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: LoginResponse })
-  login(
+  @ApiOkResponse({
+    type: LoginResponse,
+    description:
+      'With header X-Client: web the refresh token is set as an HttpOnly cookie instead of returned',
+  })
+  async login(
     @Body() dto: LoginDto,
     @Ctx() ctx: RequestContext,
-  ): Promise<LoginResult> {
-    return this.auth.login(dto.email, dto.password, ctx);
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginResult | Omit<LoginResult, 'refreshToken'>> {
+    const result = await this.auth.login(dto.email, dto.password, ctx);
+    if (!isWebClient(req)) return result;
+    setRefreshCookie(res, result.refreshToken, this.config);
+    return withoutRefreshToken(result);
   }
 
   @Post('refresh')
   @Public()
-  @AuthRateLimited()
+  // Not in the strict login bucket: refresh tokens are 256-bit random values
+  // (nothing to guess), and the web portal refreshes on every page load, so a
+  // clinic sharing one IP would be signed out. The per-IP limit still applies.
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: SessionResponse })
-  refresh(
+  @ApiOkResponse({
+    type: SessionResponse,
+    description:
+      'Web clients (X-Client: web) may omit the body; the HttpOnly cookie is used and rotated',
+  })
+  async refresh(
     @Body() dto: RefreshDto,
     @Ctx() ctx: RequestContext,
-  ): Promise<SessionTokens> {
-    return this.auth.refresh(dto.refreshToken, ctx);
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SessionTokens | Omit<SessionTokens, 'refreshToken'>> {
+    const web = isWebClient(req);
+    const token =
+      dto.refreshToken ?? (web ? readRefreshCookie(req) : undefined);
+    if (!token) {
+      throw new UnauthorizedException({
+        code: 'INVALID_TOKEN',
+        message: 'Session expired. Please sign in again.',
+      });
+    }
+    const tokens = await this.auth.refresh(token, ctx);
+    if (!web) return tokens;
+    setRefreshCookie(res, tokens.refreshToken, this.config);
+    return withoutRefreshToken(tokens);
   }
 
   @Post('logout')
@@ -79,11 +130,13 @@ export class AuthController {
   @AllowWhenPasswordChangeRequired()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'Session revoked' })
-  logout(
+  async logout(
     @CurrentUser() user: AuthenticatedUser,
     @Ctx() ctx: RequestContext,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    return this.auth.logout(user, ctx);
+    await this.auth.logout(user, ctx);
+    clearRefreshCookie(res, this.config);
   }
 
   @Post('forgot-password')

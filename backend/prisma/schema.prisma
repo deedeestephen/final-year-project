@@ -51,6 +51,10 @@ model User {
   patientProfile      Patient?             @relation("PatientAccount")
 
   @@index([facilityId])
+  // Admin search matches any part of an email or name (ILIKE '%term%').
+  // Trigram GIN indexes keep it fast with very many accounts.
+  @@index([email(ops: raw("gin_trgm_ops"))], type: Gin, map: "users_email_trgm_idx")
+  @@index([displayName(ops: raw("gin_trgm_ops"))], type: Gin, map: "users_display_name_trgm_idx")
   @@map("users")
 }
 

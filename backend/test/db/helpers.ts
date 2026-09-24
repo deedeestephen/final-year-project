@@ -22,6 +22,9 @@ export async function createDbTestApp(
     NODE_ENV: 'test',
     AUTH_RATE_LIMIT_MAX: '1000',
     RATE_LIMIT_MAX: '5000',
+    USER_RATE_LIMIT_MAX: '5000',
+    // In-memory counters: never share limits with the dev server or other runs.
+    REDIS_URL: '',
     ...TEST_JWT_ENV,
     ...env,
   });

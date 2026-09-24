@@ -45,7 +45,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | NFR-02 | ≤3 s P95 inference | Measured in Ph.17 with real/mock providers; reported honestly | Research target |
 | NFR-03 | ≥99.5% uptime | Not measurable in prototype; health checks + restart policies only | Research target |
 | NFR-04 | SUS ≥75 | Requires UAT with participants (out of dev scope) | Research target |
-| NFR-05 | ≥500 concurrent users | Load test in Ph.17 | Research target |
+| NFR-05 | ≥500 concurrent users | Stateless API instances, Redis-shared rate limits (per address and per account), server-side paging, trigram search indexes, app backoff honouring `Retry-After`. Preliminary load test on the development laptop in [scalability.md](scalability.md) (single instance, about 300 signed-in requests/s); formal test with realistic traffic in Ph.17 | **Partial** (design + preliminary measurement) |
 | NFR-06 | HL7 FHIR R4 | FR-09 | Planned |
 | NFR-07 | ≥80% test coverage | Coverage reports per package in CI | Planned |
 | NFR-08 | Complete offline data entry | FR-03 | **Verified for patient registration and screening records (Ph.6)**; offline start with the cached profile; later clinical features reuse the same outbox |
@@ -152,9 +152,20 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 
 | Requirement | Implementation | Test | Status |
 |---|---|---|---|
-| UC-09: administrators manage accounts and roles | Users screens: search, roles, facility, disable, unlock, one-time password reset; `POST /users/:id/reset-password`, `GET /users?q=&role=` | `backend/test/db/admin.int-spec.ts`, `mobile/test/features/admin/admin_test.dart`, on-device admin flow | Verified |
+| UC-09: administrators manage accounts and roles | Admin **web app** (`admin-web/`, ADR-005): search, roles, facility, disable, unlock, one-time password reset; `POST /users/:id/reset-password`, `GET /users?q=&role=` | `backend/test/db/admin.int-spec.ts`, `admin-web/src/App.test.tsx`, browser check at desktop, tablet and phone widths | Verified |
 | Editable role permissions with safety locks | `GET /admin/roles`, `PUT /admin/roles/:name/permissions`, `POST /admin/roles/:name/reset`; `roles.customised` kept by the seed | `admin.int-spec.ts` (immediate effect, audit, seed keeps edits, lock-out and patient locks) | Verified |
-| Giving patients access to their own data | `POST /admin/patient-accounts/:id/match|link|unlink` (NRC HMAC match; `patient_account:link`) + notification | `admin.int-spec.ts`, on-device admin flow | Verified |
+| Giving patients access to their own data | `POST /admin/patient-accounts/:id/match|link|unlink` (NRC HMAC match; `patient_account:link`) + notification | `admin.int-spec.ts`, `admin-web/src/App.test.tsx` (match → confirm → link; no-match message) | Verified |
 | Patient sign-up with phone and NRC or passport | `RegisterDto` + `users.phone_enc`, `id_number_enc`, `id_number_hmac` (unique) | `admin.int-spec.ts`, `patient_app_test.dart` | Verified |
 | Zambian national colours (owner request) | ADR-004; tokens + `NationalStripe`; not-an-official-service notice | `theme_test.dart` (AA contrast), `widgets_test.dart` | Verified |
+
+## Admin web app, rate limits and scalability
+
+| Requirement | Implementation | Test | Status |
+|---|---|---|---|
+| Administration separate from the mobile app, on the desktop, responsive (owner request) | `admin-web/` (React 19 + TypeScript, ADR-005); sidebar ≥ 900 px, Menu button below, tables become cards below 700 px; the app shows "Administration is on the web" | `admin-web/src/App.test.tsx` (17 Vitest tests incl. client); Edge at 1440, 820 and 375 px: no horizontal scrolling, all pages | Verified |
+| Secure browser session (NFR-01) | HttpOnly SameSite=Strict refresh cookie for `X-Client: web`; access token in memory; single-flight refresh | `rate-limit.int-spec.ts` (cookie login, rotation, reuse, logout; mobile body token unchanged), `client.test.ts` | Verified |
+| Per-user rate limit so no user can overload the system (owner request) | `UserRateLimitGuard` (120/min per account) after authentication; per-address limit 600/min; `Retry-After` + `X-RateLimit-*` headers | `rate-limit.int-spec.ts`; load test C in [scalability.md](scalability.md) (exactly 120 of about 15,000 requests passed) | Verified |
+| Limits shared across API instances (horizontal scaling) | `RedisThrottlerStorage` (atomic Lua counter), fail-open if Redis is down | `rate-limit.int-spec.ts` (two instances, one Redis; unreachable Redis) | Verified |
+| Clients back off under load | App `SyncEngine` waits `max(backoff, Retry-After)`; portal shows the wait time and never auto-retries 4xx | `sync_test.dart` (Retry-After), `App.test.tsx` (rate-limit message) | Verified |
+| Fast search with many accounts | `pg_trgm` GIN indexes on user email and name (migration `20260924150000_user_search_trgm`) | migration applied in the DB test run | Verified |
 

@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsIn,
+  IsOptional,
   IsString,
   Length,
   Matches,
@@ -71,10 +72,13 @@ export class LoginDto {
 }
 
 export class RefreshDto {
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'Required unless a web client sends the refresh cookie',
+  })
+  @IsOptional()
   @IsString()
   @Length(20, 200)
-  refreshToken!: string;
+  refreshToken?: string;
 }
 
 export class ForgotPasswordDto {

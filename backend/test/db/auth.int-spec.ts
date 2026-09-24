@@ -43,6 +43,9 @@ async function createApp(env: Record<string, string> = {}) {
     NODE_ENV: 'test',
     AUTH_RATE_LIMIT_MAX: '1000',
     RATE_LIMIT_MAX: '5000',
+    USER_RATE_LIMIT_MAX: '5000',
+    // In-memory counters: never share limits with the dev server or other runs.
+    REDIS_URL: '',
     ...TEST_JWT_ENV,
     ...env,
   });
@@ -584,6 +587,13 @@ describe('authentication rate limiting', () => {
       expect((limited.body as ErrorBody).error.code).toBe('RATE_LIMITED');
       // Non-auth routes are not affected by the auth limit.
       await request(app.getHttpServer()).get('/api/v1/health').expect(200);
+      // Nor is refreshing (a random token; web pages refresh on every load).
+      for (let i = 0; i < 5; i++) {
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/refresh')
+          .send({ refreshToken: 'x'.repeat(43) })
+          .expect(401);
+      }
     } finally {
       await app.close();
       await prisma.$disconnect();

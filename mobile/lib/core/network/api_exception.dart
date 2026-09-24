@@ -10,6 +10,7 @@ class ApiException implements Exception {
     this.status,
     this.details,
     this.requestId,
+    this.retryAfter,
   });
 
   /// No response from the server (offline, DNS failure, refused connection, timeout).
@@ -21,6 +22,9 @@ class ApiException implements Exception {
   final int? status;
   final Object? details;
   final String? requestId;
+
+  /// From a 429 response: how long the server asks us to wait.
+  final Duration? retryAfter;
 
   bool get isNetwork => code == networkUnavailable;
 
@@ -70,6 +74,7 @@ class ApiException implements Exception {
         requestId: error['requestId'] is String
             ? error['requestId'] as String
             : null,
+        retryAfter: _retryAfter(response?.headers.value('retry-after')),
       );
     }
     return ApiException(
@@ -77,6 +82,11 @@ class ApiException implements Exception {
       message: 'Something went wrong. Please try again.',
       status: response?.statusCode,
     );
+  }
+
+  static Duration? _retryAfter(String? header) {
+    final seconds = int.tryParse(header ?? '');
+    return seconds == null || seconds <= 0 ? null : Duration(seconds: seconds);
   }
 
   @override

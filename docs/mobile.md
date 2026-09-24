@@ -109,25 +109,15 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 - **Create an account.** Patients can sign up from the Sign in page. A new account shows "Almost ready" until a clinic links it to a patient record. The linking screen for clinicians is Phase 9.
 - **The chatbot stays in Phase 13** (owner decision), shown on Home under "Coming later".
 
-## Administration
+## Administration (moved to the web)
 
-- **Admin home.** The home screen opens **Users**, **Roles & permissions** and **Patient accounts** (`/admin/...`, administrators only).
-- **Users.**
-  - Search and filter by role.
-  - Set roles, facility and active/disabled.
-  - Unlock an account, or reset its password (a one-time password is shown once).
-  - Add staff users. Patients register themselves.
-- **Roles & permissions.**
-  - A checklist per role, grouped by area. Saving asks first, applies to everyone with the role on their next request, and is audited. "Reset to defaults" undoes all changes.
-  - The server's safety locks are shown as locked boxes:
-    - ADMIN always keeps user and role management.
-    - PATIENT can only have permissions about themselves.
-  - Customised roles are kept by the demo seed.
-- **Patient accounts.**
-  - Self-registered accounts show their ID type and the last 4 characters of the ID and phone.
-  - "Find record and link" matches the account's NRC hash exactly against clinic records. The admin sees only the record number and facility, never clinical data.
-  - Unlinking signs the patient out.
-  - Passport holders are linked by the clinic (Phase 9).
+- Administration is a **separate web app** in `admin-web/` (ADR-005). The Flutter admin screens were removed.
+- An administrator who signs in on the phone sees one card, **"Administration is on the web"**, with the portal address. The address comes from the dart-define `ADMIN_PORTAL_URL` (default `http://localhost:5173`).
+- Users with more than one role (e.g. admin + clinician) still get their clinical home screens in the app.
+
+## Rate limits in the app
+
+- A `429` answer carries `Retry-After`. `ApiException.retryAfter` reads it, and `SyncEngine` waits at least that long before trying again (`max(backoff, Retry-After)`), so phones back off together instead of hammering the server.
 
 ## Galaxy S9+ emulator and a real phone
 
@@ -153,7 +143,7 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
    flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
    ```
    `10.0.2.2` is the emulator's alias for the host PC. A physical phone on the same Wi-Fi needs the PC's LAN address, and a firewall rule for port 3000.
-3. Sign in as `clinician@demo.pca-mhealth.test`, `patient@…`, `pathologist@…` or `admin@…`. The password is `SEED_DEMO_PASSWORD` in `.env`.
+3. Sign in as `clinician@demo.pca-mhealth.test`, `patient@…` or `pathologist@…` (the admin uses the website). The password is `SEED_DEMO_PASSWORD` in `.env`.
    - Demo accounts must change their password on first sign-in.
    - Changing it on the dev database means the `.env` value no longer works for that account. Re-running `npm run db:seed` does not reset existing passwords.
 

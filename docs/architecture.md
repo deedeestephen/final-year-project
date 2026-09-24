@@ -14,14 +14,16 @@ security, offline-first, AI, chatbot and interoperability requirement from the p
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ L1 PRESENTATION   mobile/  (Flutter)                                     │
-│   Patient · Clinician · Pathologist/Radiologist · Admin · Chatbot        │
+│ L1 PRESENTATION   mobile/  (Flutter)       admin-web/ (React + TS)       │
+│   Patient · Clinician · Pathologist/         Administration (desktop,    │
+│   Radiologist · Chatbot                      responsive; ADR-005)        │
 │   Encrypted local DB (SQLCipher, AES-256) · Sync queue · Report viewer   │
 └───────────────────────────────┬──────────────────────────────────────────┘
                                 │ HTTPS (TLS 1.3 in prod) · REST /api/v1 · JWT
 ┌───────────────────────────────▼──────────────────────────────────────────┐
 │ L2 API GATEWAY    backend/src/gateway                                    │
 │   TLS termination (reverse proxy) · JWT verify · RBAC guard · validation │
+│   Rate limits per address and per account (Redis-shared; scalability.md) │
 │   sanitization · rate limit · CORS · security headers · versioning       │
 │   OpenAPI 3.0 · central error filter · request IDs                       │
 └───────────────────────────────┬──────────────────────────────────────────┘

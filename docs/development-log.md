@@ -430,3 +430,64 @@ Owner decisions:
 
 **Note:** the development database contains a self-registered account with a real name and email (most likely the owner trying the sign-up screen). The build and tests never create or use it. For testing, synthetic details are preferred.
 
+
+## 2026-09-24 — Owner requests: admin web app, per-user rate limits, scalability
+
+**Asked for:**
+- the admin page separate from the mobile app, as a web app for the desktop that also works on smaller screens
+- a rate limit per user, so nobody can overload the system
+- both the admin portal and the app scalable, easy to change, and able to serve very many users
+- the owner chose **React + TypeScript** for the portal
+
+**Admin web app** (`admin-web/`, ADR-005):
+- Vite + React 19 + TypeScript (strict), React Router, TanStack Query.
+- Pages:
+  - Sign in (administrators only) and forced password change
+  - Users (server-side search, role filter, paging), user detail and add staff user
+  - Roles & permissions, with a grouped checklist, locked boxes, a confirmation and reset to defaults
+  - Patient accounts (match by NRC → confirm → link; unlink)
+- Same Zambian flag tokens and fonts as the app (ADR-004).
+- Layout: a sidebar on wide screens, a Menu button below 900 px, and stacked labelled cards instead of tables below 700 px.
+- The Flutter admin screens were removed. An administrator on the phone sees "Administration is on the web" (`ADMIN_PORTAL_URL`).
+
+**Web session:**
+- For requests with `X-Client: web`, the refresh token is an HttpOnly, SameSite=Strict cookie scoped to `/api/v1/auth`, and never appears in the body.
+- The access token lives only in memory.
+- Concurrent 401s share one refresh (single flight).
+- Mobile clients are unchanged.
+
+**Rate limits:**
+- **Per account:** 120/min (`USER_RATE_LIMIT_MAX`), applied after authentication.
+- **Per address:** raised to 600/min (`RATE_LIMIT_MAX`), so a clinic sharing one internet address is not throttled as one person.
+- **Sign-in routes:** 10/min, unchanged.
+- Counters are shared across instances in Redis through an atomic Lua counter, and the limiter fails open if Redis is down.
+- Clients get `Retry-After`, `X-RateLimit-Limit` and `X-RateLimit-Remaining`. The app's sync waits at least `Retry-After`.
+
+**Scalability:**
+- Trigram GIN indexes for the admin search.
+- `AuthService.authenticate` reads the user and the session in parallel.
+- [scalability.md](scalability.md) records the design and the measured numbers. Single instance on this laptop:
+  - about 5,700 requests/s unauthenticated
+  - about 300 requests/s signed in
+- Under a flood from one account, exactly 120 of about 15,000 requests passed.
+
+**Tests:**
+- Admin web: 17 Vitest tests (API client: refresh single flight, retry, errors, `Retry-After`; sign-in: admin/non-admin, wrong password, rate limit, forced change; menu; search; facility rule; permission locks and save; patient linking).
+- Backend: `rate-limit.int-spec.ts` (5 tests), plus a test that refresh is not in the strict sign-in bucket.
+- Mobile: 137 tests, including `Retry-After` in sync.
+- Browser check in Edge at 1440, 820 and 375 px against the live backend:
+  - every page, with no horizontal scrolling
+  - the session survives a reload through the cookie
+  - `document.cookie` cannot see the refresh token
+  - after sign-out, the portal stays signed out after a reload
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| The per-user limit did not block with in-memory storage | a block duration of 0 made the storage unblock at once | block for the window length |
+| Redis offline queue off would skip counting the first requests | the command failed before the connection was ready | short command timeout (500 ms) and fail open |
+| After a few page reloads the portal signed the admin out (429 on `/auth/refresh`) | refresh was in the strict 10/min sign-in bucket, and the portal refreshes on every page load | refresh removed from that bucket (a 256-bit random token has nothing to guess); per-address limit still applies; test added |
+| DB tests got 429 on login in a second run | test apps inherited `REDIS_URL` from `.env`, so counters (and a block) carried over from the previous run and the dev server | tests use in-memory counters unless they opt in to Redis |
+| The "Saved" message vanished after saving a role or user | the editor was keyed on the data, so the refetch remounted it | key by id; update the selection from the server's answer |
+| The "Account active" checkbox shrank next to wrapped text | flex item shrink | `flex: none` |
+| Tried: `relationJoins` and a larger DB pool to speed up signed-in requests | the Node process was about 60% idle under load; the database round trips in Docker/WSL2 are the limit here | neither changed throughput, so both were left out (recorded in scalability.md) |

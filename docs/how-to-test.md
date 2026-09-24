@@ -36,6 +36,7 @@ This guide is written so anyone can follow it. Do the steps **in order**. Each s
 
 **You should see:**
 - a **second window** called *PCa mHealth backend*. **Leave it open.** It is the server. Closing it switches the server off.
+- a **third window** called *PCa mHealth admin website*. **Leave it open too.** It serves the admin website at http://localhost:5173.
 - the green word **READY!** in the first window.
 
 **Check it with your eyes:** open your web browser and go to **http://localhost:3000/api/v1/health**. You should see `"status":"ok"`.
@@ -71,7 +72,7 @@ Tick each box when it works.
   → *"Use at least 12 characters."*
 - [ ] **New password.** Choose a new password you will remember (12 or more characters, e.g. `green-river-stone-7`), type it again in *Confirm*, and tap **Save password**.
   → You see the **Clinician** home: *Welcome, SYNTHETIC Clinician*.
-- [ ] **Other roles.** Sign out (see the next box) and try `patient@…`, `pathologist@…` and `admin@…` (all `@demo.pca-mhealth.test`). Each one gets **its own home screen**.
+- [ ] **Other roles.** Sign out (see the next box) and try `patient@…` and `pathologist@…` (both `@demo.pca-mhealth.test`). Each one gets **its own home screen**. (The admin uses the website: see *The admin website* below.)
 - [ ] **Sign out.** Tap the **☰** menu at the top left, then **Sign out**.
   → Back on the Sign in page.
 - [ ] **Forgot password.** On Sign in, tap **Forgot password?**, type any email, and tap **Send reset instructions**.
@@ -131,28 +132,48 @@ Tick each box when it works.
 - [ ] **Offline.** Turn **Airplane mode** on and open the tabs again.
   → The app still shows your last results and messages, with *"Offline · showing what was saved on …"*.
 
-### The admin page (users, roles and permissions, patient accounts)
+### The admin website (users, roles and permissions, patient accounts)
 
-**How to get in:** sign in with **`admin@demo.pca-mhealth.test`** and the **demo password** from Part 1. The first time, you must choose a new password (12 or more letters). **Write it down.** If you lose it, run `dev-up.ps1 -ResetDemoPasswords`.
+The admin page is now a **website on your PC**, not part of the phone app. `dev-up.ps1` starts it in a third window, *PCa mHealth admin website*. **Leave that window open**, just like the backend one.
 
-- [ ] **Admin home.** It shows **Users**, **Roles & permissions** and **Patient accounts**.
-- [ ] **Users.** Tap **Users**.
+**How to get in:**
+1. Open **Chrome** or **Edge** on your PC and go to **http://localhost:5173**.
+2. Sign in with **`admin@demo.pca-mhealth.test`** and the **demo password** from Part 1.
+3. The first time, it asks you to **choose a new password** (12 or more letters). **Write it down.** If you lose it, run `dev-up.ps1 -ResetDemoPasswords`.
+
+- [ ] **Only admins get in.** Try signing in on the website as `clinician@demo.pca-mhealth.test`.
+  → *"This portal is for administrators. Clinicians and patients use the mobile app."*
+- [ ] **Phone app.** Sign in on the pretend phone as the admin.
+  → One card: *"Administration is on the web"*, with the website address.
+- [ ] **Menu.** On the left: **Users**, **Roles & permissions**, **Patient accounts**.
+- [ ] **Users.**
   → Every account, with a green *Active*, orange *Locked* or red *Disabled* label. Search by name or email, or filter by role.
-  - Tap a person to change their **roles**, their **facility** (a clinician only sees the patients of their own facility), or switch the **account off**.
-  - **Unlock** appears when someone typed a wrong password 5 times.
+  - Click a person to change their **roles**, their **facility** (a clinician only sees the patients of their own facility), or switch the **account off**.
+  - **Unlock account** appears when someone typed a wrong password 5 times.
   - **Reset password** shows a one-time password. Give it to the person privately; they choose their own at their next sign-in.
-- [ ] **Add staff user.** On **Users**, tap **Add staff user**. Enter an email and name, tick **Clinician**, choose the facility, and tap **Create account**.
-  → A one-time password appears. Staff accounts are only made here; patients sign up themselves.
-- [ ] **Roles & permissions.** Tap a role, e.g. **Pathologist / Radiologist**.
-  → A list of ticks: what that role may do.
-  - Untick something and tap **Save permissions**. It asks first, then applies to everyone with that role at once.
-  - Tap **Reset to defaults** to undo.
-  - Some boxes are **locked** for safety: the admin role can't lose "manage users/roles" (or nobody could manage accounts again), and patients can't be given access to other people's data.
+- [ ] **Add staff user.** Click **Add staff user**. Enter an email and name, tick **Clinician**, choose the facility, and click **Create account**.
+  → A one-time password appears. Staff accounts are only made here; patients sign up themselves in the app.
+- [ ] **Roles & permissions.** Click **Edit** next to a role, e.g. **Pathologist / Radiologist**.
+  → Groups of ticks: what that role may do.
+  - Untick something and click **Save permissions**. It asks first, then applies to everyone with that role at once.
+  - Click **Reset to defaults** to undo.
+  - Some boxes are **locked** (greyed) for safety: the admin role can't lose "manage users/roles" (or nobody could manage accounts again), and patients can't be given access to other people's data.
 - [ ] **Patient accounts (giving a patient access to their own data).**
-  1. As a patient: **New patient? Create an account**, with a made-up NRC such as `654321/12/1`.
-  2. As the clinician: register a patient with the **same NRC**.
-  3. As the admin: **Patient accounts → Not linked → Find record and link**.
-  → *"The NRC matches record … Link?"* Tap **Link**. The patient now sees their results in their app, and gets a message saying so.
+  1. In the phone app: **New patient? Create an account**, with a made-up NRC such as `654321/12/1`.
+  2. In the phone app as the clinician: register a patient with the **same NRC**.
+  3. On the website: **Patient accounts → Not linked → Find record and link**.
+  → *"The NRC matches record … "* Click **Link**. The patient now sees their results in the app, and gets a message saying so.
+- [ ] **Small screens.** Make the browser window narrow (or press **F12**, then the phone icon, and pick a phone).
+  → The menu hides behind a **Menu** button, and tables turn into cards. Nothing needs sideways scrolling.
+- [ ] **Stay signed in, safely.** Press **F5** to reload.
+  → You are still signed in. The long-lived key is in a cookie that the page's own code cannot read (it protects you if a bad script ever got in). **Sign out**, then press **F5**: you stay signed out.
+
+### Rate limits (nobody can overload the system)
+
+- [ ] **Too many sign-in tries.** On the website, type an email that does **not** exist, such as `nobody@example.com`, and any password. Click **Sign in** 11 times quickly.
+  → The first 10 say *"Email or password is incorrect."*, then *"Too many requests. Please wait … seconds and try again."* Wait a minute and it works again.
+  (Use a made-up email: 5 wrong passwords on a real account lock that account for 15 minutes, which is a separate protection.)
+- [ ] **Each account has its own limit** (120 requests a minute), so one busy or broken phone can't slow down everyone else. The robot tests check this, and [scalability.md](scalability.md) shows a real measurement: one account sending 15,000 requests got exactly 120 through.
 
 ### Phase 3: the server itself
 
@@ -175,7 +196,7 @@ Tick each box when it works.
 
 ### Phases 0 and 1, plus every phase at once: the robot tests
 
-This runs **all** the automated checks (hundreds of tests) for the backend, the AI service and the app.
+This runs **all** the automated checks (hundreds of tests) for the backend, the AI service, the app and the admin website.
 ```
 cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File scripts\quality-gate.ps1
 ```

@@ -40,7 +40,15 @@ const schema = z
       .regex(/^\d+(kb|mb)$/)
       .default('1mb'),
     RATE_LIMIT_TTL_MS: z.coerce.number().int().positive().default(60_000),
-    RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+    // Per network address: high enough for many users behind one clinic NAT.
+    RATE_LIMIT_MAX: z.coerce.number().int().positive().default(600),
+    // Per signed-in account, shared by all API instances when REDIS_URL is set.
+    USER_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+    REDIS_URL: z
+      .string()
+      .optional()
+      .transform((v) => (v && v.trim() ? v.trim() : undefined))
+      .pipe(z.url({ protocol: /^rediss?$/ }).optional()),
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
@@ -93,7 +101,9 @@ export interface AppConfig {
   mongoUrl: string;
   corsOrigins: string[];
   jsonBodyLimit: string;
-  rateLimit: { ttlMs: number; limit: number };
+  rateLimit: { ttlMs: number; limit: number; userLimit: number };
+  /** Shared rate-limit store; in-memory (single instance) when unset. */
+  redisUrl?: string;
   logLevel: string;
   trustProxy: boolean;
   apiDocsEnabled: boolean;
@@ -134,7 +144,12 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
     mongoUrl: e.MONGO_URL,
     corsOrigins: e.CORS_ORIGINS,
     jsonBodyLimit: e.JSON_BODY_LIMIT,
-    rateLimit: { ttlMs: e.RATE_LIMIT_TTL_MS, limit: e.RATE_LIMIT_MAX },
+    rateLimit: {
+      ttlMs: e.RATE_LIMIT_TTL_MS,
+      limit: e.RATE_LIMIT_MAX,
+      userLimit: e.USER_RATE_LIMIT_MAX,
+    },
+    redisUrl: e.REDIS_URL,
     logLevel: e.LOG_LEVEL,
     trustProxy: e.TRUST_PROXY,
     apiDocsEnabled: e.API_DOCS_ENABLED ?? e.NODE_ENV !== 'production',

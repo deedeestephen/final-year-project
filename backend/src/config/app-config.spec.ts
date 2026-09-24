@@ -15,7 +15,7 @@ describe('loadConfig', () => {
       port: 3000,
       corsOrigins: [],
       jsonBodyLimit: '1mb',
-      rateLimit: { ttlMs: 60_000, limit: 120 },
+      rateLimit: { ttlMs: 60_000, limit: 600, userLimit: 120 },
       apiDocsEnabled: true,
       trustProxy: false,
     });

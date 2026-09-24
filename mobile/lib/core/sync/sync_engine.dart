@@ -113,7 +113,11 @@ class SyncEngine {
         await store.releaseBatch(inFlight.map((o) => o.seq));
       }
       _failures++;
-      _nextAttemptAt = _now().add(backoffFor(_failures));
+      var wait = backoffFor(_failures);
+      // A rate-limited server says how long to wait; never retry sooner.
+      final serverWait = e is ApiException ? e.retryAfter : null;
+      if (serverWait != null && serverWait > wait) wait = serverWait;
+      _nextAttemptAt = _now().add(wait);
       final offline = e is ApiException && e.isNetwork;
       _emit(
         offline ? SyncPhase.offline : SyncPhase.failed,

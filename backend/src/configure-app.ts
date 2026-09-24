@@ -52,9 +52,17 @@ export function configureApp(
       'Content-Type',
       'X-Request-Id',
       'Idempotency-Key',
+      'X-Client',
     ],
-    exposedHeaders: ['X-Request-Id', 'Retry-After'],
-    credentials: false,
+    exposedHeaders: [
+      'X-Request-Id',
+      'Retry-After',
+      'X-RateLimit-Limit',
+      'X-RateLimit-Remaining',
+    ],
+    // Only for the allow-listed origins (the admin web app), so the browser
+    // may send the HttpOnly refresh cookie to /auth routes. Off when closed.
+    credentials: config.corsOrigins.length > 0,
     maxAge: 600,
   });
 

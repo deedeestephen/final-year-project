@@ -48,7 +48,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "With header X-Client: web the refresh token is set as an HttpOnly cookie instead of returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -79,7 +79,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Web clients (X-Client: web) may omit the body; the HttpOnly cookie is used and rotated",
             "content": {
               "application/json": {
                 "schema": {
@@ -1768,12 +1768,10 @@
         "type": "object",
         "properties": {
           "refreshToken": {
-            "type": "string"
+            "type": "string",
+            "description": "Required unless a web client sends the refresh cookie"
           }
-        },
-        "required": [
-          "refreshToken"
-        ]
+        }
       },
       "SessionResponse": {
         "type": "object",

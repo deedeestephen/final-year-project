@@ -21,7 +21,8 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 ## Transport & gateway
 - TLS 1.3 only in production, terminated at the reverse proxy (config in `infrastructure/`). HSTS.
 - helmet security headers, strict CORS allowlist, body size limits, a global validation pipe with `whitelist` +
-  `forbidNonWhitelisted`, and rate limiting (stricter on `/auth/*`) backed by Redis.
+  `forbidNonWhitelisted`, and rate limiting per address, per signed-in account, and stricter on sign-in and password
+  routes, with counters shared in Redis. See [scalability.md](scalability.md).
 
 ## Data protection
 - On device: SQLCipher (AES-256) database; its key is generated per install and stored in Android Keystore / iOS Keychain
@@ -61,8 +62,10 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 |---|---|---|
 | Config validated at startup; secrets never echoed in errors | `backend/src/config/app-config.ts` | Verified (Ph.3) |
 | Security headers: HSTS 1y, CSP `default-src 'none'`, `frame-ancestors 'none'`, nosniff, no `X-Powered-By` | `configure-app.ts` (helmet) | Verified (Ph.3, e2e) |
-| CORS closed by default, explicit allow-list (required in production), no credentials | `configure-app.ts` | Verified (Ph.3, e2e) |
-| Global rate limiting (default 120/min per client) with `429 RATE_LIMITED` + `Retry-After`; health exempt | `@nestjs/throttler` in `app.module.ts` | Verified (Ph.3, e2e). Stricter auth limits: Ph.4 |
+| CORS closed by default, explicit allow-list (required in production). Credentials (the refresh cookie) only for allow-listed origins such as the admin portal | `configure-app.ts` | Verified (Ph.3, e2e; credentials: admin web) |
+| Global rate limiting per address (default 600/min) with `429 RATE_LIMITED` + `Retry-After`; health exempt | `@nestjs/throttler` in `app.module.ts` | Verified (Ph.3, e2e) |
+| **Per-account rate limit** (default 120/min per signed-in user, after authentication) with `Retry-After`, `X-RateLimit-Limit` and `X-RateLimit-Remaining`; one account cannot slow down others | `common/http/user-rate-limit.guard.ts` | Verified (`rate-limit.int-spec.ts`; load test in [scalability.md](scalability.md)) |
+| Rate-limit counters shared between API instances in Redis (atomic Lua counter); if Redis is down the API **fails open** and logs a warning at most once a minute | `common/http/redis-throttler.storage.ts` | Verified (two instances + unreachable Redis in `rate-limit.int-spec.ts`) |
 | Input validation: whitelist + reject unknown properties, typed DTOs, submitted values not echoed | `common/http/validation.ts` | Verified (Ph.3, e2e) |
 | Input sanitisation: `@IsSafeText()` rejects markup/control characters in free text | `common/validation/safe-text.ts` | Verified (Ph.3, unit) |
 | Body size limit (default 1 MB) and malformed-JSON handling | `configure-app.ts`, `http-middleware.ts` | Verified (Ph.3, e2e) |
@@ -82,7 +85,9 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Self-registration creates PATIENT only; role self-assignment and mass assignment rejected | `RegisterDto`, validation pipe | Verified (Ph.4) |
 | Temporary passwords must be changed before any other action | `JwtAuthGuard` (`PASSWORD_CHANGE_REQUIRED`) | Verified (Ph.4) |
 | Password reset: single-use, 30-min, hashed token; newest link only; all sessions revoked on reset | `AuthService.resetPassword` | Verified (Ph.4) |
-| Stricter rate limit on auth routes (default 10/min) | `AppThrottlerGuard` | Verified (Ph.4) |
+| Stricter rate limit on sign-in, registration and password routes (default 10/min). Session refresh is excluded: it presents a 256-bit random token, and the admin portal refreshes on each page load | `AppThrottlerGuard`, `auth.controller.ts` | Verified (Ph.4; refresh exclusion in `auth.int-spec.ts`) |
+| **Admin web session:** access token in memory only; refresh token in an HttpOnly, SameSite=Strict, `Secure` (production) cookie scoped to `/api/v1/auth`, never in the response body; cookie only honoured with the `X-Client: web` header (CSRF defence); rotated on every refresh and cleared on sign-out | `modules/auth/web-session.ts`, `admin-web/src/api/client.ts` | Verified (`rate-limit.int-spec.ts`; browser check: `document.cookie` cannot see it) |
+| Admin portal admits ADMIN accounts only (others are signed out with an explanation); cached admin data is cleared at sign-out; the server still checks every permission (ADR-005) | `admin-web/src/auth/session.tsx`, `App.tsx` | Verified (Vitest) |
 | Facility scoping of patient data; records elsewhere reported as 404 so their existence is not revealed | `PatientsService.requireInFacility` | Verified (Ph.5) |
 | Patient identifiers encrypted at rest (AES-256-GCM) with HMAC exact-match lookup; national ID masked in API responses | `patients.service.ts`, `common/crypto` | Verified (Ph.5) |
 | Every patient read, search and change audited without identifiers | patients / clinical services | Verified (Ph.5) |

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/routes.dart';
+import '../../core/config/app_env.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/providers.dart';
 import '../../shared/widgets/clinical_card.dart';
@@ -87,34 +88,10 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
   ],
   UserRole.admin: [
     HomeDestination(
-      'Users',
-      'Staff and patient accounts: roles, facility, lock, password reset',
-      Icons.manage_accounts_outlined,
-      route: Routes.adminUsers,
-    ),
-    HomeDestination(
-      'Roles & permissions',
-      'What each role is allowed to do',
-      Icons.admin_panel_settings_outlined,
-      route: Routes.adminRoles,
-    ),
-    HomeDestination(
-      'Patient accounts',
-      'Link patient app accounts to clinic records by NRC',
-      Icons.link_outlined,
-      route: Routes.adminPatientAccounts,
-    ),
-    HomeDestination(
-      'Audit log',
-      'Who did what, and when',
-      Icons.history_outlined,
-      phase: 15,
-    ),
-    HomeDestination(
-      'AI models',
-      'Model versions and evaluation',
-      Icons.model_training_outlined,
-      phase: 16,
+      'Administration is on the web',
+      'Manage users, roles and permissions, and patient accounts in the '
+          'PCa mHealth admin portal on a computer (${AppEnv.adminPortalUrl}).',
+      Icons.computer_outlined,
     ),
   ],
 };

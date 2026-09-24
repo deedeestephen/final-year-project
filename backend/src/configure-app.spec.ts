@@ -35,7 +35,7 @@ describe('configureApp', () => {
     const closed = fakeApp();
     configureApp(closed as unknown as NestExpressApplication, loadConfig(env));
     expect(closed.enableCors).toHaveBeenCalledWith(
-      expect.objectContaining({ origin: false }),
+      expect.objectContaining({ origin: false, credentials: false }),
     );
 
     const open = fakeApp();
@@ -46,7 +46,13 @@ describe('configureApp', () => {
     expect(open.enableCors).toHaveBeenCalledWith(
       expect.objectContaining({
         origin: ['https://app.example.org'],
-        credentials: false,
+        // The admin web app sends its HttpOnly refresh cookie (ADR-005).
+        credentials: true,
+        allowedHeaders: expect.arrayContaining(['X-Client']) as unknown,
+        exposedHeaders: expect.arrayContaining([
+          'Retry-After',
+          'X-RateLimit-Remaining',
+        ]) as unknown,
       }),
     );
   });

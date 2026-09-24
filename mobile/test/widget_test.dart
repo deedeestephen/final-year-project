@@ -110,7 +110,9 @@ void main() {
     backend.on('GET /users/me', FakeResponse(200, userJson(roles: ['ADMIN'])));
     await pumpApp(tester, backend: backend, store: store);
     expect(find.text('Administrator'), findsOneWidget);
-    expect(find.text('Audit log'), findsOneWidget);
+    // Administration moved to the separate web portal.
+    expect(find.text('Administration is on the web'), findsOneWidget);
+    expect(find.textContaining('admin portal on a computer'), findsOneWidget);
   });
 
   group('forced password change', () {

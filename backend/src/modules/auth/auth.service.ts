@@ -405,22 +405,25 @@ export class AuthService {
       throw invalidToken();
     }
     const now = new Date();
-    const user = await this.prisma.user.findUnique({
-      where: { id: claims.userId },
-      include: USER_WITH_ACCESS,
-    });
-    if (!user || !isUsable(user, now)) throw invalidToken();
-
-    const liveSession = await this.prisma.refreshToken.findFirst({
-      where: {
-        familyId: claims.familyId,
-        userId: user.id,
-        revokedAt: null,
-        expiresAt: { gt: now },
-      },
-      select: { id: true },
-    });
-    if (!liveSession) throw invalidToken();
+    // Runs on every authenticated request: the user (with roles and
+    // permissions) and the session are read in parallel. Both stay live reads
+    // so disabling an account or changing a role applies to the next request.
+    const [user, liveSession] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: claims.userId },
+        include: USER_WITH_ACCESS,
+      }),
+      this.prisma.refreshToken.findFirst({
+        where: {
+          familyId: claims.familyId,
+          userId: claims.userId,
+          revokedAt: null,
+          expiresAt: { gt: now },
+        },
+        select: { id: true },
+      }),
+    ]);
+    if (!user || !isUsable(user, now) || !liveSession) throw invalidToken();
 
     return {
       id: user.id,

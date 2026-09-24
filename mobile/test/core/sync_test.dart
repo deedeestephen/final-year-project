@@ -311,6 +311,40 @@ void main() {
       expect(await db.select(db.outbox).get(), isEmpty);
     });
 
+    test('a rate-limited server is not retried before Retry-After', () async {
+      await store.registerPatient(draft);
+      backend.routes['POST /sync'] = (_) async => const FakeResponse(
+        429,
+        {
+          'error': {
+            'status': 429,
+            'code': 'RATE_LIMITED',
+            'message': 'Too many requests',
+          },
+        },
+        {'retry-after': '120'},
+      );
+      expect(await engine.sync(), SyncOutcome.failed);
+      clock = clock.add(const Duration(seconds: 60));
+      expect(
+        await engine.sync(),
+        SyncOutcome.skipped,
+        reason: 'server asked for 120 s',
+      );
+      clock = clock.add(const Duration(seconds: 61));
+      backend.routes.remove('POST /sync');
+      backend.routes['POST /sync'] = (r) async => FakeResponse(200, {
+        'results': [
+          for (final op
+              in ((r.body as Map)['operations'] as List)
+                  .cast<Map<String, dynamic>>())
+            applied(op, 'srv-9'),
+        ],
+        'serverTime': '2026-09-24T09:00:00Z',
+      });
+      expect(await engine.sync(), SyncOutcome.completed);
+    });
+
     test('"Sync now" ignores the backoff', () async {
       await store.registerPatient(draft);
       backend.isOffline = true;

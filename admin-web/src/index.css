@@ -1,0 +1,465 @@
+/* PCa mHealth admin portal. Zambian national colours (ADR-004); text colours
+   are deepened to reach WCAG AA. No national emblem is used. */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlusJakartaSans';
+  src: url('/fonts/PlusJakartaSans-Variable.ttf') format('truetype');
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrainsMono';
+  src: url('/fonts/JetBrainsMono-Variable.ttf') format('truetype');
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+:root {
+  --flag-green: #198a00;
+  --flag-red: #de2010;
+  --flag-black: #000000;
+  --flag-orange: #ef7d00;
+  --primary: #146e00;
+  --primary-pressed: #0f5500;
+  --on-primary: #ffffff;
+  --canvas: #f7f9f6;
+  --surface: #ffffff;
+  --surface-muted: #eef3ec;
+  --border: #dde5da;
+  --border-strong: #c2cfbe;
+  --text: #111111;
+  --text-secondary: #45503f;
+  --text-muted: #5e6858;
+  --danger: #b81a0d;
+  --danger-bg: #fff1ef;
+  --warning: #8a3e00;
+  --warning-bg: #fff3e3;
+  --success: #0f5c12;
+  --success-bg: #eaf6e6;
+  --info: #065a8c;
+  --info-bg: #eef7fc;
+  --radius: 8px;
+  --radius-card: 16px;
+  --focus: 0 0 0 3px rgba(25, 138, 0, 0.35);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--canvas);
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+h1,
+h2,
+h3 {
+  font-family: 'PlusJakartaSans', 'Inter', sans-serif;
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.6rem;
+}
+h2 {
+  font-size: 1.25rem;
+}
+a {
+  color: var(--primary);
+}
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.mono {
+  font-family: 'JetBrainsMono', monospace;
+}
+.muted {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.skip-link {
+  position: absolute;
+  left: -999px;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  background: var(--surface);
+  padding: 0.5rem 1rem;
+}
+
+/* National stripe: decorative only */
+.stripe {
+  display: flex;
+  height: 6px;
+}
+.stripe span:nth-child(1) {
+  flex: 7;
+  background: var(--flag-green);
+}
+.stripe span:nth-child(2) {
+  flex: 1;
+  background: var(--flag-red);
+}
+.stripe span:nth-child(3) {
+  flex: 1;
+  background: var(--flag-black);
+}
+.stripe span:nth-child(4) {
+  flex: 1;
+  background: var(--flag-orange);
+}
+
+/* Buttons and inputs: at least 44 px tall for touch screens */
+button,
+.button {
+  font: inherit;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-muted);
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+a.button {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+button.primary,
+.button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+button.primary:hover,
+.button.primary:hover {
+  background: var(--primary-pressed);
+}
+button.danger {
+  color: var(--danger);
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+input,
+select {
+  font: inherit;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+.field {
+  margin-bottom: 1rem;
+}
+.field-error {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+.checkbox {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  font-weight: 400;
+  padding: 0.5rem 0;
+}
+.checkbox input {
+  flex: none;
+  width: 20px;
+  min-height: 20px;
+  height: 20px;
+  margin-top: 0.2rem;
+  accent-color: var(--primary);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.25rem;
+}
+.notice {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+.notice.error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid #f4a79e;
+}
+.notice.success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.notice.info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.badge.ACTIVE {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.badge.LOCKED {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.badge.DISABLED {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* App layout: sidebar on wide screens, menu button on narrow ones */
+.app {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+}
+.topbar-inner .brand {
+  font-family: 'PlusJakartaSans', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex: 1;
+}
+.topbar-inner .who {
+  font-size: 0.9rem;
+}
+.topbar button {
+  background: transparent;
+  color: var(--on-primary);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.menu-button {
+  display: none;
+}
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1rem 0.75rem;
+}
+.sidebar a {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+.sidebar a.active {
+  background: var(--surface-muted);
+  color: var(--primary);
+}
+.content {
+  padding: 1.5rem;
+  min-width: 0;
+}
+.content > .page {
+  max-width: 1100px;
+}
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.toolbar input {
+  max-width: 360px;
+}
+.toolbar select {
+  max-width: 240px;
+}
+.footer-note {
+  margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .menu-button {
+    display: inline-block;
+  }
+  .sidebar {
+    display: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar.open {
+    display: block;
+  }
+  .content {
+    padding: 1rem;
+  }
+  .topbar-inner .who {
+    display: none;
+  }
+}
+
+/* Responsive table: a table on wide screens, stacked cards on phones */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.table th {
+  background: var(--surface-muted);
+  font-size: 0.9rem;
+}
+.table tr.clickable {
+  cursor: pointer;
+}
+.table tr.clickable:hover {
+  background: #f3f7f1;
+}
+@media (max-width: 700px) {
+  .table thead {
+    display: none;
+  }
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+  .table tr {
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 0;
+  }
+  .table td {
+    border: none;
+    padding: 0.25rem 1rem;
+  }
+  .table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 700px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dialog */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+.dialog {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 100%;
+}
+.dialog .actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+/* Sign-in pages */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.center {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}

@@ -1,4 +1,4 @@
-# Stops the backend and the Docker services started by dev-up.ps1.
+# Stops the backend, the admin website and the Docker services started by dev-up.ps1.
 # Data is kept (volumes are not removed).
 #   powershell -ExecutionPolicy Bypass -File scripts\dev-down.ps1
 $root = Split-Path -Parent $PSScriptRoot
@@ -7,6 +7,13 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
   Where-Object { $_.CommandLine -match 'dist[\\/]main' } |
   ForEach-Object {
     Write-Host "Stopping backend (process $($_.ProcessId))"
+    Stop-Process -Id $_.ProcessId -Force
+  }
+
+Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
+  Where-Object { $_.CommandLine -match 'vite' -and $_.CommandLine -match 'admin-web' } |
+  ForEach-Object {
+    Write-Host "Stopping admin website (process $($_.ProcessId))"
     Stop-Process -Id $_.ProcessId -Force
   }
 

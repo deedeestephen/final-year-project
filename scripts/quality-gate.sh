@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
-# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|all]   (default: all)
+# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|all]   (default: all)
 # The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
@@ -61,6 +61,17 @@ mobile() {
   if [ "${SKIP_APK:-0}" != "1" ]; then run "mobile build apk" flutter build apk --debug; fi
 }
 
+admin_web() {
+  step "admin-web"
+  cd "$ROOT/admin-web"
+  run "admin-web format" npm run -s format:check
+  run "admin-web lint" npx oxlint --deny-warnings src
+  run "admin-web typecheck" npm run -s typecheck
+  run "admin-web tests" npm run -s test
+  run "admin-web build" npm run -s build
+  run "admin-web npm audit" npm audit --audit-level=high --omit=dev
+}
+
 secrets() {
   step "secret scan"
   cd "$ROOT"
@@ -76,7 +87,8 @@ case "$TARGET" in
   db) db ;;
   ai) ai ;;
   mobile) mobile ;;
-  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; secrets ;;
+  admin-web) admin_web ;;
+  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; admin_web; secrets ;;
   *) echo "unknown target $TARGET"; exit 2 ;;
 esac
 

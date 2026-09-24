@@ -9,6 +9,7 @@ Object.assign(process.env, {
   CORS_ORIGINS: 'https://app.example.test',
   JSON_BODY_LIMIT: '1kb',
   RATE_LIMIT_MAX: '20',
+  USER_RATE_LIMIT_MAX: '20',
   RATE_LIMIT_TTL_MS: '60000',
   AUTH_RATE_LIMIT_MAX: '10',
   ...TEST_JWT_ENV,

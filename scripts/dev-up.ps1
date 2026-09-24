@@ -2,6 +2,7 @@
 #   1. Docker Desktop (if it is not running yet)
 #   2. the databases (PostgreSQL, MongoDB, MinIO, Qdrant, Redis) in Docker
 #   3. the backend API on http://localhost:3000 (in its own window)
+#   4. the admin website on http://localhost:5173 (in its own window)
 #
 # Usage (from the project folder, in PowerShell):
 #   powershell -ExecutionPolicy Bypass -File scripts\dev-up.ps1
@@ -12,6 +13,7 @@ param([switch]$ResetDemoPasswords)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $backend = Join-Path $root 'backend'
+$adminWeb = Join-Path $root 'admin-web'
 
 function Say($text) { Write-Host "==> $text" -ForegroundColor Cyan }
 function Fail($text) { Write-Host "!! $text" -ForegroundColor Red; exit 1 }
@@ -85,8 +87,29 @@ for ($i = 0; $i -lt 40; $i++) {
 }
 if (-not $ok) { Fail 'The backend did not answer on http://localhost:3000. Look at the backend window for errors.' }
 
+if (-not (Test-Path (Join-Path $adminWeb 'node_modules'))) {
+  Say 'Installing admin website packages (first time only)...'
+  Push-Location $adminWeb
+  try {
+    npm ci
+    if ($LASTEXITCODE -ne 0) { Fail 'npm ci failed for the admin website.' }
+  } finally {
+    Pop-Location
+  }
+}
+$adminRunning = Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
+  Where-Object { $_.CommandLine -match 'vite' -and $_.CommandLine -match 'admin-web' }
+if (-not $adminRunning) {
+  Say 'Starting the admin website in a new window (keep that window open)...'
+  Start-Process powershell -WorkingDirectory $adminWeb -ArgumentList @(
+    '-NoExit', '-Command',
+    "`$Host.UI.RawUI.WindowTitle = 'PCa mHealth admin website - close this window to stop'; npm run dev"
+  )
+}
+
 Write-Host ''
 Write-Host 'READY!' -ForegroundColor Green
 Write-Host '  Backend health:  http://localhost:3000/api/v1/health'
 Write-Host '  API explorer:    http://localhost:3000/api/docs'
+Write-Host '  Admin website:   http://localhost:5173  (open it in Chrome or Edge on this PC)'
 Write-Host '  Next: open the "mobile" folder in Android Studio, pick the Galaxy S9+ emulator, press Run.'
