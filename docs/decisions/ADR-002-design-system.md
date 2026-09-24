@@ -1,6 +1,6 @@
 # ADR-002: Mobile design system — Option 2 "Clinical Trust", with Option 1 legibility rules
 
-- **Status:** Proposed (awaiting owner confirmation)
+- **Status:** Accepted (owner chose Option 2 with Option 1 legibility rules, 2026-09-23; implemented in Phase 7)
 - **Inputs:** [design-option-1-clinical-field-health.md](../design/design-option-1-clinical-field-health.md),
   [design-option-2-clinical-trust.md](../design/design-option-2-clinical-trust.md)
 
@@ -31,3 +31,8 @@ three-state sync. Option 1's advantage is legibility, and that can be carried ov
 ## Consequences
 The Flutter `ThemeData` + `ThemeExtension` tokens (Phase 7) are generated from Option 2's colours. The contrast of every
 text/background pair gets a WCAG AA check in a unit test.
+
+**Implemented (Phase 7):** `mobile/lib/app/theme/{tokens,app_theme}.dart`, tested in `mobile/test/app/theme_test.dart`.
+Design Option 2 teal `#0D9488` and amber `#D97706` fail 4.5:1 as text on white, so they are used only for icons and
+accents; text uses the darker `#0F766E` and `#B45309`. The fonts are variable TTFs from the google/fonts repository
+(SIL OFL 1.1, licences bundled and shown on the licence page).

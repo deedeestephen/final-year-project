@@ -24,7 +24,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 
 | UC | Name | Covered by | Status |
 |---|---|---|---|
-| UC-01 | Registration & authentication | FR-01 | **Verified (backend)**; app screens Ph.7 |
+| UC-01 | Registration & authentication | FR-01 | **Verified:** backend (Ph.4); app sign-in, forced password change, forgot password, sign-out and session expiry (Ph.7, `mobile/test/widget_test.dart`, live check `test/live`). Self-registration screen with patient onboarding in Ph.8 |
 | UC-02 | Offline clinical data capture | FR-02, FR-03 | **Partial:** server idempotency (`clientUuid`) and optimistic concurrency (`version` → `VERSION_CONFLICT`) Verified; sync API + app offline store Ph.6 |
 | UC-03 | Imaging upload & validation | FR-04 | Planned |
 | UC-04 | Histopathology slide submission | Phase 10 (WSI) + Phase 11 Patch-CNN provider | Planned |
@@ -51,7 +51,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | NFR-08 | Complete offline data entry | FR-03 | Planned |
 | NFR-09 | 100% explainability coverage | Every AI report has a Grad-CAM/SHAP artifact or an explicit "unavailable" reason | Planned |
 | NFR-10 | Safe Harbour de-identification | Ph.2: identifiers encrypted + HMAC lookup (tested). Remaining: de-identification service before AI + export; tests over all 18 identifier classes | Planned |
-| NFR-11 | WCAG 2.1 AA | contrast-checked tokens, semantics labels, text scaling, 48dp targets; Flutter accessibility guideline tests | Planned |
+| NFR-11 | WCAG 2.1 AA | contrast-checked tokens, semantics labels, text scaling, 48dp targets; Flutter accessibility guideline tests | **Partial (Ph.7):** every token text pair ≥ 4.5:1, body ≥ 15 px, 48 dp targets, 52 px inputs (`theme_test.dart`); states in words, not colour alone; live regions for errors. Remaining: guideline tests per screen, text-scaling checks |
 
 ## Ethics / compliance (§3.7)
 
@@ -112,3 +112,13 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Identifier encryption + exact lookup (NFR-01, NFR-10) | `FieldCrypto` (AES-256-GCM) + HMAC national-ID lookup; national ID masked in responses | `patients.int-spec.ts` › registration and storage | Verified |
 | Facility scoping / data minimisation | `PatientsService.requireInFacility` (other facilities → 404); admins have no clinical access | `patients.int-spec.ts` › access control | Verified |
 | Audit of data access (FR-10) | `patient.read`, `patient.search`, `clinical_record.*`, `consent.*` events without identifiers | `patients.int-spec.ts` | Verified |
+
+## Phase 7 additions (Flutter app foundation)
+
+| Requirement | Implementation | Test | Status |
+|---|---|---|---|
+| Role-based app shells for the four roles (§3.3.2 L1) | `app/routes.dart` `resolveRedirect`, `features/home/role_home_screen.dart` | `routes_test.dart`, `widget_test.dart` | Verified (destinations filled in later phases) |
+| Tokens only in secure storage; cleared on sign-out and refused refresh (NFR-01) | `SecureTokenStore`, `AuthRepository.logout`, `ApiClient.refreshSession` | `api_client_test.dart`, `session_test.dart` | Verified |
+| Token rotation handled by the client | `_AuthInterceptor` (single-flight refresh, one retry) | `api_client_test.dart`, live test | Verified |
+| AI output always carries a disclaimer; mock output labelled (§3.7) | `AiDisclaimerBanner` | `widgets_test.dart` | Verified (widget); used on AI screens from Ph.10 |
+| Offline awareness in the UI (NFR-08 groundwork) | `ConnectivityService`, `OfflineBanner`, `SyncStatusBadge` | `widget_test.dart`, `widgets_test.dart` | Partial: queue and sync in Ph.6 |

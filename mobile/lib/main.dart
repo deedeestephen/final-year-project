@@ -1,22 +1,28 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'app/app.dart';
 
 void main() {
-  runApp(const PcaMhealthApp());
+  _registerFontLicences();
+  runApp(const ProviderScope(child: PcaApp()));
 }
 
-/// Root widget. Replaced by the themed, routed app in Phase 7.
-class PcaMhealthApp extends StatelessWidget {
-  const PcaMhealthApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'PCa mHealth',
-      home: Scaffold(
-        body: Center(
-          child: Text('PCa mHealth — research prototype, not a medical device'),
-        ),
-      ),
-    );
-  }
+/// The bundled fonts are SIL OFL 1.1; their licences appear on the
+/// Flutter licence page ("View licences").
+void _registerFontLicences() {
+  const fonts = {
+    'Plus Jakarta Sans': 'assets/fonts/OFL-PlusJakartaSans.txt',
+    'Inter': 'assets/fonts/OFL-Inter.txt',
+    'JetBrains Mono': 'assets/fonts/OFL-JetBrainsMono.txt',
+  };
+  LicenseRegistry.addLicense(() async* {
+    for (final entry in fonts.entries) {
+      yield LicenseEntryWithLineBreaks([
+        entry.key,
+      ], await rootBundle.loadString(entry.value));
+    }
+  });
 }

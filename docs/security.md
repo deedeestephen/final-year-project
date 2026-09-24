@@ -88,5 +88,8 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Every patient read, search and change audited without identifiers | patients / clinical services | Verified (Ph.5) |
 | Optimistic concurrency: stale writes rejected (`VERSION_CONFLICT`), never silently overwritten | `PatientsService.update` | Verified (Ph.5) |
 | Patients can view and withdraw their own consent (unconditional right, proposal §3.7.1) | `consent:withdraw_self` | Verified (Ph.5) |
+| App: tokens only in Keystore/Keychain (`flutter_secure_storage`); never logged; cleared on sign-out and when a refresh is refused | `mobile/lib/core/storage`, `core/network/api_client.dart` | Verified (Ph.7) |
+| App: no secrets compiled in (only `API_BASE_URL`); cleartext HTTP allowed only in **debug** builds and only to 10.0.2.2/localhost | `android/app/src/debug/res/xml/network_security_config.xml` | Verified (Ph.7, build) |
+| App: sign-in and forgot-password messages never reveal whether an account exists | `features/auth/presentation` | Verified (Ph.7, widget tests) |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |

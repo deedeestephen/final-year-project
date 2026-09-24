@@ -192,3 +192,44 @@ strict, pytest 100% coverage, pip-audit). mobile PASS (format, analyze, widget t
 | DB suites timed out in `beforeAll` only in the combined run | `testTimeout` is a global option, so the DB project's 60 s was ignored and Jest's 5 s default applied to Argon2-heavy setup | `testTimeout: 60000` in the root `jest-all.json` |
 
 **Next:** Phase 7, Flutter app foundation (owner's choice: app before the sync API).
+
+## 2026-09-24 — Phase 7: Flutter app foundation (Layer 1)
+
+**Objective:** a runnable, themed, role-aware app that signs in against the real API. It is the base for every later screen. Built before the Phase 6 sync API at the owner's request.
+
+**Design decisions**
+- **Structure:** feature-first (`features/<name>/{domain,data,application,presentation}`), Riverpod 3 for state and dependency injection, go_router for navigation. Every dependency is a provider, so tests swap in a scripted backend without mocking internals.
+- **Navigation rules** are a pure function, `resolveRedirect(session, location)`, unit-tested for every state:
+  - signed out → login
+  - a forced password change blocks everything else
+  - users only reach their own roles' homes; the primary home follows clinician > pathologist > admin > patient
+- **API client:**
+  - a `QueuedInterceptor` refreshes once on `401 INVALID_TOKEN`, and concurrent failures share that refresh
+  - the retry uses a second Dio instance without interceptors, which avoids a queue deadlock
+  - only public auth routes are sent without a token, so change-password and logout can still refresh
+  - a refused refresh clears the tokens and shows "Your session has ended"; an offline refresh keeps the session
+- **Theme (ADR-002 accepted):**
+  - Design Option 2 colours, with Option 1 legibility rules
+  - fonts bundled as variable TTFs, with their OFL licences registered on the licence page
+  - Option 2's teal and amber fail AA as text on white, so they are kept for icons; darker text variants are used instead
+- **Shared widgets for later phases:** `AsyncStateView`, `SyncStatusBadge` (states in words), `AiDisclaimerBanner` (the mock label is exactly "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."), `ClinicalCard` with a 4 px severity accent, `PrimaryButton`, `OfflineBanner`.
+- **Role homes** list what each role will get, each labelled with the phase that delivers it. Nothing looks finished before it is.
+
+**Files created:** `mobile/lib/{app,core,shared,features}/**`, `mobile/test/{app,core,features,shared,live,support}/**`, `mobile/assets/fonts/*`, `mobile/dart_test.yaml`, `android/app/src/debug/res/xml/network_security_config.xml`, `docs/mobile.md`.
+**Files modified:** `mobile/pubspec.yaml`, `mobile/lib/main.dart`, `mobile/test/widget_test.dart`, Android manifests, ADR-002, traceability, security.
+
+**Tests:** 77 mobile tests pass: theme 20, API client 11, session/repository 14, routes 6, widgets 26. Also 1 opt-in live test, which passed against the local backend: sign-in, `/users/me`, refresh-token rotation, sign-out. `flutter analyze`: no issues. `flutter build apk --debug`: OK.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| Google Fonts download returned HTML | the CSS API serves web fonts, not TTFs | variable TTFs from the google/fonts GitHub repository, with `FontVariation('wght')` |
+| Possible deadlock on retry after refresh | retrying through the same `QueuedInterceptor` queues behind the error being handled | retry with an interceptor-free Dio instance |
+| Refresh skipped for change-password and logout | the first rule excluded all of `/auth/*` | exclude only the public auth routes |
+| Emulator could not reach `http://10.0.2.2:3000` | Android 9+ blocks cleartext HTTP by default | debug-only network security config for the local hosts; release stays HTTPS-only |
+| Restore after a refused refresh lost the "session ended" message | `_restore` overwrote the state set by the expiry callback | keep an existing `SignedOut` state |
+
+**Known limitation:** starting offline asks the user to connect before signing in. Phase 6 adds the encrypted local profile cache that allows offline work.
+
+**Next:** Phase 6, offline-first. Server `POST /sync`; on the device, Drift + SQLCipher, a sync queue and conflict resolution UI.
+
