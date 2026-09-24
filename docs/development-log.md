@@ -530,3 +530,36 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 | The contrast test saw no tokens | with `css: false`, Vitest turns `?raw` CSS imports into an empty string | read the file with `fs` |
 | The brand wrapped onto three lines on a 375 px phone | Menu + name + Sign out are too wide | show only the mark and "Admin" under 480 px |
 | The role filter stayed narrow on phones | a more specific `.toolbar select` rule won | the phone rule now names inputs and selects |
+
+## 2026-09-25: Phase 10: Imaging and files
+
+**Built:**
+- `StorageModule` (global): `OBJECT_STORAGE` is local files (`var/objects`, git-ignored) or S3/MinIO. The S3 driver now streams with `@aws-sdk/lib-storage` multipart upload instead of buffering the whole file.
+- New config: `STORAGE_DRIVER`, `LOCAL_STORAGE_ROOT`, `S3_*` (required when `s3`), `MAX_IMAGING_MB` (512), `MAX_SLIDE_MB` (2048).
+- `common/upload`:
+  - `receiveUpload` (busboy): the fields come first, then one file, streamed through a guard (size cap → 413, SHA-256, magic-byte type check → 415), then to storage.
+  - `sniffFile`: DICOM, PNG, JPEG, TIFF, BigTIFF.
+  - The name and declared type are ignored, and the name is not stored.
+- `modules/imaging`:
+  - `POST/GET /patients/:id/imaging`, `GET /imaging/:id(/content)`
+  - `POST/GET /patients/:id/histopathology`, `GET /histopathology/:id(/content)`
+  - `GET /histopathology/review-queue`, `POST /histopathology/:id/review`
+- DICOM headers are read with `dicom-parser` (technical fields only) and the modality must match. JPEG/PNG are accepted only for TRUS.
+- Files are recorded only after all checks. Rejected files are deleted and audited.
+- The ISUP grade group is computed by the server. A slide can be reviewed once (409 after that).
+- Migration `20260925090000_upload_client_uuid`: `client_uuid` on both tables (retry-safe uploads) and `reviewed_at`.
+- `npm run fixtures` writes synthetic DICOM (MR/CT/US), TIFF and a non-image to `backend/test/fixtures/files`.
+
+**Tests:**
+- `imaging.int-spec.ts` (11 tests, including the S3/MinIO streaming path).
+- Unit tests for the sniffer, the ISUP mapping, the DICOM reader and the storage config.
+- Backend 140 unit tests; the combined suite has 317 tests with 95.6% line / 83.1% branch coverage.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| Uploads with a `clientUuid` failed with 400 | busboy reports a fields limit when it is reached, not exceeded | allow one extra in the limits; unknown and repeated fields are still rejected by name |
+| The test's Mongo client could not connect ("Missing required sub-document 'driver'") | a plain `MongoClient` without the project's runtime adapter | use `createMongoClient` like the other tests |
+| TypeScript narrowed variables set inside upload callbacks to their initial values | control-flow narrowing | keep upload state in a holder object |
+| Prisma client could not be regenerated | the running backend held the query engine open on Windows | stop the backend first |
+| The `db` gate step once exited silently right after the backend step | memory pressure (emulator, Android Studio, Docker) during a heavy build and audit | re-ran on its own: passed, 317 tests |

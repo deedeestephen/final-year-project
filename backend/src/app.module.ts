@@ -24,6 +24,8 @@ import { PermissionsGuard } from './modules/access/permissions.guard';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ImagingModule } from './modules/imaging/imaging.module';
+import { StorageModule } from './infrastructure/storage/storage.module';
 import { ClinicalModule } from './modules/clinical/clinical.module';
 import { HealthModule } from './modules/health/health.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -62,6 +64,7 @@ import { UsersModule } from './modules/users/users.module';
       }),
     }),
     DatabaseModule,
+    StorageModule,
     CryptoModule,
     AuditModule,
     AuthModule,
@@ -71,6 +74,7 @@ import { UsersModule } from './modules/users/users.module';
     NotificationsModule,
     AdminModule,
     SyncModule,
+    ImagingModule,
     HealthModule,
   ],
   providers: [

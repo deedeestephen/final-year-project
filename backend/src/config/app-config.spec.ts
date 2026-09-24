@@ -80,4 +80,36 @@ describe('loadConfig', () => {
       loadConfig({ ...base, API_DOCS_ENABLED: 'false' }).apiDocsEnabled,
     ).toBe(false);
   });
+
+  it('stores uploads locally by default, with size caps', () => {
+    const config = loadConfig(base);
+    expect(config.storage).toEqual({ driver: 'local', root: 'var/objects' });
+    expect(config.uploads).toEqual({
+      maxImagingBytes: 512 * 1024 * 1024,
+      maxSlideBytes: 2048 * 1024 * 1024,
+    });
+  });
+
+  it('requires every S3 setting when STORAGE_DRIVER=s3, without echoing values', () => {
+    expect(() =>
+      loadConfig({ ...base, STORAGE_DRIVER: 's3', S3_SECRET_KEY: 'hush' }),
+    ).toThrow(/S3_BUCKET: is required when STORAGE_DRIVER=s3/);
+    try {
+      loadConfig({ ...base, STORAGE_DRIVER: 's3', S3_SECRET_KEY: 'hush' });
+    } catch (err) {
+      expect((err as Error).message).not.toContain('hush');
+    }
+    const config = loadConfig({
+      ...base,
+      STORAGE_DRIVER: 's3',
+      S3_ENDPOINT: 'http://localhost:9000',
+      S3_BUCKET: 'pca-mhealth',
+      S3_ACCESS_KEY: 'key',
+      S3_SECRET_KEY: 'secret',
+    });
+    expect(config.storage).toMatchObject({
+      driver: 's3',
+      bucket: 'pca-mhealth',
+    });
+  });
 });

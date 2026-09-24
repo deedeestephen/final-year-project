@@ -324,6 +324,8 @@ model ImagingStudy {
   status            FileStatus      @default(UPLOADING)
   rejectionReason   String?         @map("rejection_reason")
   uploadedById      String          @map("uploaded_by_id") @db.Uuid
+  /// Client-generated id so a retried upload never creates a duplicate.
+  clientUuid        String?         @unique @map("client_uuid") @db.Uuid
   createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -347,7 +349,10 @@ model HistopathologySpecimen {
   gleasonSecondary Int?       @map("gleason_secondary")
   isupGradeGroup   Int?       @map("isup_grade_group")
   reviewedById     String?    @map("reviewed_by_id") @db.Uuid
+  reviewedAt       DateTime?  @map("reviewed_at") @db.Timestamptz(3)
   uploadedById     String     @map("uploaded_by_id") @db.Uuid
+  /// Client-generated id so a retried upload never creates a duplicate.
+  clientUuid       String?    @unique @map("client_uuid") @db.Uuid
   createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 

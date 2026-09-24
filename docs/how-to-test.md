@@ -178,6 +178,26 @@ The admin page is now a **website on your PC**, not part of the phone app. `dev-
   (Use a made-up email: 5 wrong passwords on a real account lock that account for 15 minutes, which is a separate protection.)
 - [ ] **Each account has its own limit** (120 requests a minute), so one busy or broken phone can't slow down everyone else. The robot tests check this, and [scalability.md](scalability.md) shows a real measurement: one account sending 15,000 requests got exactly 120 through.
 
+### Phase 10: pictures and slides (on the server)
+
+The phone screens for this come in Phase 9. For now you test it on the server's own web page.
+
+1. Make the practice files (they are made up, with no real person in them):
+   ```
+   cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth\backend"; npm run fixtures
+   ```
+   → Five files appear in `backend\test\fixtures\files`: `synthetic-mri.dcm`, `synthetic-ct.dcm`, `synthetic-trus.dcm`, `synthetic-slide.tif` and `not-an-image.dcm`.
+2. Open **http://localhost:3000/api/docs**. Use **POST /api/v1/auth/login** (Try it out) as the clinician and copy the `accessToken`. Click **Authorize** at the top, paste it, and click **Authorize**.
+3. Find a patient id: **GET /api/v1/patients** → Try it out → Execute, and copy one `id`.
+- [ ] **A good MRI.** Open **POST /api/v1/patients/{id}/imaging**, paste the id, choose modality **MRI**, choose the file `synthetic-mri.dcm`, and click **Execute**.
+  → Code **201**, `"status": "VALIDATED"`, and a long `sha256` (the file's fingerprint).
+- [ ] **The wrong kind.** Same again with the file `synthetic-ct.dcm` but modality **MRI**.
+  → Code **422**: *"This DICOM file is modality CT, not MRI"*.
+- [ ] **Not a picture at all.** Try `not-an-image.dcm`.
+  → Code **415**. The server looks inside the file, not at its name.
+- [ ] **Slides and review** (sign in as `pathologist@demo.pca-mhealth.test`): upload `synthetic-slide.tif` with **POST /api/v1/patients/{id}/histopathology**, then **GET /api/v1/histopathology/review-queue** lists it. **POST /api/v1/histopathology/{id}/review** with `{"gleasonPrimary": 4, "gleasonSecondary": 3}`.
+  → `"isupGradeGroup": 3`. The server works that out itself.
+
 ### Phase 3: the server itself
 
 - [ ] Open **http://localhost:3000/api/docs** in your browser.

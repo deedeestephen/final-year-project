@@ -38,8 +38,13 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
   AI requests, exports and admin actions are all logged.
 
 ## Files
-- Streaming upload with a size cap per modality. MIME is checked by extension, declared type and **magic bytes**; DICOM
-  headers are parsed. Storage keys are server-generated UUIDs (no user paths). Uploads are quarantined until validated.
+- Streaming upload (busboy) straight to object storage, with a size cap per kind (`MAX_IMAGING_MB`, `MAX_SLIDE_MB`).
+  The file type is decided **only by magic bytes**; the file name and declared Content-Type are ignored, and the name
+  is never stored (it may contain identifiers). DICOM headers are parsed and the modality must match what was chosen.
+- Storage keys are server-generated UUIDs (no user paths). A file is recorded only after every check passed; a file
+  that fails is deleted and the rejection is audited (reason only). Downloads are `attachment`, `nosniff`, `no-store`.
+- **Known limit:** stored DICOM files still contain their original header tags. Only technical fields are copied to
+  MongoDB, and nothing leaves the backend, but de-identifying the files themselves before any AI use is Phase 15 work.
 
 ## Secrets
 - Secrets only come from environment variables / a secret manager. `.env` is git-ignored and `.env.example` holds
@@ -108,5 +113,9 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Linking a patient account needs an exact NRC match; the admin sees only record number and facility (data minimisation); linking notifies the patient; unlinking ends their sessions; all audited | `AdminService.link/unlink` | Verified |
 | Admin password reset issues a one-time password, forces a change and ends all sessions; admins cannot reset their own this way | `UsersService.resetPassword` | Verified |
 | No official emblems; every sign-in screen says the app is not an official government service (ADR-004) | `NationalStripe.notOfficial` | Verified |
+| Uploads: streamed (never whole in memory), size cap (413), magic-byte type check (415), DICOM header and modality check (422), server-generated keys, original file name not stored, rejected files deleted and audited | `common/upload/*`, `modules/imaging` | Verified (Ph.10, `imaging.int-spec.ts`) |
+| Imaging and slide reads facility-scoped (other facilities get 404), every list and download audited without identifiers; downloads sent as attachments with `nosniff` | `ImagingService` | Verified (Ph.10) |
+| Only technical DICOM fields (UIDs, modality, size) copied to MongoDB; patient name and ID tags never read | `dicom-header.ts` | Verified (Ph.10) |
+| Pathologist review: one review per slide (conditional update, 409 on repeat), ISUP grade group computed by the server, Gleason values kept out of the audit details | `ImagingService.review` | Verified (Ph.10) |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |

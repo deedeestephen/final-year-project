@@ -1571,6 +1571,388 @@
         ]
       }
     },
+    "/api/v1/patients/{id}/imaging": {
+      "post": {
+        "operationId": "PatientFilesController_uploadImaging_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ImagingUploadForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Same clientUuid already uploaded (idempotent retry)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImagingStudyView"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImagingStudyView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      },
+      "get": {
+        "operationId": "PatientFilesController_listImaging_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImagingStudyView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
+    "/api/v1/patients/{id}/histopathology": {
+      "post": {
+        "operationId": "PatientFilesController_uploadSlide_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SlideUploadForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Same clientUuid already uploaded (idempotent retry)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecimenView"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecimenView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      },
+      "get": {
+        "operationId": "PatientFilesController_listSlides_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SpecimenView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
+    "/api/v1/imaging/{id}": {
+      "get": {
+        "operationId": "ImagingController_get_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImagingStudyView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
+    "/api/v1/imaging/{id}/content": {
+      "get": {
+        "operationId": "ImagingController_content_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stored file, as a download"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
+    "/api/v1/histopathology/review-queue": {
+      "get": {
+        "operationId": "HistopathologyController_queue_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Unreviewed slides in your facility, oldest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SpecimenView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
+    "/api/v1/histopathology/{id}": {
+      "get": {
+        "operationId": "HistopathologyController_get_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecimenView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
+    "/api/v1/histopathology/{id}/content": {
+      "get": {
+        "operationId": "HistopathologyController_content_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stored slide, as a download"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
+    "/api/v1/histopathology/{id}/review": {
+      "post": {
+        "operationId": "HistopathologyController_review_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewSpecimenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gleason patterns saved; the ISUP grade group is computed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecimenView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "imaging"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check_v1",
@@ -3091,6 +3473,231 @@
           "clinicalRecords",
           "cursor",
           "hasMore"
+        ]
+      },
+      "ImagingUploadForm": {
+        "type": "object",
+        "properties": {
+          "modality": {
+            "type": "string",
+            "enum": [
+              "MRI",
+              "TRUS",
+              "CT"
+            ]
+          },
+          "clientUuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Client-generated id; a retry with the same id never duplicates"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "DICOM for MRI and CT; DICOM, JPEG or PNG for TRUS. Send the other fields first."
+          }
+        },
+        "required": [
+          "modality",
+          "file"
+        ]
+      },
+      "ImagingStudyView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "MRI",
+              "TRUS",
+              "CT"
+            ]
+          },
+          "mimeType": {
+            "type": "string",
+            "example": "application/dicom"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 of the stored file"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "VALIDATED"
+            ],
+            "description": "Only files that passed every check are recorded"
+          },
+          "studyInstanceUid": {
+            "type": "string",
+            "nullable": true
+          },
+          "seriesInstanceUid": {
+            "type": "string",
+            "nullable": true
+          },
+          "uploadedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "modality",
+          "mimeType",
+          "sizeBytes",
+          "sha256",
+          "status",
+          "uploadedById",
+          "createdAt"
+        ]
+      },
+      "SlideUploadForm": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "SVS",
+              "TIFF",
+              "NDPI"
+            ],
+            "default": "TIFF"
+          },
+          "stain": {
+            "type": "string",
+            "example": "H&E",
+            "maxLength": 40
+          },
+          "biopsyDate": {
+            "type": "string",
+            "example": "2026-09-01",
+            "description": "YYYY-MM-DD"
+          },
+          "clientUuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Whole-slide image (TIFF-based: SVS, TIFF, NDPI). Send the other fields first."
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "SpecimenView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "SVS",
+              "TIFF",
+              "NDPI"
+            ]
+          },
+          "stain": {
+            "type": "string",
+            "nullable": true
+          },
+          "biopsyDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-09-01"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "VALIDATED"
+            ]
+          },
+          "gleasonPrimary": {
+            "type": "number",
+            "nullable": true
+          },
+          "gleasonSecondary": {
+            "type": "number",
+            "nullable": true
+          },
+          "isupGradeGroup": {
+            "type": "number",
+            "nullable": true,
+            "description": "ISUP grade group 1-5, computed by the server from the Gleason patterns"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "uploadedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "format",
+          "sizeBytes",
+          "sha256",
+          "status",
+          "uploadedById",
+          "createdAt"
+        ]
+      },
+      "ReviewSpecimenDto": {
+        "type": "object",
+        "properties": {
+          "gleasonPrimary": {
+            "type": "number",
+            "minimum": 3,
+            "maximum": 5,
+            "description": "Most common Gleason pattern"
+          },
+          "gleasonSecondary": {
+            "type": "number",
+            "minimum": 3,
+            "maximum": 5,
+            "description": "Second most common pattern"
+          }
+        },
+        "required": [
+          "gleasonPrimary",
+          "gleasonSecondary"
         ]
       }
     }

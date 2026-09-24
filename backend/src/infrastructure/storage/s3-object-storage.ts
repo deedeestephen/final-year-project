@@ -5,10 +5,10 @@ import {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
-  PutObjectCommand,
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import {
   assertValidKey,
   ObjectNotFoundError,
@@ -64,19 +64,19 @@ export class S3ObjectStorage implements ObjectStorage {
     assertValidKey(key);
     if (await this.exists(key))
       throw new Error(`Object already exists: ${key}`);
-    // The SDK needs a known length for streamed uploads, so buffer only here.
-    // Large-file multipart upload is added with the imaging module (Phase 10).
-    const chunks: Buffer[] = [];
-    for await (const chunk of body) chunks.push(Buffer.from(chunk as Buffer));
-    await this.client.send(
-      new PutObjectCommand({
+    // Streams in parts (multipart upload), so large files are never held in memory.
+    await new Upload({
+      client: this.client,
+      params: {
         Bucket: this.config.bucket,
         Key: key,
-        Body: Buffer.concat(chunks),
+        Body: body,
         ContentType: metadata.contentType,
         Metadata: metadata.sha256 ? { sha256: metadata.sha256 } : undefined,
-      }),
-    );
+      },
+      queueSize: 2,
+      partSize: 8 * 1024 * 1024,
+    }).done();
   }
 
   async get(key: string): Promise<Readable> {

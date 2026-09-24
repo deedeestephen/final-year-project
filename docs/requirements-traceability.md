@@ -10,7 +10,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | FR-01 | JWT auth + RBAC for 4 roles; lockout after 5 failed logins | L2/L3 auth | `modules/auth`, `modules/access` (JwtAuthGuard, PermissionsGuard), `modules/users` | `test/db/auth.int-spec.ts` (25 tests), `token.service.spec.ts`, `password.spec.ts` | 4 | **Verified** |
 | FR-02 | Capture/transmit demographics, PSA, DRE, history encrypted over TLS 1.3 | L1 forms, L3 clinical | `backend/src/modules/{patients,clinical}`; app forms Ph.9 | `test/db/patients.int-spec.ts`, `users-and-edges.int-spec.ts` | 5, 9 | **Backend Verified**; app Ph.9; TLS Ph.15 |
 | FR-03 | Full offline entry, AES-256 SQLite cache, conflict-resolving sync | L1 sync, L3 sync | `mobile/lib/core/{db,sync}`, `backend/src/modules/sync` | `backend/test/db/sync.int-spec.ts`, `mobile/test/core/sync_test.dart`, `mobile/test/features/patients/patients_flow_test.dart`, on-device `mobile/integration_test/app_flow_test.dart` | 6 | **Verified** |
-| FR-04 | Accept & validate DICOM MRI/TRUS/CT, archive, queue for CNN | L3 imaging, L5 object store | backend/modules/imaging | upload validation tests | 10 | Planned |
+| FR-04 | Accept & validate DICOM MRI/TRUS/CT, archive, queue for CNN | L3 imaging, L5 object store | `backend/src/modules/imaging` (streamed multipart upload, magic-byte check, DICOM header parse, size caps, retry-safe `clientUuid`), `common/upload/*`, `StorageModule` (local or S3/MinIO, streamed) | `test/db/imaging.int-spec.ts` (11 tests incl. MinIO), `file-signatures.spec.ts`, `imaging.spec.ts` | 10 | **Verified** for upload, validation and archive; queueing for the CNN is Phase 11 |
 | FR-05 | PCa probability + Gleason grade group ≤3 s P95 | L4 + broker | ai-services router, backend ai-broker | contract tests; latency measured in Ph.17 | 11, 17 | Planned (target, not claimed) |
 | FR-06 | Grad-CAM for CNN outputs, SHAP for ANN outputs | L4 explainability | ai-services/explain | artifact tests | 12 | Planned |
 | FR-07 | RAG chatbot, ≤2 s, English/Bemba/Nyanja | L4 RAG + L3 chatbot | ai-services/rag, backend/modules/chatbot | retrieval/safety/multilingual tests | 13 | Planned |
@@ -26,8 +26,8 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 |---|---|---|---|
 | UC-01 | Registration & authentication | FR-01 | **Verified:** backend (Ph.4); app sign-in, forced password change, forgot password, sign-out and session expiry (Ph.7, `mobile/test/widget_test.dart`, live check `test/live`). Self-registration screen with patient onboarding in Ph.8 |
 | UC-02 | Offline clinical data capture | FR-02, FR-03 | **Verified (Ph.6):** register patients and add PSA/DRE/PI-RADS records offline; queued, synced idempotently, conflicts shown for the user to resolve; checked on the Galaxy S9+ (Android 10) emulator against the live backend. Richer clinical forms (symptoms, history) Ph.8 |
-| UC-03 | Imaging upload & validation | FR-04 | Planned |
-| UC-04 | Histopathology slide submission | Phase 10 (WSI) + Phase 11 Patch-CNN provider | Planned |
+| UC-03 | Imaging upload & validation | FR-04 | **Verified (Ph.10, API)**; app screens Ph.9 |
+| UC-04 | Histopathology slide submission | Ph.10: slide upload (TIFF/SVS/NDPI), review queue, Gleason review with server-computed ISUP grade group; Ph.11: Patch-CNN provider | **Partial:** upload and review Verified (API); AI provider Ph.11; app screens Ph.9 |
 | UC-05 | AI multi-modal analysis | FR-05 | Planned |
 | UC-06 | Diagnostic report delivery | FR-08 | Planned |
 | UC-07 | Chatbot interaction | FR-07 | Planned |

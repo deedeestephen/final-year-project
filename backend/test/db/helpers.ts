@@ -1,4 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
+import os from 'node:os';
+import path from 'node:path';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import type { PrismaClient } from '@prisma/client';
@@ -25,6 +27,12 @@ export async function createDbTestApp(
     USER_RATE_LIMIT_MAX: '5000',
     // In-memory counters: never share limits with the dev server or other runs.
     REDIS_URL: '',
+    // Uploaded files go to a per-run temp folder unless a test asks for S3.
+    STORAGE_DRIVER: 'local',
+    LOCAL_STORAGE_ROOT: path.join(
+      os.tmpdir(),
+      `pca-mhealth-objects-${process.env.TEST_RUN_ID ?? 'local'}`,
+    ),
     ...TEST_JWT_ENV,
     ...env,
   });

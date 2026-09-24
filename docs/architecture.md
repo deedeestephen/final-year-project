@@ -81,9 +81,7 @@ Router dispatches to providers, fusion runs, and explainability artifacts are pr
 configured) → answer + cited chunks + disclaimer. Content in Bemba and Nyanja **must come from human-verified translations**.
 The system will not machine-translate medical content and present it as verified.
 
-**Imaging (UC-03/04).** Streamed multipart upload → size/MIME/magic-byte check → DICOM header parse (dcmjs) or WSI
-format check → stored under a server-generated key in object storage → metadata row. Original filenames are never used
-as paths.
+**Imaging (UC-03/04), built in Phase 10.** The client sends the form fields first, then one file, as multipart/form-data. The stream goes through a guard that counts bytes (size cap), hashes (SHA-256) and checks magic bytes, then straight into object storage (`StorageModule`: local files, or S3/MinIO with multipart upload). DICOM headers are read with `dicom-parser` (technical fields only) and checked against the chosen modality. Only then is the `imaging_studies` / `histopathology_specimens` row written, with an audit entry, plus a metadata copy in MongoDB `imaging_metadata`. A repeated `clientUuid` returns the existing record, so a lost connection can simply be retried (whole-file retry; byte-range resume is future work).
 
 ## 5. Security boundaries
 

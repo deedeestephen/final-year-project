@@ -83,8 +83,34 @@ const schema = z
         (v) => Buffer.from(v, 'base64').length === 32,
         'must be 32 bytes, base64',
       ),
+    // Object storage for imaging and slides (Phase 10).
+    STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+    // Relative to the backend folder; var/ is git-ignored.
+    LOCAL_STORAGE_ROOT: z.string().min(1).default('var/objects'),
+    S3_ENDPOINT: z.url({ protocol: /^https?$/ }).optional(),
+    S3_BUCKET: z.string().min(3).optional(),
+    S3_ACCESS_KEY: z.string().min(1).optional(),
+    S3_SECRET_KEY: z.string().min(1).optional(),
+    MAX_IMAGING_MB: z.coerce.number().int().min(1).max(4096).default(512),
+    MAX_SLIDE_MB: z.coerce.number().int().min(1).max(8192).default(2048),
   })
   .superRefine((env, ctx) => {
+    if (env.STORAGE_DRIVER === 's3') {
+      for (const key of [
+        'S3_ENDPOINT',
+        'S3_BUCKET',
+        'S3_ACCESS_KEY',
+        'S3_SECRET_KEY',
+      ] as const) {
+        if (!env[key]) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'is required when STORAGE_DRIVER=s3',
+          });
+        }
+      }
+    }
     if (env.NODE_ENV === 'production' && env.CORS_ORIGINS.length === 0) {
       ctx.addIssue({
         code: 'custom',
@@ -121,6 +147,16 @@ export interface AppConfig {
   };
   fieldEncryptionKey: Buffer;
   fieldHmacKey: Buffer;
+  storage:
+    | { driver: 'local'; root: string }
+    | {
+        driver: 's3';
+        endpoint: string;
+        bucket: string;
+        accessKeyId: string;
+        secretAccessKey: string;
+      };
+  uploads: { maxImagingBytes: number; maxSlideBytes: number };
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -172,5 +208,19 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
     },
     fieldEncryptionKey: Buffer.from(e.FIELD_ENCRYPTION_KEY_BASE64, 'base64'),
     fieldHmacKey: Buffer.from(e.FIELD_HMAC_KEY_BASE64, 'base64'),
+    storage:
+      e.STORAGE_DRIVER === 's3'
+        ? {
+            driver: 's3',
+            endpoint: e.S3_ENDPOINT ?? '',
+            bucket: e.S3_BUCKET ?? '',
+            accessKeyId: e.S3_ACCESS_KEY ?? '',
+            secretAccessKey: e.S3_SECRET_KEY ?? '',
+          }
+        : { driver: 'local', root: e.LOCAL_STORAGE_ROOT },
+    uploads: {
+      maxImagingBytes: e.MAX_IMAGING_MB * 1024 * 1024,
+      maxSlideBytes: e.MAX_SLIDE_MB * 1024 * 1024,
+    },
   };
 }
