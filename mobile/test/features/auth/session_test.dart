@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pca_mhealth/core/db/local_store.dart';
 import 'package:pca_mhealth/core/network/api_exception.dart';
 import 'package:pca_mhealth/core/providers.dart';
 import 'package:pca_mhealth/features/auth/application/session_controller.dart';
@@ -208,6 +209,80 @@ void main() {
         throwsA(isA<ApiException>()),
       );
       expect(container.read(sessionControllerProvider), isA<SignedOut>());
+    });
+  });
+
+  group('session and the device database', () {
+    test('an offline start continues with the saved profile', () async {
+      // First run online: signs in and caches the profile.
+      await settled();
+      backend
+        ..on('POST /auth/login', FakeResponse(200, loginJson(userJson())))
+        ..on('GET /users/me', FakeResponse(200, userJson()));
+      await controller().signIn('clinician@demo.pca-mhealth.test', 'pw');
+
+      // Next start: no network, but tokens and profile are on the device.
+      final restarted = ProviderContainer(
+        overrides: testOverrides(
+          backend: backend,
+          store: store,
+          database: container.read(appDatabaseProvider),
+        ),
+      );
+      addTearDown(restarted.dispose);
+      backend.isOffline = true;
+      restarted.read(sessionControllerProvider);
+      for (
+        var i = 0;
+        i < 50 && restarted.read(sessionControllerProvider) is SessionRestoring;
+        i++
+      ) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      final state = restarted.read(sessionControllerProvider);
+      expect(state, isA<SignedIn>());
+      expect((state as SignedIn).user.displayName, 'Demo Clinician');
+    });
+
+    test('signing in as someone else clears the previous user data', () async {
+      await settled();
+      final local = container.read(localStoreProvider);
+      await local.prepareFor('someone-else');
+      await local.registerPatient(
+        const PatientDraft(
+          givenName: 'SYNTHETIC',
+          familyName: 'Left behind',
+          dateOfBirth: '1950-01-01',
+          regionClass: 'URBAN',
+        ),
+      );
+      backend
+        ..on('POST /auth/login', FakeResponse(200, loginJson(userJson())))
+        ..on('GET /users/me', FakeResponse(200, userJson()));
+      await controller().signIn('clinician@demo.pca-mhealth.test', 'pw');
+      expect(await local.watchPatients().first, isEmpty);
+      expect(await local.meta(MetaKey.owner), 'u-1');
+    });
+
+    test('signing out removes clinical data and the cached profile', () async {
+      await settled();
+      backend
+        ..on('POST /auth/login', FakeResponse(200, loginJson(userJson())))
+        ..on('GET /users/me', FakeResponse(200, userJson()))
+        ..on('POST /auth/logout', const FakeResponse(204));
+      await controller().signIn('clinician@demo.pca-mhealth.test', 'pw');
+      final local = container.read(localStoreProvider);
+      await local.registerPatient(
+        const PatientDraft(
+          givenName: 'SYNTHETIC',
+          familyName: 'Temp',
+          dateOfBirth: '1950-01-01',
+          regionClass: 'URBAN',
+        ),
+      );
+      await controller().signOut();
+      expect(await local.watchPatients().first, isEmpty);
+      expect(await local.cachedUser(), isNull);
     });
   });
 }

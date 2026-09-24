@@ -20,6 +20,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ClinicalModule } from './modules/clinical/clinical.module';
 import { HealthModule } from './modules/health/health.module';
 import { PatientsModule } from './modules/patients/patients.module';
+import { SyncModule } from './modules/sync/sync.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -51,6 +52,7 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     PatientsModule,
     ClinicalModule,
+    SyncModule,
     HealthModule,
   ],
   providers: [

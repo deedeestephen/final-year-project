@@ -929,6 +929,92 @@
         ]
       }
     },
+    "/api/v1/sync": {
+      "post": {
+        "operationId": "SyncController_push_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncBatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One result per operation, in order: APPLIED, CONFLICT (with the server copy) or REJECTED (permanent; fix and resubmit with a new key). Retrying a key returns the stored result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncBatchResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "sync"
+        ]
+      }
+    },
+    "/api/v1/sync/changes": {
+      "get": {
+        "operationId": "SyncController_changes_v1",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 500,
+              "default": 200,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncChangesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "sync"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check_v1",
@@ -1480,6 +1566,11 @@
           "isSynthetic": {
             "type": "boolean"
           },
+          "clientUuid": {
+            "type": "string",
+            "nullable": true,
+            "description": "Device-generated id when the patient was registered offline"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -1504,6 +1595,7 @@
           "district",
           "accountUserId",
           "isSynthetic",
+          "clientUuid",
           "createdAt",
           "updatedAt"
         ]
@@ -1909,6 +2001,200 @@
           "type",
           "method",
           "consentTextVersion"
+        ]
+      },
+      "SyncOperationDto": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Generated once on the device; retries reuse it"
+          },
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "patient",
+              "clinical_record"
+            ]
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "CREATE",
+              "UPDATE"
+            ]
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UPDATE: server id or the clientUuid the device created it with"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "clinical_record: the patient, by server id or by the clientUuid of a patient created offline"
+          },
+          "baseVersion": {
+            "type": "number",
+            "description": "UPDATE: the version the device edited"
+          },
+          "clientTimestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Body of the matching REST call (CreatePatientDto, UpdatePatientDto without version, CreateClinicalRecordDto); validated per operation"
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "entityType",
+          "operation",
+          "clientTimestamp",
+          "payload"
+        ]
+      },
+      "SyncBatchDto": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Stable id of this app installation"
+          },
+          "operations": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncOperationDto"
+            }
+          }
+        },
+        "required": [
+          "deviceId",
+          "operations"
+        ]
+      },
+      "SyncErrorView": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "description": "Field-level messages, as in VALIDATION_FAILED responses"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "SyncOperationResult": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "APPLIED",
+              "CONFLICT",
+              "REJECTED"
+            ]
+          },
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "patient",
+              "clinical_record"
+            ]
+          },
+          "entityId": {
+            "type": "string",
+            "description": "Server id of the entity"
+          },
+          "version": {
+            "type": "number",
+            "description": "Server version after the operation"
+          },
+          "replayed": {
+            "type": "boolean",
+            "description": "True when this key was already processed and the stored result is returned"
+          },
+          "error": {
+            "$ref": "#/components/schemas/SyncErrorView"
+          },
+          "server": {
+            "description": "CONFLICT: the current server copy, for the user to compare",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatientView"
+              }
+            ]
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "result",
+          "entityType",
+          "replayed"
+        ]
+      },
+      "SyncBatchResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncOperationResult"
+            }
+          },
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "results",
+          "serverTime"
+        ]
+      },
+      "SyncChangesResponse": {
+        "type": "object",
+        "properties": {
+          "patients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PatientView"
+            }
+          },
+          "clinicalRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClinicalRecordView"
+            }
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Pass back to get the next changes"
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "patients",
+          "clinicalRecords",
+          "cursor",
+          "hasMore"
         ]
       }
     }

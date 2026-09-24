@@ -4,20 +4,30 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/routes.dart';
 import '../../app/theme/tokens.dart';
+import '../../core/providers.dart';
 import '../../shared/widgets/clinical_card.dart';
 import '../../shared/widgets/offline_banner.dart';
 import '../auth/application/session_controller.dart';
 import '../auth/domain/current_user.dart';
+import '../sync/device_sync_button.dart';
 
-/// A place in a role's home that later phases fill in.
+/// A place in a role's home. Destinations a later phase delivers show that
+/// phase, so nothing looks finished early.
 class HomeDestination {
-  const HomeDestination(this.title, this.description, this.icon, this.phase);
+  const HomeDestination(
+    this.title,
+    this.description,
+    this.icon, {
+    this.phase,
+    this.route,
+  });
   final String title;
   final String description;
   final IconData icon;
 
-  /// The build phase that delivers it; shown so nothing looks finished early.
-  final int phase;
+  /// The build phase that delivers it; null when it is available now.
+  final int? phase;
+  final String? route;
 }
 
 const roleDestinations = <UserRole, List<HomeDestination>>{
@@ -26,71 +36,77 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'My screening',
       'Your screening history and next steps',
       Icons.assignment_outlined,
-      8,
+      phase: 8,
     ),
     HomeDestination(
       'Symptom check',
       'Answer a short questionnaire',
       Icons.checklist_outlined,
-      8,
+      phase: 8,
     ),
     HomeDestination(
       'Appointments',
       'Upcoming visits and reminders',
       Icons.event_outlined,
-      13,
+      phase: 13,
     ),
     HomeDestination(
       'Learn',
       'Prostate health information',
       Icons.menu_book_outlined,
-      14,
+      phase: 14,
     ),
   ],
   UserRole.clinician: [
     HomeDestination(
       'Patients',
-      'Register and find patients',
+      'Register and find patients, also offline',
       Icons.people_outline,
-      8,
+      route: Routes.patients,
     ),
     HomeDestination(
       'New screening',
-      'PSA, DRE and symptom scores',
+      'Choose a patient, then add PSA, DRE and PI-RADS',
       Icons.add_task_outlined,
-      8,
+      route: Routes.patients,
     ),
     HomeDestination(
       'AI results to review',
       'Decision-support results awaiting you',
       Icons.fact_check_outlined,
-      10,
+      phase: 10,
     ),
     HomeDestination(
       'Referrals',
       'Referrals and follow-up',
       Icons.send_outlined,
-      12,
+      phase: 12,
     ),
   ],
   UserRole.pathologist: [
     HomeDestination(
+      'Patients',
+      'View patients and their screening records',
+      Icons.people_outline,
+      route: Routes.patients,
+    ),
+    HomeDestination(
       'Review queue',
       'Cases waiting for specialist review',
       Icons.inbox_outlined,
-      11,
+      phase: 11,
     ),
     HomeDestination(
       'Images',
       'MRI and histopathology uploads',
       Icons.image_outlined,
-      9,
+      phase: 9,
     ),
     HomeDestination(
       'Reports',
       'Signed-off reports',
       Icons.description_outlined,
-      11,
+      phase: 11,
     ),
   ],
   UserRole.admin: [
@@ -98,25 +114,25 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'Users',
       'Accounts, roles and access',
       Icons.manage_accounts_outlined,
-      15,
+      phase: 15,
     ),
     HomeDestination(
       'Facilities',
       'Clinics and hospitals',
       Icons.local_hospital_outlined,
-      15,
+      phase: 15,
     ),
     HomeDestination(
       'Audit log',
       'Who did what, and when',
       Icons.history_outlined,
-      15,
+      phase: 15,
     ),
     HomeDestination(
       'AI models',
       'Model versions and evaluation',
       Icons.model_training_outlined,
-      16,
+      phase: 16,
     ),
   ],
 };
@@ -135,7 +151,10 @@ class RoleHomeScreen extends ConsumerWidget {
     final destinations = roleDestinations[role]!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(role.label)),
+      appBar: AppBar(
+        title: Text(role.label),
+        actions: [if (user.canSync) const DeviceSyncButton()],
+      ),
       drawer: _HomeDrawer(user: user, current: role),
       body: Column(
         children: [
@@ -153,6 +172,9 @@ class RoleHomeScreen extends ConsumerWidget {
                 const SizedBox(height: AppSizes.lg),
                 for (final d in destinations) ...[
                   ClinicalCard(
+                    onTap: d.route == null
+                        ? null
+                        : () => context.push(d.route!),
                     child: Row(
                       children: [
                         Icon(d.icon, color: AppColors.navy),
@@ -167,14 +189,21 @@ class RoleHomeScreen extends ConsumerWidget {
                                 d.description,
                                 style: theme.textTheme.bodyMedium,
                               ),
-                              const SizedBox(height: AppSizes.xs),
-                              Text(
-                                'Coming in build phase ${d.phase}',
-                                style: theme.textTheme.bodySmall,
-                              ),
+                              if (d.phase != null) ...[
+                                const SizedBox(height: AppSizes.xs),
+                                Text(
+                                  'Coming in build phase ${d.phase}',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                              ],
                             ],
                           ),
                         ),
+                        if (d.route != null)
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.textSecondary,
+                          ),
                       ],
                     ),
                   ),
@@ -194,6 +223,37 @@ class _HomeDrawer extends ConsumerWidget {
 
   final CurrentUser user;
   final UserRole current;
+
+  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+    final counts = await ref.read(localStoreProvider).counts();
+    final unsent = counts.pending + counts.rejected + counts.conflicts;
+    if (unsent > 0 && context.mounted) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Unsent changes'),
+          content: Text(
+            '$unsent change${unsent == 1 ? ' has' : 's have'} not been sent to the server yet. '
+            'Signing out removes ${unsent == 1 ? 'it' : 'them'} from this phone. '
+            'Connect to the internet and sync first to keep ${unsent == 1 ? 'it' : 'them'}.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              key: const Key('signOut.confirm'),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sign out anyway'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    await ref.read(sessionControllerProvider.notifier).signOut();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -226,15 +286,24 @@ class _HomeDrawer extends ConsumerWidget {
                     context.go(Routes.home(r));
                   },
                 ),
+            if (user.canSync)
+              ListTile(
+                leading: const Icon(Icons.sync),
+                title: const Text('Sync'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push(Routes.sync);
+                },
+              ),
             const Spacer(),
             const Divider(),
             ListTile(
               key: const Key('home.signOut'),
               leading: const Icon(Icons.logout),
               title: const Text('Sign out'),
-              onTap: () {
+              onTap: () async {
                 Navigator.of(context).pop();
-                ref.read(sessionControllerProvider.notifier).signOut();
+                await _signOut(context, ref);
               },
             ),
           ],

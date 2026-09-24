@@ -91,5 +91,8 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | App: tokens only in Keystore/Keychain (`flutter_secure_storage`); never logged; cleared on sign-out and when a refresh is refused | `mobile/lib/core/storage`, `core/network/api_client.dart` | Verified (Ph.7) |
 | App: no secrets compiled in (only `API_BASE_URL`); cleartext HTTP allowed only in **debug** builds and only to 10.0.2.2/localhost | `android/app/src/debug/res/xml/network_security_config.xml` | Verified (Ph.7, build) |
 | App: sign-in and forgot-password messages never reveal whether an account exists | `features/auth/presentation` | Verified (Ph.7, widget tests) |
+| App: on-device database encrypted with SQLCipher (AES-256); random 256-bit key only in Keystore/Keychain; opening fails if SQLCipher is missing | `mobile/lib/core/db/open_database.dart` | Verified (Ph.6, on-device test) |
+| App: clinical data on the phone belongs to one user; another user's sign-in wipes it; sign-out wipes it after warning about unsent changes; Android cloud backup disabled | `LocalStore.prepareFor/wipe`, `AndroidManifest.xml` (`allowBackup=false`) | Verified (Ph.6) |
+| Sync: every operation re-checked with the same permissions, facility scoping, validation and audit as the REST endpoints; idempotency keys cannot be reused across accounts | `backend/src/modules/sync/sync.service.ts` | Verified (Ph.6) |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |

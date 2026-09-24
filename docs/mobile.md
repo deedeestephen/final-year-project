@@ -47,8 +47,30 @@ Role gating in the app is a convenience only. The API enforces every permission.
   - If the server refuses the refresh, the tokens are cleared and the user sees "Your session has ended".
   - Being offline never ends a session.
 - **Sign-out** revokes the session on the server when it is reachable, and always clears the device.
-- **Offline at start-up.** The saved tokens are kept, but the user is asked to connect to sign in.
-  - Phase 6 adds an encrypted local profile cache so offline work can continue.
+- **Offline at start-up.** If the phone has saved tokens and a cached profile, the user continues signed in and can work offline (Phase 6). Otherwise the user is asked to connect to sign in.
+
+## Offline-first data (Phase 6)
+
+```
+screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sync
+   ^                                                         |
+   +------------ watch() streams <-- mergePulled <-- GET /sync/changes
+```
+
+- **Every change goes to the phone first.** A patient registration, a screening record or a details edit is written to the encrypted database, and at the same time an **outbox** operation is queued with a random idempotency key. The screen updates straight away, online or not.
+- **`SyncEngine`.** Only one sync runs at a time.
+  - **When it syncs:** at sign-in, when the connection returns, when the app comes back to the foreground, every 5 minutes, and after each local save. "Sync now" skips the waiting time.
+  - **Sending:** it sends the outbox in batches of 50, oldest first, then pulls server changes with a cursor.
+  - **After a failure:** it waits 2 s, then doubles the wait each time, up to 15 min, with jitter.
+- **Results for each operation:**
+  - **APPLIED** stores the server id and version.
+  - **CONFLICT** keeps both versions. The user chooses "Use my change" or "Keep server version" on the Sync screen.
+  - **REJECTED** is shown with the server's reason. The change is not resent, and the user can discard it.
+  - **DEPENDENCY_FAILED** (a record whose new patient failed in the same batch) waits and is retried.
+- **References to patients registered offline:** until the server id is known, a patient is referenced by its client UUID. The server accepts either form.
+- **Editing a patient** is possible once the server has it. Several edits made before a sync are merged into one update, so they do not conflict with each other.
+- **One user per device.** When a different user signs in, the previous user's data is wiped. Sign-out also wipes it, after warning about unsent changes.
+- **Encryption.** The database is SQLCipher, with a random 256-bit key held only in the Android Keystore. If the key is lost, the file is replaced by an empty database. Tests on the PC use Windows' `winsqlite3.dll` with an in-memory database; the on-device test checks that SQLCipher is really in use.
 
 ## Security in the app
 
@@ -64,6 +86,18 @@ Role gating in the app is a convenience only. The API enforces every permission.
 - Body text is 15 px or larger, touch targets are 48 dp or larger, and inputs are 52 px tall.
 - Severity and sync states are always written in words, never shown by colour alone.
 - Loading spinners and error messages have semantic labels or live regions.
+
+## Galaxy S9+ emulator and a real phone
+
+- **Emulator.** An Android Virtual Device `Galaxy_S9_Plus_API_29` ("Samsung Galaxy S9+ (Android 10)") is created from a custom hardware profile in `%USERPROFILE%\.android\devices.xml`: 6.2", 1080x2220 (the S9+ default display setting), 420 dpi, Android 10 / API 29, x86_64 with WHPX acceleration. Widget tests use the same logical screen size.
+- **Real phone (SM-G965U, Android 10).** Run `scripts\phone-usb.ps1` (`adb reverse tcp:3000 tcp:3000`), then use the Android Studio run configuration **App - USB phone** (`API_BASE_URL=http://localhost:3000`).
+- **Run configurations.** `mobile/.run/`: **App - S9+ emulator** and **App - USB phone**.
+- **One command starts the backend and its services:** `scripts\dev-up.ps1`. `scripts\dev-down.ps1` stops them.
+- **End-to-end test on a device.** It uses a throwaway synthetic clinician, so the demo accounts are never touched:
+  ```
+  cd backend && npm run e2e:user
+  cd mobile && flutter test integration_test -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000 --dart-define=E2E_EMAIL=... --dart-define=E2E_PASSWORD=...
+  ```
 
 ## Running against the local backend
 

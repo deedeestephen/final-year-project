@@ -4,10 +4,19 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'core/db/open_database.dart';
+import 'core/providers.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   _registerFontLicences();
-  runApp(const ProviderScope(child: PcaApp()));
+  final database = await openAppDatabase();
+  runApp(
+    ProviderScope(
+      overrides: [appDatabaseProvider.overrideWithValue(database)],
+      child: const PcaApp(),
+    ),
+  );
 }
 
 /// The bundled fonts are SIL OFL 1.1; their licences appear on the

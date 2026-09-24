@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pca_mhealth/app/app.dart';
 import 'package:pca_mhealth/core/connectivity/connectivity_service.dart';
+import 'package:pca_mhealth/core/db/app_database.dart';
 import 'package:pca_mhealth/core/providers.dart';
 import 'package:pca_mhealth/core/storage/token_store.dart';
 
 import 'fakes.dart';
+import 'test_db.dart';
 
 /// Connectivity that tests switch on and off.
 class FakeConnectivity implements ConnectivityService {
@@ -89,7 +91,9 @@ List<Override> testOverrides({
   required FakeBackend backend,
   required InMemoryTokenStore store,
   FakeConnectivity? connectivity,
+  AppDatabase? database,
 }) => [
+  appDatabaseProvider.overrideWithValue(database ?? memoryDatabase()),
   tokenStoreProvider.overrideWithValue(store),
   httpAdapterProvider.overrideWithValue(backend.adapter),
   connectivityServiceProvider.overrideWithValue(
@@ -103,13 +107,21 @@ Future<void> pumpApp(
   required FakeBackend backend,
   required InMemoryTokenStore store,
   FakeConnectivity? connectivity,
+  AppDatabase? database,
 }) async {
+  final db = database ?? memoryDatabase();
+  addTearDown(db.close);
+  // Same logical screen as a Galaxy S9+ at its default resolution.
+  tester.view.physicalSize = const Size(1080, 2220);
+  tester.view.devicePixelRatio = 2.625;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
       overrides: testOverrides(
         backend: backend,
         store: store,
         connectivity: connectivity,
+        database: db,
       ),
       child: const PcaApp(),
     ),
@@ -125,12 +137,26 @@ Future<void> settle(WidgetTester tester) async {
 }
 
 extension FormHelpers on WidgetTester {
-  Future<void> enter(String key, String text) =>
-      enterText(find.byKey(Key(key)), text);
+  /// Scrolls lazily built lists until the widget exists and is on screen.
+  Future<Finder> reveal(String key) async {
+    final finder = find.byKey(Key(key));
+    if (finder.evaluate().isEmpty) {
+      await scrollUntilVisible(
+        finder,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
+    await ensureVisible(finder);
+    await pump();
+    return finder;
+  }
+
+  Future<void> enter(String key, String text) async =>
+      enterText(await reveal(key), text);
 
   Future<void> tapKey(String key) async {
-    await ensureVisible(find.byKey(Key(key)));
-    await tap(find.byKey(Key(key)));
+    await tap(await reveal(key));
     await settle(this);
   }
 }

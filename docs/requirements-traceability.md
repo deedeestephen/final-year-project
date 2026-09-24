@@ -9,7 +9,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 |---|---|---|---|---|---|---|
 | FR-01 | JWT auth + RBAC for 4 roles; lockout after 5 failed logins | L2/L3 auth | `modules/auth`, `modules/access` (JwtAuthGuard, PermissionsGuard), `modules/users` | `test/db/auth.int-spec.ts` (25 tests), `token.service.spec.ts`, `password.spec.ts` | 4 | **Verified** |
 | FR-02 | Capture/transmit demographics, PSA, DRE, history encrypted over TLS 1.3 | L1 forms, L3 clinical | `backend/src/modules/{patients,clinical}`; app forms Ph.9 | `test/db/patients.int-spec.ts`, `users-and-edges.int-spec.ts` | 5, 9 | **Backend Verified**; app Ph.9; TLS Ph.15 |
-| FR-03 | Full offline entry, AES-256 SQLite cache, conflict-resolving sync | L1 sync, L3 sync | mobile/core/sync, backend/modules/sync | offline/sync test suite | 6 | Planned |
+| FR-03 | Full offline entry, AES-256 SQLite cache, conflict-resolving sync | L1 sync, L3 sync | `mobile/lib/core/{db,sync}`, `backend/src/modules/sync` | `backend/test/db/sync.int-spec.ts`, `mobile/test/core/sync_test.dart`, `mobile/test/features/patients/patients_flow_test.dart`, on-device `mobile/integration_test/app_flow_test.dart` | 6 | **Verified** |
 | FR-04 | Accept & validate DICOM MRI/TRUS/CT, archive, queue for CNN | L3 imaging, L5 object store | backend/modules/imaging | upload validation tests | 10 | Planned |
 | FR-05 | PCa probability + Gleason grade group ≤3 s P95 | L4 + broker | ai-services router, backend ai-broker | contract tests; latency measured in Ph.17 | 11, 17 | Planned (target, not claimed) |
 | FR-06 | Grad-CAM for CNN outputs, SHAP for ANN outputs | L4 explainability | ai-services/explain | artifact tests | 12 | Planned |
@@ -25,7 +25,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | UC | Name | Covered by | Status |
 |---|---|---|---|
 | UC-01 | Registration & authentication | FR-01 | **Verified:** backend (Ph.4); app sign-in, forced password change, forgot password, sign-out and session expiry (Ph.7, `mobile/test/widget_test.dart`, live check `test/live`). Self-registration screen with patient onboarding in Ph.8 |
-| UC-02 | Offline clinical data capture | FR-02, FR-03 | **Partial:** server idempotency (`clientUuid`) and optimistic concurrency (`version` → `VERSION_CONFLICT`) Verified; sync API + app offline store Ph.6 |
+| UC-02 | Offline clinical data capture | FR-02, FR-03 | **Verified (Ph.6):** register patients and add PSA/DRE/PI-RADS records offline; queued, synced idempotently, conflicts shown for the user to resolve; checked on the Galaxy S9+ (Android 10) emulator against the live backend. Richer clinical forms (symptoms, history) Ph.8 |
 | UC-03 | Imaging upload & validation | FR-04 | Planned |
 | UC-04 | Histopathology slide submission | Phase 10 (WSI) + Phase 11 Patch-CNN provider | Planned |
 | UC-05 | AI multi-modal analysis | FR-05 | Planned |
@@ -41,14 +41,14 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 
 | ID | Target | How it is addressed / verified | Status |
 |---|---|---|---|
-| NFR-01 | AES-256 at rest, TLS 1.3, RBAC at gateway | **Partial (Ph.2):** AES-256-GCM column encryption `src/common/crypto/field-crypto.ts` (unit-tested; tamper/wrong-key rejected); RBAC catalogue `src/modules/access/permissions.ts` (tested). Remaining: SQLCipher on device; pgcrypto field encryption for identifiers + encrypted volumes/object storage SSE; TLS 1.3 at reverse proxy (config tested); RBAC guard | Planned |
+| NFR-01 | AES-256 at rest, TLS 1.3, RBAC at gateway | **Partial (Ph.2):** AES-256-GCM column encryption `src/common/crypto/field-crypto.ts` (unit-tested; tamper/wrong-key rejected); RBAC catalogue `src/modules/access/permissions.ts` (tested). Ph.6: SQLCipher (AES-256) database on the device, key in Android Keystore (on-device test checks `cipher_version`). Remaining: pgcrypto field encryption for identifiers + encrypted volumes/object storage SSE; TLS 1.3 at reverse proxy (config tested); RBAC guard | Planned |
 | NFR-02 | ≤3 s P95 inference | Measured in Ph.17 with real/mock providers; reported honestly | Research target |
 | NFR-03 | ≥99.5% uptime | Not measurable in prototype; health checks + restart policies only | Research target |
 | NFR-04 | SUS ≥75 | Requires UAT with participants (out of dev scope) | Research target |
 | NFR-05 | ≥500 concurrent users | Load test in Ph.17 | Research target |
 | NFR-06 | HL7 FHIR R4 | FR-09 | Planned |
 | NFR-07 | ≥80% test coverage | Coverage reports per package in CI | Planned |
-| NFR-08 | Complete offline data entry | FR-03 | Planned |
+| NFR-08 | Complete offline data entry | FR-03 | **Verified for patient registration and screening records (Ph.6)**; offline start with the cached profile; later clinical features reuse the same outbox |
 | NFR-09 | 100% explainability coverage | Every AI report has a Grad-CAM/SHAP artifact or an explicit "unavailable" reason | Planned |
 | NFR-10 | Safe Harbour de-identification | Ph.2: identifiers encrypted + HMAC lookup (tested). Remaining: de-identification service before AI + export; tests over all 18 identifier classes | Planned |
 | NFR-11 | WCAG 2.1 AA | contrast-checked tokens, semantics labels, text scaling, 48dp targets; Flutter accessibility guideline tests | **Partial (Ph.7):** every token text pair ≥ 4.5:1, body ≥ 15 px, 48 dp targets, 52 px inputs (`theme_test.dart`); states in words, not colour alone; live regions for errors. Remaining: guideline tests per screen, text-scaling checks |
@@ -121,4 +121,18 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Tokens only in secure storage; cleared on sign-out and refused refresh (NFR-01) | `SecureTokenStore`, `AuthRepository.logout`, `ApiClient.refreshSession` | `api_client_test.dart`, `session_test.dart` | Verified |
 | Token rotation handled by the client | `_AuthInterceptor` (single-flight refresh, one retry) | `api_client_test.dart`, live test | Verified |
 | AI output always carries a disclaimer; mock output labelled (§3.7) | `AiDisclaimerBanner` | `widgets_test.dart` | Verified (widget); used on AI screens from Ph.10 |
-| Offline awareness in the UI (NFR-08 groundwork) | `ConnectivityService`, `OfflineBanner`, `SyncStatusBadge` | `widget_test.dart`, `widgets_test.dart` | Partial: queue and sync in Ph.6 |
+| Offline awareness in the UI (NFR-08 groundwork) | `ConnectivityService`, `OfflineBanner`, `SyncStatusBadge` | `widget_test.dart`, `widgets_test.dart` | Verified (queue and sync added in Ph.6) |
+
+## Phase 6 additions (offline-first sync)
+
+| Requirement | Implementation | Test | Status |
+|---|---|---|---|
+| Batch sync with idempotency keys (FR-03) | `POST /api/v1/sync`; results stored in `sync_operations`; retries return the stored result | `sync.int-spec.ts` › replay | Verified |
+| Conflict detection, never silent overwrite (FR-03) | `baseVersion` → `CONFLICT` with the server copy; app keeps both and asks the user | `sync.int-spec.ts`, `sync_test.dart` › conflicts, `patients_flow_test.dart` | Verified |
+| Per-operation access control | each operation needs its own permission (e.g. pathologists cannot register); facility scoping as in REST | `sync.int-spec.ts` | Verified |
+| Pull changes for offline reading | `GET /api/v1/sync/changes` with an opaque cursor (patients + records of the caller's facility) | `sync.int-spec.ts` › pull, `sync_test.dart` › pull | Verified |
+| Encrypted on-device storage (NFR-01) | Drift + SQLCipher, random 256-bit key in Keystore/Keychain | on-device `integration_test/app_flow_test.dart` (asserts `cipher_version`) | Verified on emulator |
+| Retry with exponential backoff | 2 s doubling, max 15 min, jitter; "Sync now" overrides | `sync_test.dart` | Verified |
+| Device data belongs to one user | another user signing in wipes the previous user's data; sign-out wipes after warning about unsent changes | `sync_test.dart`, `session_test.dart`, `patients_flow_test.dart` | Verified |
+| Runs on the target phone class | Galaxy S9+ hardware profile, Android 10 (API 29) emulator; the owner's SM-G965U connects by USB (`scripts/phone-usb.ps1`) | on-device integration test | Verified on emulator |
+

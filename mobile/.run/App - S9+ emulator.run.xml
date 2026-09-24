@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <!-- Android emulator: the app reaches the PC's backend at 10.0.2.2:3000 (the default). -->
+  <configuration default="false" name="App - S9+ emulator" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
+    <option name="additionalArgs" value="--dart-define=API_BASE_URL=http://10.0.2.2:3000" />
+    <method v="2" />
+  </configuration>
+</component>

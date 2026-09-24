@@ -361,6 +361,7 @@ export class PatientsService {
       district: p.district,
       accountUserId: p.userId,
       isSynthetic: p.isSynthetic,
+      clientUuid: p.clientUuid,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
     };

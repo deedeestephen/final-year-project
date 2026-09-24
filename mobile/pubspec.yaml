@@ -40,9 +40,19 @@ dependencies:
   flutter_secure_storage: ^10.3.4
   connectivity_plus: ^7.3.1
   intl: ^0.20.3
+  # drift/drift_dev 2.28 are the newest pair compatible with the test packages
+  # pinned by Flutter 3.35 (newer drift_dev needs a newer analyzer/SDK).
+  drift: ">=2.28.0 <2.29.0"
+  sqlcipher_flutter_libs: ^0.6.8
+  sqlite3: ^2.9.4
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -52,6 +62,8 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   mocktail: ^1.0.5
+  drift_dev: ">=2.28.3 <2.29.0"
+  build_runner: ^2.7.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

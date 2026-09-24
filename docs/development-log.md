@@ -229,7 +229,87 @@ strict, pytest 100% coverage, pip-audit). mobile PASS (format, analyze, widget t
 | Emulator could not reach `http://10.0.2.2:3000` | Android 9+ blocks cleartext HTTP by default | debug-only network security config for the local hosts; release stays HTTPS-only |
 | Restore after a refused refresh lost the "session ended" message | `_restore` overwrote the state set by the expiry callback | keep an existing `SignedOut` state |
 
-**Known limitation:** starting offline asks the user to connect before signing in. Phase 6 adds the encrypted local profile cache that allows offline work.
+**Known limitation (resolved in Phase 6):** starting offline asked the user to connect before signing in.
 
 **Next:** Phase 6, offline-first. Server `POST /sync`; on the device, Drift + SQLCipher, a sync queue and conflict resolution UI.
+
+## 2026-09-24 — Phase 6: Offline-first sync (Layers 1 and 3)
+
+**Objective:** clinicians can register patients and record PSA, DRE and PI-RADS with no connection (FR-03, UC-02, NFR-08). The data is kept encrypted on the phone and synced safely later. Also required: the app must be proven on the owner's target device, a Samsung Galaxy S9+ on Android 10.
+
+**Design decisions**
+- **Server `POST /api/v1/sync`:**
+  - Takes an ordered batch of up to 100 operations and handles each one separately.
+  - Each operation goes through the existing `PatientsService` / `ClinicalService`, so the permissions, facility scoping, validation, idempotency and audit are the same as REST.
+  - Every result is stored by idempotency key in `sync_operations`, so a retried batch returns the stored results and applies nothing twice. A key already used by another account is refused.
+- **Results for each operation:**
+  - `APPLIED`
+  - `CONFLICT` (a stale `baseVersion`, answered with the current server copy)
+  - `REJECTED` (a permanent refusal with field errors)
+  - `DEPENDENCY_FAILED` for a record whose new patient failed in the same batch. This result is not stored, so it can be retried.
+- **Operations need their own permission**, not just `sync:write`. Pathologists have `sync:write` but cannot register patients.
+- **Patient references:** a record for a patient registered offline refers to it by the device's `clientUuid`. The server accepts either the server id or the `clientUuid` within the caller's facility.
+- **`GET /api/v1/sync/changes`:**
+  - Pulls the facility's patients and records with an opaque base64url cursor over (`updatedAt`, `id`). `PatientView` now includes `clientUuid`.
+  - The pull is audited with counts only.
+- **App storage:**
+  - Drift with SQLCipher. The random 256-bit key lives in the Keystore, and opening refuses to continue if SQLCipher is missing.
+  - Tables: patients, records, an outbox, conflicts, and meta (device id, owner, cursor, cached profile).
+  - Every change is written locally first, then queued.
+- **`SyncEngine`:**
+  - Runs one sync at a time: it pushes in batches of 50, then pulls.
+  - After a failure it backs off: 2 s, doubling up to 15 min, with jitter. "Sync now" skips the wait.
+  - A send cut off by the app closing is recovered on the next run.
+  - It runs at sign-in, when the connection returns, when the app resumes, every 5 min, and after each save.
+- **Conflicts:** they are never overwritten silently. The Sync screen shows "Your change" beside "On the server", and the user picks one. Several edits made before a sync are merged into one update, so they cannot conflict with each other.
+- **Offline start:** saved tokens plus the cached profile mean `SignedIn` (this was the Phase 7 limitation).
+- **One user per device:**
+  - When another user signs in, the previous user's data is wiped.
+  - Sign-out wipes the data after a warning if changes are unsent.
+  - Android cloud backup is disabled.
+- **Minimum clinician screens:** patients list and search, register, detail, add screening record, edit details, and the Sync screen. Each has a sync badge (Synced / Saved on device / Syncing N / Needs attention).
+- **Forms use a non-lazy scroll view**, so every field is validated, including fields scrolled off-screen. A lazy `ListView` drops those fields from the `Form`.
+- **Target device:**
+  - Custom Galaxy S9+ hardware profile (6.2", 1080x2220, 420 dpi) and the AVD `Galaxy_S9_Plus_API_29` (Android 10, x86_64, WHPX).
+  - Widget tests use the same logical screen size.
+  - The owner's own SM-G965U (Android 10, arm64) was seen over USB. `scripts/phone-usb.ps1` sets up `adb reverse`, and there are two Android Studio run configurations.
+- **Owner tooling:**
+  - `scripts/dev-up.ps1` / `dev-down.ps1` start and stop everything in one step.
+  - `npm run db:reset-demo` resets only the synthetic demo accounts.
+  - `npm run e2e:user` creates a throwaway synthetic clinician for device tests.
+  - `docs/how-to-test.md` is the step-by-step guide.
+
+**Files created:**
+- Backend: `src/modules/sync/*`, `test/db/sync.int-spec.ts`, `tools/create-e2e-user.ts`
+- Mobile:
+  - `lib/core/db/*`, `lib/core/sync/*`, `lib/features/patients/**`, `lib/features/sync/*`
+  - tests: `test/core/sync_test.dart`, `test/features/patients/patients_flow_test.dart`, `test/support/test_db.dart`, `integration_test/app_flow_test.dart`
+  - `.run/*.run.xml`
+- Scripts and docs: `scripts/{dev-up,dev-down,phone-usb}.ps1`, `docs/how-to-test.md`, `docs/images/phase6-s9plus-patient-synced.png`
+
+**Files modified:** the patient view (`clientUuid`), `app.module.ts`, `prisma/seed.ts` (demo reset), `package.json`, the OpenAPI document, the session controller (offline start, owner and wipe), routes and router, the home screen, the sync badge, `main.dart`, the Android manifest (label, no backup), `pubspec.yaml`, and the docs.
+
+**Tests:**
+- Backend: 14 new sync integration tests pass.
+- Mobile: 113 tests pass (was 77): data layer 22, session 17, routes 9, patient and sync flows 8, plus the earlier suites. 1 opt-in live test is skipped.
+- **On the Galaxy S9+ Android 10 emulator, against the live backend:** the integration test passed.
+  - Covered: SQLCipher active, sign-in, offline-style local save, automatic sync, the server MRN arriving, a PSA record, and both confirmed through the API.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| `drift_dev` would not resolve | newer drift_dev needs an analyzer or SDK newer than the one Flutter 3.35 pins with `test_api` | pinned the newest compatible pair, drift and drift_dev 2.28.x (see the comment in `pubspec.yaml`) |
+| Host tests need a native SQLite | `sqlite3` 2.x loads a system library, and Windows has none by default | use Windows' built-in `winsqlite3.dll` in tests. Devices use SQLCipher, checked by the on-device test |
+| Widget tests failed with "A Timer is still pending" | drift closes stream queries with a zero-length timer | tests use `DatabaseConnection(..., closeStreamsSynchronously: true)` |
+| Form fields off-screen were not validated (a possible crash on save) | a lazy `ListView` disposes off-screen fields, which then leave the `Form` | forms use `SingleChildScrollView` + `Column`. Found through the widget tests at the S9+ screen size |
+| Save tap missed in a widget test | the "saved" snackbar covered the button | the test waits for the snackbar to time out, as a user would |
+| The emulator test reached an old backend | an earlier `node dist/main` was still holding port 3000 | stopped it. `dev-up.ps1` now stops a stale backend before starting |
+| The AVD data partition was set to `<temp>` | an avdmanager default | removed, so app data persists between boots |
+
+**Known limitations:**
+- Clinical records are create-only. Correcting a record comes in a later phase.
+- If the app is killed during a patient UPDATE after the server applied it but before the result was stored, a replay can report a false conflict. The user resolves it with "Keep server version".
+- The real phone was disconnected before its run and was not tested in this session. The steps are in `docs/how-to-test.md`.
+
+**Next:** Phase 8, the full clinical workflow (symptom scores, history, patient app screens).
 

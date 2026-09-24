@@ -30,6 +30,8 @@ class AuthRepository {
     return currentUser();
   }
 
+  Future<bool> hasSavedSession() async => await _tokens.read() != null;
+
   Future<CurrentUser> currentUser() async =>
       CurrentUser.fromJson(await _api.get<Map<String, dynamic>>('/users/me'));
 

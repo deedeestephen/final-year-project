@@ -34,22 +34,45 @@ class SessionController extends Notifier<SessionState> {
   }
 
   Future<void> _restore() async {
+    final auth = ref.read(authRepositoryProvider);
     try {
-      final user = await ref.read(authRepositoryProvider).restore();
-      state = user == null ? const SignedOut() : SignedIn(user);
+      final user = await auth.restore();
+      if (user == null) {
+        state = const SignedOut();
+        return;
+      }
+      await _remember(user);
+      state = SignedIn(user);
     } on ApiException catch (e) {
       // A refused refresh has already signed out with its own message.
       if (state is SignedOut) return;
-      // Offline at start-up: the saved session is kept but cannot be verified yet.
+      if (e.isNetwork) {
+        // Offline start: continue with the profile saved at the last sign-in,
+        // so work can go on without a connection (FR-03).
+        final cached = await ref.read(localStoreProvider).cachedUser();
+        if (cached != null && await auth.hasSavedSession()) {
+          state = SignedIn(CurrentUser.fromJson(cached));
+          return;
+        }
+      }
       state = SignedOut(
         reason: e.isNetwork ? 'You are offline. Connect to sign in.' : null,
       );
     }
   }
 
+  /// Keeps the device's data for this user only, and remembers the profile
+  /// for starting offline.
+  Future<void> _remember(CurrentUser user) async {
+    final store = ref.read(localStoreProvider);
+    await store.prepareFor(user.id);
+    await store.cacheUser(user.toJson());
+  }
+
   /// Throws [ApiException] so the login screen can show the exact reason.
   Future<void> signIn(String email, String password) async {
     final user = await ref.read(authRepositoryProvider).login(email, password);
+    await _remember(user);
     state = SignedIn(user);
   }
 
@@ -57,12 +80,17 @@ class SessionController extends Notifier<SessionState> {
     await ref.read(authRepositoryProvider).changePassword(current, next);
     final s = state;
     if (s is SignedIn) {
-      state = SignedIn(s.user.copyWith(mustChangePassword: false));
+      final user = s.user.copyWith(mustChangePassword: false);
+      await ref.read(localStoreProvider).cacheUser(user.toJson());
+      state = SignedIn(user);
     }
   }
 
+  /// Signs out and removes this user's data from the device. The screen
+  /// warns first when changes have not been sent yet.
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider).logout();
+    await ref.read(localStoreProvider).wipe();
     state = const SignedOut();
   }
 

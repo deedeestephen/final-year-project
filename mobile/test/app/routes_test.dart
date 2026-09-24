@@ -64,4 +64,36 @@ void main() {
     expect(resolveRedirect(s, '/home/patient'), isNull);
     expect(resolveRedirect(s, '/home/admin'), '/home/clinician');
   });
+
+  test('clinicians reach patients, forms and sync', () {
+    final s = signedIn(['CLINICIAN']);
+    for (final path in [
+      Routes.patients,
+      Routes.newPatient,
+      Routes.patient('p-1'),
+      Routes.editPatient('p-1'),
+      Routes.newRecord('p-1'),
+      Routes.sync,
+    ]) {
+      expect(resolveRedirect(s, path), isNull, reason: path);
+    }
+  });
+
+  test('pathologists can view patients but not change them', () {
+    final s = signedIn(['PATHOLOGIST']);
+    expect(resolveRedirect(s, Routes.patients), isNull);
+    expect(resolveRedirect(s, Routes.patient('p-1')), isNull);
+    expect(resolveRedirect(s, Routes.sync), isNull);
+    expect(resolveRedirect(s, Routes.newPatient), '/home/pathologist');
+    expect(resolveRedirect(s, Routes.newRecord('p-1')), '/home/pathologist');
+    expect(resolveRedirect(s, Routes.editPatient('p-1')), '/home/pathologist');
+  });
+
+  test('patients and administrators have no clinical data on the device', () {
+    expect(
+      resolveRedirect(signedIn(['PATIENT']), Routes.patients),
+      '/home/patient',
+    );
+    expect(resolveRedirect(signedIn(['ADMIN']), Routes.sync), '/home/admin');
+  });
 }

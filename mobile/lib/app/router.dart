@@ -8,6 +8,12 @@ import '../features/auth/presentation/change_password_screen.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/home/role_home_screen.dart';
+import '../features/patients/presentation/add_record_screen.dart';
+import '../features/patients/presentation/edit_patient_screen.dart';
+import '../features/patients/presentation/patient_detail_screen.dart';
+import '../features/patients/presentation/patients_screen.dart';
+import '../features/patients/presentation/register_patient_screen.dart';
+import '../features/sync/sync_screen.dart';
 import 'routes.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -35,6 +41,35 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.changePassword,
         builder: (_, _) => const ChangePasswordScreen(),
+      ),
+      GoRoute(path: Routes.sync, builder: (_, _) => const SyncScreen()),
+      GoRoute(
+        path: Routes.patients,
+        builder: (_, _) => const PatientsScreen(),
+        routes: [
+          // "new" is declared before ":id" so it is not read as an id.
+          GoRoute(
+            path: 'new',
+            builder: (_, _) => const RegisterPatientScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (_, state) =>
+                PatientDetailScreen(patientId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (_, state) =>
+                    EditPatientScreen(patientId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'records/new',
+                builder: (_, state) =>
+                    AddRecordScreen(patientId: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+        ],
       ),
       for (final role in UserRole.values)
         GoRoute(

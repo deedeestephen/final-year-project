@@ -197,6 +197,40 @@ export async function seed(
   return result;
 }
 
+/**
+ * Puts the synthetic demo accounts back to the demo password (forced change on
+ * next sign-in), unlocks them and ends their sessions. Only accounts marked
+ * synthetic and listed in `emails` are touched.
+ */
+export async function resetDemoPasswords(
+  prisma: PrismaClient,
+  password: string,
+  emails: readonly string[] = DEMO_USERS.map((u) => u.email),
+): Promise<number> {
+  const passwordHash = await argon2.hash(password, ARGON2_OPTIONS);
+  const users = await prisma.user.findMany({
+    where: { email: { in: [...emails] }, isSynthetic: true },
+    select: { id: true },
+  });
+  const ids = users.map((u) => u.id);
+  await prisma.$transaction([
+    prisma.user.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        passwordHash,
+        mustChangePassword: true,
+        failedLoginCount: 0,
+        lockedUntil: null,
+      },
+    }),
+    prisma.refreshToken.updateMany({
+      where: { userId: { in: ids }, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
+  return ids.length;
+}
+
 async function main(): Promise<void> {
   try {
     process.loadEnvFile(path.resolve(__dirname, '..', '..', '.env'));
@@ -209,6 +243,21 @@ async function main(): Promise<void> {
     console.log(
       `Seed complete (SYNTHETIC data). Users created: ${result.createdUsers.length}`,
     );
+    if (
+      process.argv.includes('--reset-demo-passwords') ||
+      process.env.SEED_RESET_DEMO_PASSWORDS === '1'
+    ) {
+      const demoPassword = process.env.SEED_DEMO_PASSWORD;
+      if (!demoPassword) {
+        throw new Error(
+          'Resetting demo passwords needs SEED_DEMO_PASSWORD in .env',
+        );
+      }
+      const count = await resetDemoPasswords(prisma, demoPassword);
+      console.log(
+        `Demo passwords reset to SEED_DEMO_PASSWORD for ${count} synthetic accounts.`,
+      );
+    }
     if (result.demoPassword) {
       console.log(
         `Demo password for new users (shown once): ${result.demoPassword}`,

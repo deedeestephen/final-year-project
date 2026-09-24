@@ -183,6 +183,12 @@ export class PatientView extends PatientSummary {
   @ApiProperty({ nullable: true, type: String }) district!: string | null;
   @ApiProperty({ nullable: true, type: String }) accountUserId!: string | null;
   @ApiProperty() isSynthetic!: boolean;
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'Device-generated id when the patient was registered offline',
+  })
+  clientUuid!: string | null;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
   @ApiProperty({ format: 'date-time' }) updatedAt!: string;
 }

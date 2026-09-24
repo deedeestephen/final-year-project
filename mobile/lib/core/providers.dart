@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/application/session_controller.dart';
 import '../features/auth/data/auth_repository.dart';
 import 'config/app_env.dart';
+import 'db/app_database.dart';
+import 'db/local_store.dart';
 import 'network/api_client.dart';
 import 'storage/token_store.dart';
 
@@ -29,3 +31,13 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     ref.watch(tokenStoreProvider),
   );
 });
+
+/// The encrypted on-device database, opened in `main()` before the app starts
+/// (tests supply an in-memory one).
+final appDatabaseProvider = Provider<AppDatabase>(
+  (ref) => throw UnimplementedError('appDatabaseProvider must be overridden'),
+);
+
+final localStoreProvider = Provider<LocalStore>(
+  (ref) => LocalStore(ref.watch(appDatabaseProvider)),
+);

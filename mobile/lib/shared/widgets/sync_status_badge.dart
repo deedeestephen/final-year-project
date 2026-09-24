@@ -16,6 +16,11 @@ class SavedOffline extends SyncStatus {
   const SavedOffline();
 }
 
+/// The server refused a change or someone else changed the record.
+class NeedsAttention extends SyncStatus {
+  const NeedsAttention();
+}
+
 class Syncing extends SyncStatus {
   const Syncing(this.pending);
   final int pending;
@@ -31,6 +36,7 @@ class SyncStatusBadge extends StatelessWidget {
     Synced() => 'Synced',
     SavedOffline() => 'Saved on device',
     Syncing(:final pending) => 'Syncing $pending',
+    NeedsAttention() => 'Needs attention',
   };
 
   @override
@@ -47,6 +53,11 @@ class SyncStatusBadge extends StatelessWidget {
         AppColors.warningBg,
       ),
       Syncing() => (AppColors.sky, AppColors.infoText, AppColors.infoBg),
+      NeedsAttention() => (
+        AppColors.danger,
+        AppColors.danger,
+        AppColors.dangerBg,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(

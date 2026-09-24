@@ -48,6 +48,14 @@ class CurrentUser {
     return UserRole.patient;
   }
 
+  /// Clinical staff keep patient data on the device and sync it.
+  bool get canSync =>
+      roles.contains(UserRole.clinician) ||
+      roles.contains(UserRole.pathologist);
+
+  /// Only clinicians register patients and add screening records.
+  bool get canEditPatients => roles.contains(UserRole.clinician);
+
   CurrentUser copyWith({bool? mustChangePassword}) => CurrentUser(
     id: id,
     email: email,
@@ -68,4 +76,13 @@ class CurrentUser {
     mustChangePassword: json['mustChangePassword'] as bool? ?? false,
     facilityId: json['facilityId'] as String?,
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'email': email,
+    'displayName': displayName,
+    'roles': [for (final r in roles) r.apiName],
+    'mustChangePassword': mustChangePassword,
+    'facilityId': facilityId,
+  };
 }
