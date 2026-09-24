@@ -22,6 +22,9 @@ import 'package:pca_mhealth/core/storage/token_store.dart';
 /// Everything it creates is SYNTHETIC.
 const _email = String.fromEnvironment('E2E_EMAIL');
 const _password = String.fromEnvironment('E2E_PASSWORD');
+// From `npm run e2e:user -- --role patient` (optional second flow).
+const _patientEmail = String.fromEnvironment('E2E_PATIENT_EMAIL');
+const _patientPassword = String.fromEnvironment('E2E_PATIENT_PASSWORD');
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -160,7 +163,106 @@ void main() {
 
       // Leave the device clean.
       await store.wipe();
+      await db.close();
     },
+  );
+
+  testWidgets(
+    'patient sees their result, reads a message, opens an article and withdraws a consent',
+    (tester) async {
+      final AppDatabase db = await openAppDatabase();
+      final store = LocalStore(db);
+      await store.wipe();
+      await SecureTokenStore().clear();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appDatabaseProvider.overrideWithValue(db)],
+          child: const PcaApp(),
+        ),
+      );
+      await waitFor(tester, find.byKey(const Key('login.email')));
+      await enter(tester, 'login.email', _patientEmail);
+      await enter(tester, 'login.password', _patientPassword);
+      await tapKey(tester, 'login.submit');
+
+      await waitFor(tester, find.text('Hello, SYNTHETIC E2E Patient'));
+      await waitFor(tester, find.text('Latest screening: 2026-08-20'));
+      await waitFor(tester, find.text('1 unread message'));
+      await tester.pump(const Duration(seconds: 3)); // screenshot: home
+
+      Future<void> tab(String label) async {
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text(label),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+
+      await tab('Results');
+      await waitFor(tester, find.text('5.6 ng/mL'));
+      expect(
+        find.text('Your clinician will explain what this means for you.'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 3)); // screenshot: results
+
+      await tab('Learn');
+      await waitFor(tester, find.text('What is a PSA test?'));
+      await tester.tap(find.text('What is a PSA test?'));
+      await waitFor(tester, find.text('Why the level can be raised'));
+      await tester.pump(const Duration(seconds: 3)); // screenshot: article
+
+      await tab('Messages');
+      await waitFor(tester, find.text('New screening record'));
+      await tester.tap(find.text('New screening record'));
+      await tester.pump(const Duration(seconds: 1));
+
+      await tab('Profile');
+      await waitFor(tester, find.byKey(const Key('profile.consents')));
+      await tapKey(tester, 'profile.consents');
+      await waitFor(tester, find.text('AI-assisted analysis of your results'));
+      final withdraw = find.byWidgetPredicate(
+        (w) =>
+            w.key is ValueKey<String> &&
+            (w.key! as ValueKey<String>).value.startsWith('consent.withdraw.'),
+      );
+      await tester.tap(withdraw.first);
+      await waitFor(tester, find.byKey(const Key('consent.confirmWithdraw')));
+      await tapKey(tester, 'consent.confirmWithdraw');
+      await waitFor(tester, find.textContaining('Withdrawn on'));
+
+      // Check with the server itself.
+      final api = Dio(BaseOptions(baseUrl: AppEnv.apiRoot));
+      final login = await api.post<Map<String, dynamic>>(
+        '/auth/login',
+        data: {'email': _patientEmail, 'password': _patientPassword},
+      );
+      final auth = Options(
+        headers: {'Authorization': 'Bearer ${login.data!['accessToken']}'},
+      );
+      final consents = (await api.get<List<dynamic>>(
+        '/patients/me/consents',
+        options: auth,
+      )).data!;
+      expect((consents.first as Map)['status'], 'WITHDRAWN');
+      final inbox = (await api.get<Map<String, dynamic>>(
+        '/notifications',
+        options: auth,
+      )).data!;
+      // The message was read; withdrawing added a new confirmation.
+      expect(inbox['unreadCount'], 1);
+      expect(
+        ((inbox['items'] as List).first as Map)['type'],
+        'consent.withdrawn',
+      );
+
+      await store.wipe();
+      await db.close();
+    },
+    skip: _patientEmail.isEmpty,
   );
 }
 

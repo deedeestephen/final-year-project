@@ -8,9 +8,12 @@ import '../application/session_controller.dart';
 import 'auth_messages.dart';
 import 'auth_scaffold.dart';
 
-/// Required after an administrator creates an account or resets a password.
+/// Required after an administrator creates an account or resets a password
+/// ([forced]); also opened from Profile to change it by choice.
 class ChangePasswordScreen extends ConsumerStatefulWidget {
-  const ChangePasswordScreen({super.key});
+  const ChangePasswordScreen({super.key, this.forced = true});
+
+  final bool forced;
 
   @override
   ConsumerState<ChangePasswordScreen> createState() =>
@@ -62,6 +65,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       await ref
           .read(sessionControllerProvider.notifier)
           .changePassword(_current.text, _next.text);
+      if (!widget.forced && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Password changed.')));
+        Navigator.of(context).pop();
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -77,10 +86,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      title: 'Choose a new password',
-      subtitle:
-          'For your security, set your own password before you continue. '
-          'Use at least $passwordMinLength characters; a short phrase works well.',
+      title: widget.forced ? 'Choose a new password' : 'Change password',
+      showBack: !widget.forced,
+      subtitle: widget.forced
+          ? 'For your security, set your own password before you continue. '
+                'Use at least $passwordMinLength characters; a short phrase works well.'
+          : 'Use at least $passwordMinLength characters; a short phrase works well.',
       child: Form(
         key: _form,
         child: Column(
@@ -129,14 +140,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               busy: _busy,
               onPressed: _submit,
             ),
-            const SizedBox(height: AppSizes.sm),
-            TextButton(
-              onPressed: _busy
-                  ? null
-                  : () =>
-                        ref.read(sessionControllerProvider.notifier).signOut(),
-              child: const Text('Sign out'),
-            ),
+            if (widget.forced) ...[
+              const SizedBox(height: AppSizes.sm),
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => ref
+                          .read(sessionControllerProvider.notifier)
+                          .signOut(),
+                child: const Text('Sign out'),
+              ),
+            ],
           ],
         ),
       ),

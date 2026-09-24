@@ -36,10 +36,7 @@ void main() {
   });
 
   test('each role lands on its own home', () {
-    expect(
-      resolveRedirect(signedIn(['PATIENT']), Routes.login),
-      '/home/patient',
-    );
+    expect(resolveRedirect(signedIn(['PATIENT']), Routes.login), '/me/home');
     expect(
       resolveRedirect(signedIn(['CLINICIAN']), Routes.splash),
       '/home/clinician',
@@ -53,15 +50,15 @@ void main() {
 
   test("a user cannot open another role's home", () {
     final patient = signedIn(['PATIENT']);
-    expect(resolveRedirect(patient, '/home/admin'), '/home/patient');
-    expect(resolveRedirect(patient, '/home/clinician'), '/home/patient');
-    expect(resolveRedirect(patient, '/home/patient'), isNull);
+    expect(resolveRedirect(patient, '/home/admin'), '/me/home');
+    expect(resolveRedirect(patient, '/home/clinician'), '/me/home');
+    expect(resolveRedirect(patient, '/me/home'), isNull);
   });
 
   test('multi-role users may switch between their own homes', () {
     final s = signedIn(['PATIENT', 'CLINICIAN']);
     expect(resolveRedirect(s, Routes.login), '/home/clinician');
-    expect(resolveRedirect(s, '/home/patient'), isNull);
+    expect(resolveRedirect(s, '/me/home'), isNull);
     expect(resolveRedirect(s, '/home/admin'), '/home/clinician');
   });
 
@@ -90,10 +87,37 @@ void main() {
   });
 
   test('patients and administrators have no clinical data on the device', () {
-    expect(
-      resolveRedirect(signedIn(['PATIENT']), Routes.patients),
-      '/home/patient',
-    );
+    expect(resolveRedirect(signedIn(['PATIENT']), Routes.patients), '/me/home');
     expect(resolveRedirect(signedIn(['ADMIN']), Routes.sync), '/home/admin');
+  });
+
+  test('the patient app is only for patient accounts', () {
+    final patient = signedIn(['PATIENT']);
+    for (final path in [
+      Routes.myHome,
+      Routes.myResults,
+      Routes.learn,
+      Routes.article('psa-test'),
+      Routes.messages,
+      Routes.profile,
+      Routes.myConsents,
+      Routes.myPassword,
+    ]) {
+      expect(resolveRedirect(patient, path), isNull, reason: path);
+    }
+    expect(
+      resolveRedirect(signedIn(['CLINICIAN']), Routes.myResults),
+      '/home/clinician',
+    );
+    expect(
+      resolveRedirect(signedIn(['ADMIN']), Routes.messages),
+      '/home/admin',
+    );
+    expect(resolveRedirect(const SignedOut(), Routes.myHome), Routes.login);
+  });
+
+  test('anyone signed out can open the create-account page', () {
+    expect(resolveRedirect(const SignedOut(), Routes.register), isNull);
+    expect(resolveRedirect(signedIn(['PATIENT']), Routes.register), '/me/home');
   });
 }

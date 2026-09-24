@@ -47,6 +47,19 @@ export class PatientClinicalController {
     return this.clinical.listOwnConsents(user);
   }
 
+  @Get('me/clinical-records')
+  @RequirePermissions('clinical:read_self')
+  @ApiOkResponse({
+    type: [ClinicalRecordView],
+    description: "The caller's own screening history, newest first",
+  })
+  myRecords(
+    @CurrentUser() user: AuthenticatedUser,
+    @Ctx() ctx: RequestContext,
+  ): Promise<ClinicalRecordView[]> {
+    return this.clinical.listOwnRecords(user, ctx);
+  }
+
   @Post('me/consents/:consentId/withdraw')
   @RequirePermissions('consent:withdraw_self')
   @HttpCode(HttpStatus.OK)

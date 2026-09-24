@@ -30,33 +30,8 @@ class HomeDestination {
   final String? route;
 }
 
+/// Staff homes. Patients have their own tabbed app (features/patient).
 const roleDestinations = <UserRole, List<HomeDestination>>{
-  UserRole.patient: [
-    HomeDestination(
-      'My screening',
-      'Your screening history and next steps',
-      Icons.assignment_outlined,
-      phase: 8,
-    ),
-    HomeDestination(
-      'Symptom check',
-      'Answer a short questionnaire',
-      Icons.checklist_outlined,
-      phase: 8,
-    ),
-    HomeDestination(
-      'Appointments',
-      'Upcoming visits and reminders',
-      Icons.event_outlined,
-      phase: 13,
-    ),
-    HomeDestination(
-      'Learn',
-      'Prostate health information',
-      Icons.menu_book_outlined,
-      phase: 14,
-    ),
-  ],
   UserRole.clinician: [
     HomeDestination(
       'Patients',

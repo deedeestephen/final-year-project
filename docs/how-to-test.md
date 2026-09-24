@@ -112,6 +112,25 @@ Tick each box when it works.
 
 **What makes the phone data safe:** everything saved on the phone sits in a **locked (encrypted) database**. Its key is kept in the phone's secure keystore.
 
+### Phase 8: the patient app
+
+- [ ] Sign out, then sign in as **`patient@demo.pca-mhealth.test`** with the demo password. It asks you to choose a new password first, just like the clinician did.
+  → You see the **patient app**, with 5 buttons along the bottom: **Home · Results · Learn · Messages · Profile**.
+- [ ] **Home** says *Hello, SYNTHETIC Patient 001* and shows the date of the latest screening.
+- [ ] Tap **Results**.
+  → You see the PSA number and the exam result, with the blue note *"Your clinician will explain what this means for you."* There are no scary colours or words; that is on purpose.
+- [ ] Tap **Learn**, then tap **What is a PSA test?**
+  → A short article, with its sources at the bottom. **Bemba** and **Nyanja** are greyed out: they wait until a real translator has checked them.
+- [ ] **A message arrives.** Sign out, sign in as the **clinician**, and open **Patients**, then **Patient 001, SYNTHETIC**, then **Add screening record**. Add a PSA value, then sign out.
+  Sign in as the **patient** again and tap **Messages**.
+  → *"New screening record"* with a red number on the Messages button. Tap the message to mark it as read.
+- [ ] Tap **Profile**, then **My consents**. If the list is empty, the clinician has not recorded a consent yet (a later phase adds that screen).
+  With a consent listed, tap **Withdraw**. The app explains what that means and asks first.
+- [ ] **New patient account.** Sign out. On Sign in, tap **New patient? Create an account** and fill it in with made-up details.
+  → *"Your account is ready."* Sign in with it: Home says *"Almost ready… Ask your clinic to link it"*, because no clinic has linked it to a patient record yet.
+- [ ] **Offline.** Turn **Airplane mode** on and open the tabs again.
+  → The app still shows your last results and messages, with *"Offline · showing what was saved on …"*.
+
 ### Phase 3: the server itself
 
 - [ ] Open **http://localhost:3000/api/docs** in your browser.

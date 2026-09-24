@@ -644,6 +644,35 @@
         ]
       }
     },
+    "/api/v1/patients/me/clinical-records": {
+      "get": {
+        "operationId": "PatientClinicalController_myRecords_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The caller's own screening history, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalRecordView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
     "/api/v1/patients/me/consents/{consentId}/withdraw": {
       "post": {
         "operationId": "PatientClinicalController_withdrawMyConsent_v1",
@@ -926,6 +955,135 @@
         ],
         "tags": [
           "clinical"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list_v1",
+        "parameters": [
+          {
+            "name": "unreadOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": false,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_markAllRead_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkedReadResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "post": {
+        "operationId": "NotificationsController_markRead_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
         ]
       }
     },
@@ -1789,73 +1947,6 @@
           }
         }
       },
-      "CreateClinicalRecordDto": {
-        "type": "object",
-        "properties": {
-          "encounterDate": {
-            "type": "string",
-            "format": "date",
-            "example": "2026-09-20"
-          },
-          "psaNgMl": {
-            "type": "number",
-            "description": "Total PSA in ng/mL",
-            "example": 6.8
-          },
-          "freePsaNgMl": {
-            "type": "number",
-            "description": "Free PSA in ng/mL; must not exceed total PSA"
-          },
-          "dreFinding": {
-            "type": "string",
-            "enum": [
-              "NORMAL",
-              "ENLARGED_SMOOTH",
-              "NODULAR",
-              "INDURATED",
-              "NOT_PERFORMED"
-            ]
-          },
-          "piradsScore": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5,
-            "description": "PI-RADS v2.1 category, when imaging exists"
-          },
-          "prostateVolumeMl": {
-            "type": "number",
-            "description": "Prostate volume in mL"
-          },
-          "biopsyHistory": {
-            "type": "string",
-            "enum": [
-              "NONE",
-              "PRIOR_NEGATIVE",
-              "PRIOR_POSITIVE",
-              "UNKNOWN"
-            ],
-            "default": "UNKNOWN"
-          },
-          "familyHistory": {
-            "type": "boolean"
-          },
-          "symptoms": {
-            "$ref": "#/components/schemas/SymptomsDto"
-          },
-          "notes": {
-            "type": "string",
-            "maxLength": 2000
-          },
-          "clientUuid": {
-            "type": "string",
-            "description": "Client-generated id; resubmitting the same id returns the existing record"
-          }
-        },
-        "required": [
-          "encounterDate",
-          "dreFinding"
-        ]
-      },
       "ClinicalRecordView": {
         "type": "object",
         "properties": {
@@ -1971,6 +2062,73 @@
           "createdAt"
         ]
       },
+      "CreateClinicalRecordDto": {
+        "type": "object",
+        "properties": {
+          "encounterDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-20"
+          },
+          "psaNgMl": {
+            "type": "number",
+            "description": "Total PSA in ng/mL",
+            "example": 6.8
+          },
+          "freePsaNgMl": {
+            "type": "number",
+            "description": "Free PSA in ng/mL; must not exceed total PSA"
+          },
+          "dreFinding": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "ENLARGED_SMOOTH",
+              "NODULAR",
+              "INDURATED",
+              "NOT_PERFORMED"
+            ]
+          },
+          "piradsScore": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "PI-RADS v2.1 category, when imaging exists"
+          },
+          "prostateVolumeMl": {
+            "type": "number",
+            "description": "Prostate volume in mL"
+          },
+          "biopsyHistory": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "PRIOR_NEGATIVE",
+              "PRIOR_POSITIVE",
+              "UNKNOWN"
+            ],
+            "default": "UNKNOWN"
+          },
+          "familyHistory": {
+            "type": "boolean"
+          },
+          "symptoms": {
+            "$ref": "#/components/schemas/SymptomsDto"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "clientUuid": {
+            "type": "string",
+            "description": "Client-generated id; resubmitting the same id returns the existing record"
+          }
+        },
+        "required": [
+          "encounterDate",
+          "dreFinding"
+        ]
+      },
       "GrantConsentDto": {
         "type": "object",
         "properties": {
@@ -2001,6 +2159,83 @@
           "type",
           "method",
           "consentTextVersion"
+        ]
+      },
+      "NotificationView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "e.g. clinical_record.created, consent.withdrawn"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "readAt",
+          "createdAt"
+        ]
+      },
+      "NotificationPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationView"
+            }
+          },
+          "unreadCount": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "unreadCount",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "MarkedReadResponse": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "number",
+            "description": "How many notifications changed to read"
+          }
+        },
+        "required": [
+          "updated"
         ]
       },
       "SyncOperationDto": {

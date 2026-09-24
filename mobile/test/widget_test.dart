@@ -97,7 +97,9 @@ void main() {
       ..on('GET /users/me', FakeResponse(200, userJson(roles: ['PATIENT'])));
     await pumpApp(tester, backend: backend, store: store);
     await signIn(tester);
-    expect(find.text('My screening'), findsOneWidget);
+    // Patients get the tabbed patient app (not linked to a record here).
+    expect(find.text('Almost ready'), findsOneWidget);
+    expect(find.text('Results'), findsOneWidget);
     expect(find.text('Patients'), findsNothing);
   });
 

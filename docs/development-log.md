@@ -313,3 +313,62 @@ strict, pytest 100% coverage, pip-audit). mobile PASS (format, analyze, widget t
 
 **Next:** Phase 8, the full clinical workflow (symptom scores, history, patient app screens).
 
+## 2026-09-24 — Phase 8: Patient workflow (Layer 1 patient portal)
+
+**Objective:** a patient app for viewing one's own screening results, learning about prostate health, getting messages from the clinic, managing consent and creating an account. The owner's decisions:
+- Results show **values plus "Your clinician will explain what this means for you"**, with no interpretation.
+- The **chatbot stays in Phase 13**.
+
+**Design decisions**
+- **Backend:**
+  - New endpoint `GET /patients/me/clinical-records` with a new permission, `clinical:read_self`, for PATIENT. Reads are audited.
+  - New `modules/notifications`: list with unread count, mark one read, mark all read. Only the owner can mark a notification; anyone else's id returns 404.
+  - `NotificationsService.notifyPatient` runs **inside the same transaction** as a new clinical record (REST or `/sync`) and a consent grant or withdrawal. It only notifies patients whose account is linked.
+  - Notification text never contains values, names or identifiers.
+- **App shell:**
+  - The patient app is a go_router `StatefulShellRoute` with five tabs. Each tab keeps its own navigation stack.
+  - `resolveRedirect` lets only PATIENT accounts into `/me/...`, and the staff homes are unchanged.
+- **Offline for patients:** the repository saves the last good response of each call in the encrypted database. Offline, it shows that copy with a timestamp. Server errors are still shown, and sign-out wipes the copies.
+- **Results:** values only, the fixed note on every view, and no colours or words that suggest good or bad. A widget test checks for that.
+- **Education:**
+  - Six short English articles, bundled for offline use, each citing NHS, US NCI or WHO pages.
+  - The source links were checked. A CDC link could not be verified (the site blocks automated checks) and was removed.
+  - Every article is marked as a draft awaiting review by a qualified clinician.
+  - Bemba and Nyanja are shown but disabled until human-verified translations exist (proposal ethics rule).
+- **Consent withdrawal** asks first and explains the effect for each consent type, for example "AI-assisted analysis will no longer be used for your care. Your clinician will still look after you."
+- **Self-registration** has a neutral message for a taken email. An unlinked account shows "Almost ready… ask your clinic to link it". Linking is on the clinic side, in Phase 9.
+- **Change password** now has a non-forced mode, reached from Profile.
+- **The device-test tool** gains `npm run e2e:user -- --role patient`: a linked synthetic patient with one record, one consent and one message.
+
+**Files created:**
+- Backend: `src/modules/notifications/*`, `test/db/notifications.int-spec.ts`
+- Mobile: `lib/features/patient/**`, `lib/features/auth/presentation/register_account_screen.dart`, `assets/education/en/articles.json`, `test/features/patient/patient_app_test.dart`
+- Docs: `docs/images/phase8-*.png`
+
+**Files modified:**
+- Backend: clinical service, controller and module; `permissions.ts`; `app.module.ts`; the patient view (`clientUuid`, from Phase 6); the e2e tool; the OpenAPI document
+- Mobile: routes and router, the home screen (the patient entry removed), the login screen, the change-password screen, `pubspec.yaml`, the device test
+- Docs
+
+**Tests:**
+- Backend: 6 new notification and own-record integration tests pass.
+- Mobile: 131 tests pass (was 113), including 16 patient app and repository tests. 1 opt-in live test is skipped.
+- **On the Galaxy S9+ emulator (Android 10), against the live backend:** both device flows passed.
+  - The clinician flow.
+  - The new patient flow: home, a result, an article, reading a message, and withdrawing a consent. The last two were confirmed through the API.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| A patient article never loaded in one widget test | Flutter's asset cache kept the load from an earlier test | load the education asset with `cache: false`; the provider already keeps it |
+| Name error read "Enter the your name." | reused the generic name validator | a specific message for the account name |
+| Riverpod 3 retried failed patient calls in the background | automatic retry is on by default in Riverpod 3 | `retry: _noRetry` on the patient providers; screens offer Try again and pull-to-refresh |
+| Cards below the screen were not found in tests | lazy lists at the S9+ screen size | tests scroll to them |
+
+**Known limitations:**
+- Notifications are in-app only. Push delivery (for example FCM) needs an account and provider decision by the owner.
+- Linking a self-registered account to a patient record is done in the Phase 9 clinician workflow.
+- The patient consents screen is empty until staff record consents through the app (Phase 9) or the API.
+
+**Next:** Phase 9, the clinician workflow (assessment, imaging and histopathology submission, AI request, report viewer, pathologist review, and linking patient accounts).
+

@@ -7,7 +7,14 @@ import '../features/auth/domain/current_user.dart';
 import '../features/auth/presentation/change_password_screen.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/register_account_screen.dart';
 import '../features/home/role_home_screen.dart';
+import '../features/patient/presentation/learn_screen.dart';
+import '../features/patient/presentation/messages_screen.dart';
+import '../features/patient/presentation/my_home_screen.dart';
+import '../features/patient/presentation/my_results_screen.dart';
+import '../features/patient/presentation/patient_shell.dart';
+import '../features/patient/presentation/profile_screens.dart';
 import '../features/patients/presentation/add_record_screen.dart';
 import '../features/patients/presentation/edit_patient_screen.dart';
 import '../features/patients/presentation/patient_detail_screen.dart';
@@ -71,7 +78,81 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      for (final role in UserRole.values)
+      GoRoute(
+        path: Routes.register,
+        builder: (_, _) => const RegisterAccountScreen(),
+      ),
+      // Patient app: bottom tabs, each keeping its own navigation stack.
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => PatientShell(shell: shell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.myHome,
+                builder: (_, _) => const MyHomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.myResults,
+                builder: (_, _) => const MyResultsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.learn,
+                builder: (_, _) => const LearnScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':articleId',
+                    builder: (_, state) => ArticleScreen(
+                      articleId: state.pathParameters['articleId']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.messages,
+                builder: (_, _) => const MessagesScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.profile,
+                builder: (_, _) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'consents',
+                    builder: (_, _) => const MyConsentsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'reports',
+                    builder: (_, _) => const MyReportsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'password',
+                    builder: (_, _) =>
+                        const ChangePasswordScreen(forced: false),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+      // Staff homes (the patient home is the tab shell above).
+      for (final role in UserRole.values.where((r) => r != UserRole.patient))
         GoRoute(
           path: Routes.home(role),
           builder: (_, _) => RoleHomeScreen(role: role),

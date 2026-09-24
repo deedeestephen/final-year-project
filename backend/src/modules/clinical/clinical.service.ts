@@ -11,6 +11,10 @@ import type {
   RequestContext,
 } from '../access/access.decorators';
 import { AuditService } from '../audit/audit.service';
+import {
+  NOTIFICATION_TEXT,
+  NotificationsService,
+} from '../notifications/notifications.service';
 import { PatientsService } from '../patients/patients.service';
 import type {
   ClinicalRecordView,
@@ -70,6 +74,7 @@ export class ClinicalService {
     private readonly prisma: PrismaService,
     private readonly patients: PatientsService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -151,6 +156,11 @@ export class ClinicalService {
         },
         tx,
       );
+      await this.notifications.notifyPatient(
+        patient.id,
+        NOTIFICATION_TEXT.recordAdded,
+        tx,
+      );
       return created;
     });
     return { record: toClinicalView(record), created: true };
@@ -169,6 +179,29 @@ export class ClinicalService {
     });
     await this.audit.record({
       action: 'clinical_record.list',
+      entityType: 'patient',
+      entityId: patient.id,
+      outcome: 'SUCCESS',
+      actorUserId: user.id,
+      actorRole: user.roles.join(','),
+      details: { results: records.length },
+      ...ctx,
+    });
+    return records.map(toClinicalView);
+  }
+
+  /** The caller's own screening history (patient app), newest first. */
+  async listOwnRecords(
+    user: AuthenticatedUser,
+    ctx: RequestContext,
+  ): Promise<ClinicalRecordView[]> {
+    const patient = await this.patients.requireOwn(user);
+    const records = await this.prisma.clinicalRecord.findMany({
+      where: { patientId: patient.id },
+      orderBy: [{ encounterDate: 'desc' }, { createdAt: 'desc' }],
+    });
+    await this.audit.record({
+      action: 'clinical_record.read_self',
       entityType: 'patient',
       entityId: patient.id,
       outcome: 'SUCCESS',
@@ -248,6 +281,11 @@ export class ClinicalService {
           },
           ...ctx,
         },
+        tx,
+      );
+      await this.notifications.notifyPatient(
+        patient.id,
+        NOTIFICATION_TEXT.consentGranted,
         tx,
       );
       return created;
@@ -335,6 +373,11 @@ export class ClinicalService {
           details: { patientId, byPatient: user.roles.includes('PATIENT') },
           ...ctx,
         },
+        tx,
+      );
+      await this.notifications.notifyPatient(
+        patientId,
+        NOTIFICATION_TEXT.consentWithdrawn,
         tx,
       );
       return tx.consent.findUniqueOrThrow({ where: { id: consentId } });

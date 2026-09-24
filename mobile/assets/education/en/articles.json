@@ -1,0 +1,186 @@
+{
+  "language": "en",
+  "reviewStatus": "Draft for review by a qualified clinician before use with patients (research prototype content).",
+  "articles": [
+    {
+      "id": "prostate",
+      "title": "What is the prostate?",
+      "summary": "A small gland that helps make semen, and why it can cause problems as men get older.",
+      "minutes": 2,
+      "sections": [
+        {
+          "heading": "Where it is and what it does",
+          "body": "The prostate is a small gland, about the size of a walnut, found only in men. It sits below the bladder and surrounds the tube that carries urine out of the body (the urethra). It helps to make the fluid that carries sperm (semen)."
+        },
+        {
+          "heading": "Changes with age",
+          "body": "The prostate often gets bigger as men get older. This is common and is usually not cancer. A bigger prostate can press on the urethra and cause changes in passing urine, such as needing to go more often, especially at night, or a weaker flow."
+        },
+        {
+          "heading": "Prostate cancer",
+          "body": "Prostate cancer happens when cells in the prostate grow out of control. Some prostate cancers grow very slowly and may never cause harm; others can grow and spread. Finding out which kind a man has needs tests and a clinician's assessment."
+        }
+      ],
+      "sources": [
+        {
+          "name": "NHS: Prostate cancer",
+          "url": "https://www.nhs.uk/conditions/prostate-cancer/"
+        },
+        {
+          "name": "US National Cancer Institute: Prostate cancer",
+          "url": "https://www.cancer.gov/types/prostate"
+        }
+      ]
+    },
+    {
+      "id": "psa-test",
+      "title": "What is a PSA test?",
+      "summary": "A blood test that measures a protein made by the prostate, and what can change the result.",
+      "minutes": 3,
+      "sections": [
+        {
+          "heading": "What PSA is",
+          "body": "PSA (prostate-specific antigen) is a protein made by the prostate. A small amount is normally found in the blood. The PSA test measures how much is there, in nanograms per millilitre (ng/mL)."
+        },
+        {
+          "heading": "Why the level can be raised",
+          "body": "A raised PSA can be caused by prostate cancer, but it is also often raised by other things, such as an enlarged prostate, an infection or swelling of the prostate, or getting older. Recent ejaculation, vigorous exercise such as cycling, or a recent procedure on the urinary tract can also raise it for a short time."
+        },
+        {
+          "heading": "What a result can and cannot show",
+          "body": "A PSA result on its own cannot say whether a man has prostate cancer. A raised level does not always mean cancer, and a normal level does not always rule it out. Your clinician looks at the result together with other information, and may repeat the test or suggest other tests."
+        }
+      ],
+      "sources": [
+        {
+          "name": "US National Cancer Institute: PSA test fact sheet",
+          "url": "https://www.cancer.gov/types/prostate/psa-fact-sheet"
+        },
+        {
+          "name": "NHS: Prostate cancer",
+          "url": "https://www.nhs.uk/conditions/prostate-cancer/"
+        }
+      ]
+    },
+    {
+      "id": "dre",
+      "title": "What is a digital rectal exam (DRE)?",
+      "summary": "A short physical check of the prostate by a clinician.",
+      "minutes": 2,
+      "sections": [
+        {
+          "heading": "What happens",
+          "body": "The clinician gently puts a gloved, lubricated finger into the back passage (rectum) to feel the prostate through the wall of the rectum. It takes only a short time. It may feel uncomfortable, but it should not be painful."
+        },
+        {
+          "heading": "Why it is done",
+          "body": "The clinician feels the size, shape and texture of the prostate. For example, a prostate that feels larger than expected, or has a hard or lumpy area, may need more tests. Like the PSA test, a DRE on its own cannot confirm or rule out cancer."
+        },
+        {
+          "heading": "Your choice",
+          "body": "You can ask questions before the exam, ask for a chaperone, and say if you want to stop. The exam is only done with your agreement."
+        }
+      ],
+      "sources": [
+        {
+          "name": "US National Cancer Institute: Prostate cancer screening (patient version)",
+          "url": "https://www.cancer.gov/types/prostate/patient/prostate-screening-pdq"
+        },
+        {
+          "name": "NHS: Prostate cancer",
+          "url": "https://www.nhs.uk/conditions/prostate-cancer/"
+        }
+      ]
+    },
+    {
+      "id": "screening",
+      "title": "What screening can and cannot tell you",
+      "summary": "Checks can find some cancers early, but they also have limits. Deciding is something you do with your clinician.",
+      "minutes": 3,
+      "sections": [
+        {
+          "heading": "Possible benefits",
+          "body": "Screening tests such as PSA and DRE can find some prostate cancers before they cause symptoms, when treatment may be more effective."
+        },
+        {
+          "heading": "Possible downsides",
+          "body": "Tests can give results that cause worry but turn out not to be cancer. They can also find slow-growing cancers that would never have caused harm, which may lead to further tests, such as a scan or a biopsy, and to treatments that have side effects."
+        },
+        {
+          "heading": "Who may be at higher risk",
+          "body": "The risk of prostate cancer goes up with age. Men whose father or brother had prostate cancer, and Black men, are at higher risk. If this applies to you, talk to your clinician about when to be checked."
+        },
+        {
+          "heading": "Deciding together",
+          "body": "There is no single right answer for everyone. Your clinician can explain the benefits and risks for you, so that you can decide together."
+        }
+      ],
+      "sources": [
+        {
+          "name": "US National Cancer Institute: Prostate cancer screening (patient version)",
+          "url": "https://www.cancer.gov/types/prostate/patient/prostate-screening-pdq"
+        },
+        {
+          "name": "World Health Organization: Cancer fact sheet",
+          "url": "https://www.who.int/news-room/fact-sheets/detail/cancer"
+        }
+      ]
+    },
+    {
+      "id": "questions",
+      "title": "Questions to ask your clinician",
+      "summary": "A short list to take to your next visit.",
+      "minutes": 1,
+      "sections": [
+        {
+          "heading": "About your results",
+          "body": "What does my result mean for me? Is it different from last time? Do I need to repeat any test?"
+        },
+        {
+          "heading": "About next steps",
+          "body": "Do I need more tests? What would they involve, and what are the benefits and risks? When should I come back?"
+        },
+        {
+          "heading": "About living well",
+          "body": "Is there anything I should change or watch out for? Who should I contact if my symptoms change or I have questions before my next visit?"
+        }
+      ],
+      "sources": [
+        {
+          "name": "US National Cancer Institute: Prostate cancer",
+          "url": "https://www.cancer.gov/types/prostate"
+        }
+      ]
+    },
+    {
+      "id": "get-help",
+      "title": "When to get medical help quickly",
+      "summary": "Symptoms that should not wait for your next routine visit.",
+      "minutes": 1,
+      "sections": [
+        {
+          "heading": "Go to a clinic or hospital straight away if",
+          "body": "You cannot pass urine at all, or passing urine suddenly becomes very painful."
+        },
+        {
+          "heading": "Contact your clinic soon if you notice",
+          "body": "Blood in your urine or semen; new pain in your back, hips or bones that does not go away; losing weight without trying; or new problems passing urine, such as needing to go much more often, especially at night."
+        },
+        {
+          "heading": "Remember",
+          "body": "Many of these symptoms have causes other than cancer, such as an infection or an enlarged prostate. They still need to be checked by a clinician."
+        }
+      ],
+      "sources": [
+        {
+          "name": "NHS: Prostate cancer",
+          "url": "https://www.nhs.uk/conditions/prostate-cancer/"
+        },
+        {
+          "name": "NHS: Benign prostate enlargement",
+          "url": "https://www.nhs.uk/conditions/prostate-enlargement/"
+        }
+      ]
+    }
+  ]
+}

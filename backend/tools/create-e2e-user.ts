@@ -1,18 +1,23 @@
 /**
- * Creates a throwaway SYNTHETIC clinician in the demo facility for the
+ * Creates a throwaway SYNTHETIC account in the demo facility for the
  * on-device end-to-end test (mobile/integration_test). It has no forced
  * password change, so the test never alters the demo accounts.
  *
- *   npm run e2e:user            -> prints {"email": ..., "password": ...}
+ *   npm run e2e:user                   -> a clinician
+ *   npm run e2e:user -- --role patient -> a patient app account linked to a
+ *                                         synthetic patient with one screening
+ *                                         record, one consent and one message
  *
- * The account is marked is_synthetic and uses the demo e-mail domain.
+ * Prints {"email": ..., "password": ...}. Everything is marked synthetic.
  */
 import { randomBytes, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { DEMO_EMAIL_DOMAIN, SYNTHETIC_FACILITY_CODE } from '../prisma/seed';
+import { FieldCrypto } from '../src/common/crypto/field-crypto';
 import { ARGON2_OPTIONS } from '../src/modules/auth/password';
+import { NOTIFICATION_TEXT } from '../src/modules/notifications/notifications.service';
 
 async function main(): Promise<void> {
   try {
@@ -20,6 +25,9 @@ async function main(): Promise<void> {
   } catch {
     // variables supplied by the environment
   }
+  const asPatient =
+    process.argv.includes('--role') &&
+    process.argv[process.argv.indexOf('--role') + 1] === 'patient';
   const prisma = new PrismaClient();
   try {
     const facility = await prisma.facility.findUnique({
@@ -27,20 +35,75 @@ async function main(): Promise<void> {
     });
     if (!facility) throw new Error('Run "npm run db:seed" first');
     const role = await prisma.role.findUniqueOrThrow({
-      where: { name: 'CLINICIAN' },
+      where: { name: asPatient ? 'PATIENT' : 'CLINICIAN' },
     });
-    const email = `e2e-${randomUUID().slice(0, 8)}@${DEMO_EMAIL_DOMAIN}`;
+    const tag = randomUUID().slice(0, 8);
+    const email = `e2e-${asPatient ? 'patient' : 'clinician'}-${tag}@${DEMO_EMAIL_DOMAIN}`;
     const password = `E2e-${randomBytes(12).toString('base64url')}`;
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
-        displayName: 'SYNTHETIC E2E Clinician',
+        displayName: asPatient
+          ? 'SYNTHETIC E2E Patient'
+          : 'SYNTHETIC E2E Clinician',
         passwordHash: await argon2.hash(password, ARGON2_OPTIONS),
-        facilityId: facility.id,
+        facilityId: asPatient ? null : facility.id,
         isSynthetic: true,
         roles: { create: { roleId: role.id } },
       },
     });
+
+    if (asPatient) {
+      const crypto = FieldCrypto.fromEnv(process.env);
+      const clinician = await prisma.user.findFirstOrThrow({
+        where: { facilityId: facility.id, isSynthetic: true },
+      });
+      const patient = await prisma.patient.create({
+        data: {
+          facilityId: facility.id,
+          userId: user.id,
+          mrn: `E2E-${tag}`,
+          givenNameEnc: crypto.encrypt('SYNTHETIC'),
+          familyNameEnc: crypto.encrypt(`E2E ${tag}`),
+          dateOfBirth: new Date('1957-04-09T00:00:00Z'),
+          regionClass: 'RURAL',
+          district: 'Mumbwa',
+          isSynthetic: true,
+          createdById: clinician.id,
+        },
+      });
+      await prisma.clinicalRecord.create({
+        data: {
+          patientId: patient.id,
+          facilityId: facility.id,
+          recordedById: clinician.id,
+          encounterDate: new Date('2026-08-20T00:00:00Z'),
+          psaNgMl: '5.600',
+          dreFinding: 'NORMAL',
+          notes: 'SYNTHETIC E2E DATA: not a real patient.',
+        },
+      });
+      await prisma.consent.create({
+        data: {
+          patientId: patient.id,
+          type: 'AI_ANALYSIS',
+          status: 'GRANTED',
+          method: 'DIGITAL',
+          consentTextVersion: 'e2e-v1',
+          grantedAt: new Date(),
+          capturedById: clinician.id,
+        },
+      });
+      const text = NOTIFICATION_TEXT.recordAdded;
+      await prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: text.type,
+          title: text.title,
+          body: text.body,
+        },
+      });
+    }
     console.log(JSON.stringify({ email, password }));
   } finally {
     await prisma.$disconnect();

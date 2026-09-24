@@ -136,3 +136,15 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Device data belongs to one user | another user signing in wipes the previous user's data; sign-out wipes after warning about unsent changes | `sync_test.dart`, `session_test.dart`, `patients_flow_test.dart` | Verified |
 | Runs on the target phone class | Galaxy S9+ hardware profile, Android 10 (API 29) emulator; the owner's SM-G965U connects by USB (`scripts/phone-usb.ps1`) | on-device integration test | Verified on emulator |
 
+## Phase 8 additions (patient workflow)
+
+| Requirement | Implementation | Test | Status |
+|---|---|---|---|
+| Patient portal (§3.3.2 L1): home, results, education, messages, profile | `mobile/lib/features/patient/**` (tab shell `/me/...`) | `test/features/patient/patient_app_test.dart`; on-device `integration_test/app_flow_test.dart` (patient flow) | Verified on the S9+ emulator |
+| Patients read their own screening history | `GET /api/v1/patients/me/clinical-records` (`clinical:read_self`), audited `clinical_record.read_self` | `backend/test/db/notifications.int-spec.ts` | Verified |
+| In-app notifications (push engine groundwork) | `modules/notifications`: list, unread count, mark read, mark all; created on new record (REST and sync) and on consent grant/withdrawal; no values or names in the text | `notifications.int-spec.ts` | Verified (push delivery: later, needs a provider decision) |
+| Consent self-withdrawal in the app (§3.7.1) | Profile › My consents, confirmation that explains the effect | `patient_app_test.dart`, on-device test | Verified |
+| Patient self-registration (UC-01) | Create account screen → `POST /auth/register` | `patient_app_test.dart` | Verified; clinic-side linking Ph.9 |
+| Patient education (FR-07 groundwork) | bundled, sourced English library; Bemba/Nyanja disabled until human-verified | `patient_app_test.dart` | English Verified; chatbot Ph.13; translations pending the owner |
+| Report viewer (FR-08) | Profile › My reports: empty state until reports are released | `patient_app_test.dart` | Shell only; content Ph.10–11 |
+

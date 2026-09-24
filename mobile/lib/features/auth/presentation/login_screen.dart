@@ -112,6 +112,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onPressed: () => context.push(Routes.forgotPassword),
                 child: const Text('Forgot password?'),
               ),
+              TextButton(
+                key: const Key('login.createAccount'),
+                onPressed: () => context.push(Routes.register),
+                child: const Text('New patient? Create an account'),
+              ),
             ],
           ),
         ),

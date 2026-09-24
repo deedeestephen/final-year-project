@@ -10,6 +10,7 @@ export const PERMISSIONS = {
   'patient:read_self': "Read one's own patient profile",
   'clinical:create': 'Record clinical assessments (PSA, DRE, PI-RADS)',
   'clinical:read': 'Read clinical records in own facility',
+  'clinical:read_self': "Read one's own screening records",
   'consent:manage': 'Capture or withdraw patient consent',
   'consent:read_self': "Read one's own consents",
   'consent:withdraw_self':
@@ -51,6 +52,7 @@ export const ROLE_DESCRIPTIONS: Record<RoleName, string> = {
 export const ROLE_PERMISSIONS: Record<RoleName, readonly PermissionCode[]> = {
   PATIENT: [
     'patient:read_self',
+    'clinical:read_self',
     'consent:read_self',
     'consent:withdraw_self',
     'report:read_self',

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { PatientsModule } from '../patients/patients.module';
 import {
   ClinicalRecordsController,
@@ -7,7 +8,7 @@ import {
 import { ClinicalService } from './clinical.service';
 
 @Module({
-  imports: [PatientsModule],
+  imports: [PatientsModule, NotificationsModule],
   controllers: [PatientClinicalController, ClinicalRecordsController],
   providers: [ClinicalService],
   exports: [ClinicalService],

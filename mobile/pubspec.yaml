@@ -79,6 +79,7 @@ flutter:
     - assets/fonts/OFL-PlusJakartaSans.txt
     - assets/fonts/OFL-Inter.txt
     - assets/fonts/OFL-JetBrainsMono.txt
+    - assets/education/en/
 
   # Bundled so the app renders correctly offline (ADR-002). All SIL OFL 1.1.
   fonts:

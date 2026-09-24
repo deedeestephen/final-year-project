@@ -94,5 +94,9 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | App: on-device database encrypted with SQLCipher (AES-256); random 256-bit key only in Keystore/Keychain; opening fails if SQLCipher is missing | `mobile/lib/core/db/open_database.dart` | Verified (Ph.6, on-device test) |
 | App: clinical data on the phone belongs to one user; another user's sign-in wipes it; sign-out wipes it after warning about unsent changes; Android cloud backup disabled | `LocalStore.prepareFor/wipe`, `AndroidManifest.xml` (`allowBackup=false`) | Verified (Ph.6) |
 | Sync: every operation re-checked with the same permissions, facility scoping, validation and audit as the REST endpoints; idempotency keys cannot be reused across accounts | `backend/src/modules/sync/sync.service.ts` | Verified (Ph.6) |
+| Notifications carry no clinical values, names or identifiers (they may later appear on a lock screen); each user sees and changes only their own (others' ids return 404) | `modules/notifications` | Verified (Ph.8) |
+| Patients read only their own records (`requireOwn`), audited with counts only | `ClinicalService.listOwnRecords` | Verified (Ph.8) |
+| Patient app keeps its last good copy only in the encrypted database, and wipes it at sign-out; server errors are never masked by the copy | `PatientRepository` | Verified (Ph.8) |
+| Self-registration: a taken email gets a neutral message in the app (the API's 409 is an accepted Phase 4 trade-off, rate-limited) | `register_account_screen.dart` | Verified (Ph.8) |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |
