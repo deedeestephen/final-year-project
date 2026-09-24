@@ -43,7 +43,7 @@ class SyncStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (dot, fg, bg) = switch (status) {
       Synced() => (
-        AppColors.emerald,
+        AppColors.syncedDot,
         AppColors.successText,
         AppColors.successBg,
       ),

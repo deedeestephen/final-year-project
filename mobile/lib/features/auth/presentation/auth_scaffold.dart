@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../shared/widgets/national_stripe.dart';
 import '../../../shared/widgets/offline_banner.dart';
 
 /// Layout shared by the signed-out screens: offline strip, centred column
@@ -27,6 +28,7 @@ class AuthScaffold extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            const NationalStripe(),
             const OfflineBanner(),
             Expanded(
               child: Center(
@@ -46,7 +48,7 @@ class AuthScaffold extends StatelessWidget {
                         child,
                         const SizedBox(height: AppSizes.xl),
                         Text(
-                          'Research prototype. Not a medical device.',
+                          NationalStripe.notOfficial,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall,
                         ),

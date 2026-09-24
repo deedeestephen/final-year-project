@@ -228,6 +228,29 @@
         "operationId": "UsersController_list_v1",
         "parameters": [
           {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Part of the email or name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PATIENT",
+                "CLINICIAN",
+                "PATHOLOGIST",
+                "ADMIN"
+              ]
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -376,6 +399,41 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/reset-password": {
+      "post": {
+        "operationId": "UsersController_resetPassword_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemporaryPasswordResponse"
                 }
               }
             }
@@ -1087,6 +1145,346 @@
         ]
       }
     },
+    "/api/v1/admin/permissions": {
+      "get": {
+        "operationId": "AdminController_permissions_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissionInfo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/roles": {
+      "get": {
+        "operationId": "AdminController_roles_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/roles/{name}/permissions": {
+      "put": {
+        "operationId": "AdminController_setPermissions_v1",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRolePermissionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Replaces the role's permissions. Takes effect on the next request of every user with the role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/roles/{name}/reset": {
+      "post": {
+        "operationId": "AdminController_resetRole_v1",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/facilities": {
+      "get": {
+        "operationId": "AdminController_facilities_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FacilityView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/patient-accounts": {
+      "get": {
+        "operationId": "AdminController_patientAccounts_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "unlinked",
+                "linked",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientAccountPage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/patient-accounts/{userId}/match": {
+      "post": {
+        "operationId": "AdminController_match_v1",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The clinic record with the same NRC (record number and facility only)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordMatchView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/patient-accounts/{userId}/link": {
+      "post": {
+        "operationId": "AdminController_link_v1",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientAccountView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/patient-accounts/{userId}/unlink": {
+      "post": {
+        "operationId": "AdminController_unlink_v1",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientAccountView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/sync": {
       "post": {
         "operationId": "SyncController_push_v1",
@@ -1238,12 +1636,31 @@
           "displayName": {
             "type": "string",
             "example": "Mwamba B."
+          },
+          "phone": {
+            "type": "string",
+            "example": "+260971234567"
+          },
+          "idDocumentType": {
+            "type": "string",
+            "enum": [
+              "NRC",
+              "PASSPORT"
+            ]
+          },
+          "idNumber": {
+            "type": "string",
+            "example": "123456/78/1",
+            "description": "NRC (123456/78/1) or passport number (6-12 letters/digits)"
           }
         },
         "required": [
           "email",
           "password",
-          "displayName"
+          "displayName",
+          "phone",
+          "idDocumentType",
+          "idNumber"
         ]
       },
       "RegisteredUserResponse": {
@@ -1580,6 +1997,18 @@
         },
         "required": [
           "user",
+          "temporaryPassword"
+        ]
+      },
+      "TemporaryPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Shown once. The user must change it at first sign-in."
+          }
+        },
+        "required": [
           "temporaryPassword"
         ]
       },
@@ -2236,6 +2665,240 @@
         },
         "required": [
           "updated"
+        ]
+      },
+      "PermissionInfo": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "description"
+        ]
+      },
+      "RoleView": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "PATIENT",
+              "CLINICIAN",
+              "PATHOLOGIST",
+              "ADMIN"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customised": {
+            "type": "boolean",
+            "description": "True when an administrator changed the defaults"
+          },
+          "userCount": {
+            "type": "number",
+            "description": "Accounts that have this role"
+          },
+          "notAllowed": {
+            "description": "Permissions that can never be given to this role",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required": {
+            "description": "Permissions this role must always keep",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "permissions",
+          "customised",
+          "userCount",
+          "notAllowed",
+          "required"
+        ]
+      },
+      "UpdateRolePermissionsDto": {
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "permissions"
+        ]
+      },
+      "FacilityView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "province",
+          "district"
+        ]
+      },
+      "LinkedRecordView": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "facilityName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patientId",
+          "mrn",
+          "facilityName"
+        ]
+      },
+      "PatientAccountView": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "idDocumentType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "NRC",
+              "PASSPORT"
+            ]
+          },
+          "idNumberMasked": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last 4 only"
+          },
+          "phoneMasked": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last 4 only"
+          },
+          "linked": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LinkedRecordView"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "displayName",
+          "idDocumentType",
+          "idNumberMasked",
+          "phoneMasked",
+          "linked",
+          "createdAt"
+        ]
+      },
+      "PatientAccountPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PatientAccountView"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "RecordMatchView": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "facilityName": {
+            "type": "string"
+          },
+          "linkedToAnotherAccount": {
+            "type": "boolean",
+            "description": "True when the record is already linked to another account"
+          }
+        },
+        "required": [
+          "patientId",
+          "mrn",
+          "facilityName",
+          "linkedToAnotherAccount"
         ]
       },
       "SyncOperationDto": {

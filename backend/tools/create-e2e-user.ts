@@ -4,6 +4,7 @@
  * password change, so the test never alters the demo accounts.
  *
  *   npm run e2e:user                   -> a clinician
+ *   npm run e2e:user -- --role admin   -> an administrator
  *   npm run e2e:user -- --role patient -> a patient app account linked to a
  *                                         synthetic patient with one screening
  *                                         record, one consent and one message
@@ -25,9 +26,11 @@ async function main(): Promise<void> {
   } catch {
     // variables supplied by the environment
   }
-  const asPatient =
-    process.argv.includes('--role') &&
-    process.argv[process.argv.indexOf('--role') + 1] === 'patient';
+  const roleArg = process.argv.includes('--role')
+    ? process.argv[process.argv.indexOf('--role') + 1]
+    : 'clinician';
+  const asPatient = roleArg === 'patient';
+  const asAdmin = roleArg === 'admin';
   const prisma = new PrismaClient();
   try {
     const facility = await prisma.facility.findUnique({
@@ -35,17 +38,19 @@ async function main(): Promise<void> {
     });
     if (!facility) throw new Error('Run "npm run db:seed" first');
     const role = await prisma.role.findUniqueOrThrow({
-      where: { name: asPatient ? 'PATIENT' : 'CLINICIAN' },
+      where: { name: asPatient ? 'PATIENT' : asAdmin ? 'ADMIN' : 'CLINICIAN' },
     });
     const tag = randomUUID().slice(0, 8);
-    const email = `e2e-${asPatient ? 'patient' : 'clinician'}-${tag}@${DEMO_EMAIL_DOMAIN}`;
+    const email = `e2e-${roleArg}-${tag}@${DEMO_EMAIL_DOMAIN}`;
     const password = `E2e-${randomBytes(12).toString('base64url')}`;
     const user = await prisma.user.create({
       data: {
         email,
         displayName: asPatient
           ? 'SYNTHETIC E2E Patient'
-          : 'SYNTHETIC E2E Clinician',
+          : asAdmin
+            ? 'SYNTHETIC E2E Admin'
+            : 'SYNTHETIC E2E Clinician',
         passwordHash: await argon2.hash(password, ARGON2_OPTIONS),
         facilityId: asPatient ? null : facility.id,
         isSynthetic: true,

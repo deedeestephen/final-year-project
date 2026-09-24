@@ -29,7 +29,9 @@ export const PERMISSIONS = {
   'notification:read': "Read one's own notifications",
   'sync:write': 'Submit offline synchronisation batches',
   'user:manage': 'Create, modify and deactivate users',
-  'role:manage': 'Assign roles to users',
+  'role:manage': 'Assign roles to users and edit role permissions',
+  'patient_account:link':
+    "Link a patient's app account to their clinic record (matched by NRC)",
   'facility:manage': 'Manage facilities',
   'audit:read': 'Read the audit log',
   'fhir:export': 'Export de-identified FHIR R4 bundles',
@@ -93,6 +95,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, readonly PermissionCode[]> = {
   ADMIN: [
     'user:manage',
     'role:manage',
+    'patient_account:link',
     'facility:manage',
     'audit:read',
     'ai:models:read',

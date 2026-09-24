@@ -372,3 +372,61 @@ strict, pytest 100% coverage, pip-audit). mobile PASS (format, analyze, widget t
 
 **Next:** Phase 9, the clinician workflow (assessment, imaging and histopathology submission, AI request, report viewer, pathologist review, and linking patient accounts).
 
+## 2026-09-24 — Owner requests: sign-up identity, admin page, Zambian national colours
+
+**Objective:** three owner requests.
+1. At sign-up, patients enter a phone number and an NRC or passport number.
+2. A working admin page: users, roles and permissions, and giving patients access to their own data.
+3. The design follows the style of Zambian government public applications.
+
+Owner decisions:
+- Use the national colours without official emblems.
+- Administrators can **edit role permissions**, not just assign roles.
+- Phone and one ID are **required** at sign-up.
+
+**Design decisions**
+- **Sign-up identity.**
+  - Phone, `idDocumentType` (NRC or PASSPORT) and `idNumber` are required and checked by format: NRC as `123456/78/1`, passport as 6–12 letters or digits.
+  - They are stored AES-256-GCM encrypted, with an HMAC. The NRC HMAC uses the same normalisation as patient records, so an account can be matched exactly to its clinic record.
+  - One account per ID number (a unique index). A duplicate gets the same neutral message as a taken email.
+  - A CHECK constraint keeps type, number and hash together.
+- **Admin API** (`modules/admin`, plus extensions to `/users`):
+  - The permission catalogue.
+  - Roles with user counts.
+  - Replace a role's permissions, or reset them to the defaults. A new `roles.customised` flag makes the demo seed keep an administrator's edits.
+  - The facility list.
+  - Patient accounts: list, match by NRC, link, unlink. This uses a new permission, `patient_account:link`.
+  - User search and role filter.
+  - Admin password reset with a one-time password.
+- **Safety locks** on editing roles:
+  - ADMIN must keep `user:manage` and `role:manage`.
+  - PATIENT may only hold permissions about the patient themselves.
+  - Unknown codes are refused.
+  - Every change is audited with what was added and removed. Permissions are read from the database on each request, so a change applies immediately.
+- **Linking** needs an exact NRC match. The administrator sees only the record number and facility, never clinical data. Linking sends the patient an "Account linked" message; unlinking ends their sessions.
+- **Theme** (ADR-004):
+  - Flag green, red, black and orange, deepened where they carry text so they pass WCAG AA.
+  - A decorative national stripe.
+  - No coat of arms or government name, and a "not an official Government of the Republic of Zambia service" notice on sign-in screens.
+- **Admin screens** in the app: Users (with detail and create), Roles & permissions (a grouped checklist with locked boxes, a confirmation, reset to defaults), and Patient accounts (filter, match and link, unlink).
+
+**Tests:**
+- Backend: 12 new integration tests (sign-up identity; roles and safety locks, including immediate effect, audit and seed persistence; users; facilities; patient-account linking). The existing sign-up tests were updated for the required fields.
+- Mobile: 141 tests pass, including 5 admin and 3 new sign-up tests and a stripe size test.
+- **On the Galaxy S9+ emulator (Android 10), against the live backend:** clinician, patient and **admin** flows all passed. The admin flow opened users and roles, then linked a real sign-up by NRC. It was confirmed through the API that the patient then sees their record.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| The flag stripe did not show on the phone | coloured boxes with no child shrink to 0 px unless the row stretches them | `crossAxisAlignment: stretch`, plus a widget test that checks the height |
+| The list did not refresh after linking or editing (an error was shown) | `setState(() => future = …)` returned a Future to `setState` | use a block body in `setState` |
+| The facility drop-down overflowed on a phone-width screen | long facility names in an unexpanded drop-down | `isExpanded` with ellipsis (also for the patient forms) |
+| A new message waited behind the previous one | snackbars queue | the admin screens hide the current snackbar before showing a new one |
+| Device-test taps missed while the keyboard was closing | the widget was still moving | the tap helper waits for animations |
+| Widget-test taps hit a route still animating in | a route ignores pointers while it enters | the tap helper pumps 400 ms first |
+| Existing sign-up tests failed | new required fields | added synthetic identity fields |
+| Admin account list failed now and then (500) in the combined test run | each test file uses its own random field key, so accounts made by another file could not be decrypted, and one unreadable row broke the whole list | the list shows "(cannot be read)" for that one value instead of failing; a test covers it |
+| The quality gate's database step sometimes exited without any output | very little free memory (emulator, Android Studio, Docker and an idle Gradle daemon), so Node was killed | stop idle Gradle daemons before the gate; three direct runs and the full gate then passed |
+
+**Note:** the development database contains a self-registered account with a real name and email (most likely the owner trying the sign-up screen). The build and tests never create or use it. For testing, synthetic details are preferred.
+

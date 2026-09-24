@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/admin/presentation/patient_accounts_screen.dart';
+import '../features/admin/presentation/roles_screens.dart';
+import '../features/admin/presentation/users_screens.dart';
 import '../features/auth/application/session_controller.dart';
 import '../features/auth/domain/current_user.dart';
 import '../features/auth/presentation/change_password_screen.dart';
@@ -77,6 +80,34 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: Routes.adminUsers,
+        builder: (_, _) => const UsersScreen(),
+        routes: [
+          // "new" before ":id" so it is not read as an id.
+          GoRoute(path: 'new', builder: (_, _) => const CreateUserScreen()),
+          GoRoute(
+            path: ':id',
+            builder: (_, state) =>
+                UserDetailScreen(userId: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.adminRoles,
+        builder: (_, _) => const RolesScreen(),
+        routes: [
+          GoRoute(
+            path: ':name',
+            builder: (_, state) =>
+                RolePermissionsScreen(roleName: state.pathParameters['name']!),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.adminPatientAccounts,
+        builder: (_, _) => const PatientAccountsScreen(),
       ),
       GoRoute(
         path: Routes.register,

@@ -9,6 +9,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { FieldCrypto } from '../../common/crypto/field-crypto';
+import {
+  idNumberHmac,
+  idNumberProblem,
+  normalizeIdNumber,
+  type IdDocumentType,
+} from '../../common/crypto/identity-document';
 import { APP_CONFIG, type AppConfig } from '../../config/app-config';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import type {
@@ -94,6 +101,7 @@ export class AuthService {
     private readonly audit: AuditService,
     private readonly resetDelivery: ResetDelivery,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    private readonly crypto: FieldCrypto,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -102,17 +110,41 @@ export class AuthService {
 
   /** Public self-registration always creates a PATIENT account. Staff are created by administrators. */
   async register(
-    input: { email: string; password: string; displayName: string },
+    input: {
+      email: string;
+      password: string;
+      displayName: string;
+      phone: string;
+      idDocumentType: IdDocumentType;
+      idNumber: string;
+    },
     ctx: RequestContext,
   ): Promise<{ id: string; email: string; displayName: string }> {
     const email = normalizeEmail(input.email);
     const problems = checkPasswordPolicy(input.password, email);
     if (problems.length > 0) throw policyError(problems);
+    const idProblem = idNumberProblem(input.idDocumentType, input.idNumber);
+    if (idProblem) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'Request validation failed',
+        details: [{ field: 'idNumber', errors: [idProblem] }],
+      });
+    }
+    const hmac = idNumberHmac(
+      this.crypto,
+      input.idDocumentType,
+      input.idNumber,
+    );
 
-    if (await this.prisma.user.findUnique({ where: { email } })) {
+    // One neutral answer for a taken email or identity number.
+    if (
+      (await this.prisma.user.findUnique({ where: { email } })) ||
+      (await this.prisma.user.findUnique({ where: { idNumberHmac: hmac } }))
+    ) {
       throw new ConflictException({
         code: 'CONFLICT',
-        message: 'An account with this email already exists',
+        message: 'An account with these details already exists',
       });
     }
     const passwordHash = await this.passwords.hash(input.password);
@@ -125,6 +157,12 @@ export class AuthService {
           email,
           passwordHash,
           displayName: input.displayName.trim(),
+          phoneEnc: this.crypto.encrypt(input.phone.trim()),
+          idDocumentType: input.idDocumentType,
+          idNumberEnc: this.crypto.encrypt(
+            normalizeIdNumber(input.idDocumentType, input.idNumber),
+          ),
+          idNumberHmac: hmac,
           roles: { create: { roleId: role.id } },
         },
       });

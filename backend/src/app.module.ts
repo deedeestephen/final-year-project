@@ -15,6 +15,7 @@ import { AppConfigModule } from './config/config.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { JwtAuthGuard } from './modules/access/jwt-auth.guard';
 import { PermissionsGuard } from './modules/access/permissions.guard';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClinicalModule } from './modules/clinical/clinical.module';
@@ -54,6 +55,7 @@ import { UsersModule } from './modules/users/users.module';
     PatientsModule,
     ClinicalModule,
     NotificationsModule,
+    AdminModule,
     SyncModule,
     HealthModule,
   ],

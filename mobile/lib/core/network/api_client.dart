@@ -54,6 +54,9 @@ class ApiClient {
   Future<T> patch<T>(String path, {Object? data}) =>
       _send(() => dio.patch<T>(path, data: data));
 
+  Future<T> put<T>(String path, {Object? data}) =>
+      _send(() => dio.put<T>(path, data: data));
+
   Future<T> _send<T>(Future<Response<T>> Function() request) async {
     try {
       final response = await request();

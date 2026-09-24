@@ -60,6 +60,13 @@ async function createApp(env: Record<string, string> = {}) {
   return { app, delivery };
 }
 
+/** Required identity fields for self-registration (unique synthetic passport). */
+const identity = () => ({
+  phone: '+260971234567',
+  idDocumentType: 'PASSPORT',
+  idNumber: `ZP${String(Math.floor(Math.random() * 1e9)).padStart(9, '0')}`,
+});
+
 describe('authentication and authorisation (real database)', () => {
   let app: NestExpressApplication;
   let delivery: CapturedResetDelivery;
@@ -74,7 +81,12 @@ describe('authentication and authorisation (real database)', () => {
     const email = uniqueEmail(tag);
     await http()
       .post('/api/v1/auth/register')
-      .send({ email, password: STRONG, displayName: 'SYNTHETIC Test Patient' })
+      .send({
+        email,
+        password: STRONG,
+        displayName: 'SYNTHETIC Test Patient',
+        ...identity(),
+      })
       .expect(201);
     const res = await login(email, STRONG).expect(200);
     return { email, session: res.body as LoginBody };
@@ -120,6 +132,7 @@ describe('authentication and authorisation (real database)', () => {
           email: email.toUpperCase(),
           password: STRONG,
           displayName: 'SYNTHETIC P',
+          ...identity(),
         })
         .expect(201);
       expect(res.body).toMatchObject({ email });
@@ -138,6 +151,7 @@ describe('authentication and authorisation (real database)', () => {
           password: STRONG,
           displayName: 'x',
           roles: ['ADMIN'],
+          ...identity(),
         })
         .expect(400);
       expect((res.body as ErrorBody).error.code).toBe('VALIDATION_FAILED');
@@ -150,6 +164,7 @@ describe('authentication and authorisation (real database)', () => {
           email: uniqueEmail('weak'),
           password: 'password1234',
           displayName: 'x',
+          ...identity(),
         })
         .expect(400);
       expect(JSON.stringify(weak.body)).toMatch(/too common/);
@@ -157,11 +172,11 @@ describe('authentication and authorisation (real database)', () => {
       const email = uniqueEmail('dup');
       await http()
         .post('/api/v1/auth/register')
-        .send({ email, password: STRONG, displayName: 'x' })
+        .send({ email, password: STRONG, displayName: 'x', ...identity() })
         .expect(201);
       await http()
         .post('/api/v1/auth/register')
-        .send({ email, password: STRONG, displayName: 'x' })
+        .send({ email, password: STRONG, displayName: 'x', ...identity() })
         .expect(409);
     });
 

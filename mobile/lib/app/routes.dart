@@ -23,6 +23,13 @@ abstract final class Routes {
   static const myReports = '/me/profile/reports';
   static const myPassword = '/me/profile/password';
 
+  // Administration.
+  static const admin = '/admin';
+  static const adminUsers = '/admin/users';
+  static const adminNewUser = '/admin/users/new';
+  static const adminRoles = '/admin/roles';
+  static const adminPatientAccounts = '/admin/patient-accounts';
+
   static String home(UserRole role) =>
       role == UserRole.patient ? myHome : '/home/${role.name}';
   static String patient(String id) => '/patients/$id';
@@ -44,6 +51,8 @@ bool _isClinicalRoute(String location) =>
     location == Routes.patients ||
     location.startsWith('${Routes.patients}/');
 
+bool _isAdminRoute(String location) => location.startsWith('${Routes.admin}/');
+
 bool _isPatientAppRoute(String location) =>
     location.startsWith('${Routes.me}/');
 
@@ -64,6 +73,9 @@ String? resolveRedirect(SessionState session, String location) {
         if (!user.canSync) return home;
         if (_isEditRoute(location) && !user.canEditPatients) return home;
         return null;
+      }
+      if (_isAdminRoute(location)) {
+        return user.roles.contains(UserRole.admin) ? null : home;
       }
       if (_isPatientAppRoute(location)) {
         return user.roles.contains(UserRole.patient) ? null : home;

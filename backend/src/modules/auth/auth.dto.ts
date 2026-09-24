@@ -1,6 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, Length, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsString,
+  Length,
+  Matches,
+  MaxLength,
+} from 'class-validator';
+import {
+  ID_DOCUMENT_TYPES,
+  type IdDocumentType,
+} from '../../common/crypto/identity-document';
 import { IsSafeText } from '../../common/validation/safe-text';
 
 const trimLower = ({ value }: { value: unknown }) =>
@@ -27,6 +38,23 @@ export class RegisterDto {
   @Length(1, 100)
   @IsSafeText()
   displayName!: string;
+
+  @ApiProperty({ example: '+260971234567' })
+  @IsString()
+  @Matches(/^\+?[0-9 ]{7,20}$/, { message: 'phone must be a telephone number' })
+  phone!: string;
+
+  @ApiProperty({ enum: ID_DOCUMENT_TYPES })
+  @IsIn(ID_DOCUMENT_TYPES)
+  idDocumentType!: IdDocumentType;
+
+  @ApiProperty({
+    example: '123456/78/1',
+    description: 'NRC (123456/78/1) or passport number (6-12 letters/digits)',
+  })
+  @IsString()
+  @Length(4, 30)
+  idNumber!: string;
 }
 
 export class LoginDto {

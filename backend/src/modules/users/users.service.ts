@@ -56,15 +56,33 @@ export class UsersService {
     return this.get(user.id);
   }
 
-  async list(page: number, pageSize: number): Promise<UserPage> {
+  async list(
+    page: number,
+    pageSize: number,
+    q?: string,
+    role?: RoleName,
+  ): Promise<UserPage> {
+    const term = q?.trim();
+    const where: Prisma.UserWhereInput = {
+      ...(term
+        ? {
+            OR: [
+              { email: { contains: term, mode: 'insensitive' } },
+              { displayName: { contains: term, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...(role ? { roles: { some: { role: { name: role } } } } : {}),
+    };
     const [items, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
+        where,
         include: WITH_ROLES,
         orderBy: { createdAt: 'asc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      this.prisma.user.count(),
+      this.prisma.user.count({ where }),
     ]);
     return { items: items.map(toUserView), page, pageSize, total };
   }
@@ -143,6 +161,56 @@ export class UsersService {
       return user;
     });
     return { user: toUserView(created), temporaryPassword };
+  }
+
+  /** Issues a new one-time password; all sessions end and the lockout clears. */
+  async resetPassword(
+    id: string,
+    actor: AuthenticatedUser,
+    ctx: RequestContext,
+  ): Promise<{ temporaryPassword: string }> {
+    if (id === actor.id) {
+      throw new BadRequestException({
+        code: 'SELF_RESET',
+        message: 'Use Change password for your own account',
+      });
+    }
+    const existing = await this.prisma.user.findUnique({ where: { id } });
+    if (!existing)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'User not found',
+      });
+    const temporaryPassword = randomBytes(15).toString('base64url');
+    const passwordHash = await this.passwords.hash(temporaryPassword);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id },
+        data: {
+          passwordHash,
+          mustChangePassword: true,
+          failedLoginCount: 0,
+          lockedUntil: null,
+        },
+      });
+      await tx.refreshToken.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      await this.audit.record(
+        {
+          action: 'user.password_reset_by_admin',
+          entityType: 'user',
+          entityId: id,
+          outcome: 'SUCCESS',
+          actorUserId: actor.id,
+          actorRole: actor.roles.join(','),
+          ...ctx,
+        },
+        tx,
+      );
+    });
+    return { temporaryPassword };
   }
 
   async update(

@@ -6,6 +6,7 @@ import '../../app/routes.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/providers.dart';
 import '../../shared/widgets/clinical_card.dart';
+import '../../shared/widgets/national_stripe.dart';
 import '../../shared/widgets/offline_banner.dart';
 import '../auth/application/session_controller.dart';
 import '../auth/domain/current_user.dart';
@@ -87,15 +88,21 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
   UserRole.admin: [
     HomeDestination(
       'Users',
-      'Accounts, roles and access',
+      'Staff and patient accounts: roles, facility, lock, password reset',
       Icons.manage_accounts_outlined,
-      phase: 15,
+      route: Routes.adminUsers,
     ),
     HomeDestination(
-      'Facilities',
-      'Clinics and hospitals',
-      Icons.local_hospital_outlined,
-      phase: 15,
+      'Roles & permissions',
+      'What each role is allowed to do',
+      Icons.admin_panel_settings_outlined,
+      route: Routes.adminRoles,
+    ),
+    HomeDestination(
+      'Patient accounts',
+      'Link patient app accounts to clinic records by NRC',
+      Icons.link_outlined,
+      route: Routes.adminPatientAccounts,
     ),
     HomeDestination(
       'Audit log',
@@ -133,6 +140,7 @@ class RoleHomeScreen extends ConsumerWidget {
       drawer: _HomeDrawer(user: user, current: role),
       body: Column(
         children: [
+          const NationalStripe(height: 4),
           const OfflineBanner(),
           Expanded(
             child: ListView(
@@ -152,7 +160,7 @@ class RoleHomeScreen extends ConsumerWidget {
                         : () => context.push(d.route!),
                     child: Row(
                       children: [
-                        Icon(d.icon, color: AppColors.navy),
+                        Icon(d.icon, color: AppColors.primary),
                         const SizedBox(width: AppSizes.md),
                         Expanded(
                           child: Column(

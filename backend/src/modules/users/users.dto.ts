@@ -86,6 +86,17 @@ export class UpdateUserDto {
 }
 
 export class ListUsersQuery {
+  @ApiPropertyOptional({ description: 'Part of the email or name' })
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  q?: string;
+
+  @ApiPropertyOptional({ enum: ROLES })
+  @IsOptional()
+  @IsIn(ROLES)
+  role?: RoleName;
+
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -122,6 +133,13 @@ export class UserPage {
   @ApiProperty() page!: number;
   @ApiProperty() pageSize!: number;
   @ApiProperty() total!: number;
+}
+
+export class TemporaryPasswordResponse {
+  @ApiProperty({
+    description: 'Shown once. The user must change it at first sign-in.',
+  })
+  temporaryPassword!: string;
 }
 
 export class CreatedUserResponse {

@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -26,6 +28,7 @@ import {
   CreatedUserResponse,
   CreateUserDto,
   ListUsersQuery,
+  TemporaryPasswordResponse,
   UpdateUserDto,
   UserPage,
   UserView,
@@ -49,7 +52,7 @@ export class UsersController {
   @RequirePermissions('user:manage')
   @ApiOkResponse({ type: UserPage })
   list(@Query() query: ListUsersQuery): Promise<UserPage> {
-    return this.users.list(query.page, query.pageSize);
+    return this.users.list(query.page, query.pageSize, query.q, query.role);
   }
 
   @Get(':id')
@@ -68,6 +71,18 @@ export class UsersController {
     @Ctx() ctx: RequestContext,
   ) {
     return this.users.create(dto, actor, ctx);
+  }
+
+  @Post(':id/reset-password')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermissions('user:manage')
+  @ApiOkResponse({ type: TemporaryPasswordResponse })
+  resetPassword(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+    @Ctx() ctx: RequestContext,
+  ): Promise<TemporaryPasswordResponse> {
+    return this.users.resetPassword(id, actor, ctx);
   }
 
   @Patch(':id')

@@ -94,6 +94,8 @@ export async function seed(
       update: { description: ROLE_DESCRIPTIONS[name] },
       create: { name, description: ROLE_DESCRIPTIONS[name] },
     });
+    // An administrator's edits are kept; only default roles follow the catalogue.
+    if (role.customised) continue;
     const permissions = await prisma.permission.findMany({
       where: { code: { in: [...ROLE_PERMISSIONS[name]] } },
     });

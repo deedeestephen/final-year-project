@@ -342,12 +342,56 @@ void main() {
       await tester.enter('account.confirm', 'a-long-password-2');
       await tester.tapKey('account.submit');
       expect(find.text('The passwords do not match.'), findsOneWidget);
+      expect(find.text('Enter your phone number.'), findsOneWidget);
+      expect(find.text('Enter your NRC number.'), findsOneWidget);
       expect(backend.calls, isNot(contains('POST /auth/register')));
+    });
+
+    testWidgets('checks the NRC or passport format', (tester) async {
+      await open(tester);
+      await tester.enter('account.idNumber', '12345/7/1');
+      await tester.tapKey('account.submit');
+      expect(
+        find.text('Enter the NRC number like 123456/78/1.'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.text('Passport'));
+      await tester.pump();
+      await tester.tap(find.text('Passport'));
+      await settle(tester);
+      expect(find.text('Passport number'), findsOneWidget);
+      await tester.enter('account.idNumber', 'ab');
+      await tester.tapKey('account.submit');
+      expect(
+        find.text('A passport number has 6 to 12 letters or digits.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a passport holder can register', (tester) async {
+      backend.on('POST /auth/register', const FakeResponse(201, {'id': 'x'}));
+      await open(tester);
+      await tester.tap(find.text('Passport'));
+      await settle(tester);
+      expect(find.text('Passport number'), findsOneWidget);
+      await tester.enter('account.name', 'Visitor P.');
+      await tester.enter('account.email', 'visitor@example.test');
+      await tester.enter('account.phone', '+260971234567');
+      await tester.enter('account.idNumber', 'zn 1234567');
+      await tester.enter('account.password', 'a-long-password-1');
+      await tester.enter('account.confirm', 'a-long-password-1');
+      await tester.tapKey('account.submit');
+      final body = backend.last('POST /auth/register').body as Map;
+      expect(body['idDocumentType'], 'PASSPORT');
+      expect(body['idNumber'], 'zn 1234567');
     });
 
     Future<void> fill(WidgetTester tester) async {
       await tester.enter('account.name', 'Mwamba B.');
       await tester.enter('account.email', 'new.patient@example.test');
+      await tester.enter('account.phone', '+260971234567');
+      await tester.enter('account.idNumber', '123456/78/1');
       await tester.enter('account.password', 'a-long-password-1');
       await tester.enter('account.confirm', 'a-long-password-1');
       await tester.tapKey('account.submit');
@@ -362,6 +406,9 @@ void main() {
         'displayName': 'Mwamba B.',
         'email': 'new.patient@example.test',
         'password': 'a-long-password-1',
+        'phone': '+260971234567',
+        'idDocumentType': 'NRC',
+        'idNumber': '123456/78/1',
       });
       await tester.tapKey('register.toSignIn');
       expect(find.byKey(const Key('login.email')), findsOneWidget);
@@ -372,7 +419,7 @@ void main() {
       await open(tester);
       await fill(tester);
       expect(
-        find.textContaining('This email cannot be used for a new account.'),
+        find.textContaining('An account cannot be created with these details.'),
         findsOneWidget,
       );
     });

@@ -103,12 +103,12 @@ ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     colorScheme: const ColorScheme.light(
-      primary: AppColors.navy,
-      onPrimary: AppColors.onNavy,
-      secondary: AppColors.tealText,
-      onSecondary: AppColors.onNavy,
+      primary: AppColors.primary,
+      onPrimary: AppColors.onPrimary,
+      secondary: AppColors.linkText,
+      onSecondary: AppColors.onPrimary,
       error: AppColors.danger,
-      onError: AppColors.onNavy,
+      onError: AppColors.onPrimary,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
       outline: AppColors.borderStrong,
@@ -120,10 +120,10 @@ ThemeData buildAppTheme() {
     materialTapTargetSize: MaterialTapTargetSize.padded,
     visualDensity: VisualDensity.standard,
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.navy,
-      foregroundColor: AppColors.onNavy,
+      backgroundColor: AppColors.primary,
+      foregroundColor: AppColors.onPrimary,
       elevation: 0,
-      titleTextStyle: text.titleLarge?.copyWith(color: AppColors.onNavy),
+      titleTextStyle: text.titleLarge?.copyWith(color: AppColors.onPrimary),
     ),
     cardTheme: const CardThemeData(
       color: AppColors.surface,
@@ -136,8 +136,8 @@ ThemeData buildAppTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: AppColors.navy,
-        foregroundColor: AppColors.onNavy,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
         minimumSize: const Size.fromHeight(AppSizes.minTouchTarget),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: controlShape,
@@ -147,7 +147,7 @@ ThemeData buildAppTheme() {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         backgroundColor: AppColors.surfaceMuted,
-        foregroundColor: AppColors.navy,
+        foregroundColor: AppColors.primary,
         minimumSize: const Size.fromHeight(AppSizes.minTouchTarget),
         side: const BorderSide(color: AppColors.borderStrong),
         shape: controlShape,
@@ -156,7 +156,7 @@ ThemeData buildAppTheme() {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: AppColors.tealText,
+        foregroundColor: AppColors.linkText,
         minimumSize: minTarget,
         textStyle: text.labelLarge,
       ),
@@ -171,13 +171,13 @@ ThemeData buildAppTheme() {
       constraints: const BoxConstraints(minHeight: AppSizes.inputHeight),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       labelStyle: text.labelLarge?.copyWith(color: AppColors.textSecondary),
-      floatingLabelStyle: text.labelMedium?.copyWith(color: AppColors.navy),
+      floatingLabelStyle: text.labelMedium?.copyWith(color: AppColors.primary),
       hintStyle: text.bodyMedium?.copyWith(color: AppColors.textMuted),
       helperStyle: text.bodySmall,
       errorStyle: text.bodySmall?.copyWith(color: AppColors.danger),
       border: inputBorder(AppColors.borderStrong, 1.5),
       enabledBorder: inputBorder(AppColors.borderStrong, 1.5),
-      focusedBorder: inputBorder(AppColors.teal, 2),
+      focusedBorder: inputBorder(AppColors.positive, 2),
       errorBorder: inputBorder(AppColors.danger, 1.5),
       focusedErrorBorder: inputBorder(AppColors.danger, 2),
     ),
@@ -188,7 +188,7 @@ ThemeData buildAppTheme() {
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: AppColors.textPrimary,
-      contentTextStyle: text.bodyMedium?.copyWith(color: AppColors.onNavy),
+      contentTextStyle: text.bodyMedium?.copyWith(color: AppColors.onPrimary),
       behavior: SnackBarBehavior.floating,
     ),
   );

@@ -25,6 +25,9 @@ const _password = String.fromEnvironment('E2E_PASSWORD');
 // From `npm run e2e:user -- --role patient` (optional second flow).
 const _patientEmail = String.fromEnvironment('E2E_PATIENT_EMAIL');
 const _patientPassword = String.fromEnvironment('E2E_PATIENT_PASSWORD');
+// From `npm run e2e:user -- --role admin` (optional third flow).
+const _adminEmail = String.fromEnvironment('E2E_ADMIN_EMAIL');
+const _adminPassword = String.fromEnvironment('E2E_ADMIN_PASSWORD');
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +47,9 @@ void main() {
 
   Future<void> tapKey(WidgetTester tester, String key) async {
     final f = find.byKey(Key(key));
+    await tester.ensureVisible(f);
+    // Let the keyboard and page animations finish; a moving widget misses taps.
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.ensureVisible(f);
     await tester.pump();
     await tester.tap(f);
@@ -263,6 +269,118 @@ void main() {
       await db.close();
     },
     skip: _patientEmail.isEmpty,
+  );
+
+  testWidgets(
+    'admin sees users and roles, and links a new patient account by NRC',
+    (tester) async {
+      // Arrange through the API: a patient signs up with an NRC, and the
+      // clinic registers a record with the same NRC.
+      final api = Dio(BaseOptions(baseUrl: AppEnv.apiRoot));
+      final tag = DateTime.now().millisecondsSinceEpoch % 1000000;
+      final nrc =
+          '${(100000 + tag).toString().substring(0, 6)}/${10 + tag % 80}/1';
+      final newEmail = 'e2e-signup-$tag@example.test';
+      await api.post<Map<String, dynamic>>(
+        '/auth/register',
+        data: {
+          'email': newEmail,
+          'password': 'e2e-signup-password-$tag',
+          'displayName': 'SYNTHETIC Signup $tag',
+          'phone': '+260971234567',
+          'idDocumentType': 'NRC',
+          'idNumber': nrc,
+        },
+      );
+      final clinician = await api.post<Map<String, dynamic>>(
+        '/auth/login',
+        data: {'email': _email, 'password': _password},
+      );
+      await api.post<Map<String, dynamic>>(
+        '/patients',
+        data: {
+          'givenName': 'SYNTHETIC',
+          'familyName': 'Signup $tag',
+          'nationalId': nrc,
+          'dateOfBirth': '1962-02-02',
+          'regionClass': 'URBAN',
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${clinician.data!['accessToken']}',
+          },
+        ),
+      );
+
+      final AppDatabase db = await openAppDatabase();
+      final store = LocalStore(db);
+      await store.wipe();
+      await SecureTokenStore().clear();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appDatabaseProvider.overrideWithValue(db)],
+          child: const PcaApp(),
+        ),
+      );
+      await waitFor(tester, find.byKey(const Key('login.email')));
+
+      // The new sign-up form (screenshot), then back.
+      await tapKey(tester, 'login.createAccount');
+      await waitFor(tester, find.byKey(const Key('account.idNumber')));
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+
+      await enter(tester, 'login.email', _adminEmail);
+      await enter(tester, 'login.password', _adminPassword);
+      await tapKey(tester, 'login.submit');
+      await waitFor(tester, find.text('Roles & permissions'));
+      await tester.pump(const Duration(seconds: 2)); // screenshot: admin home
+
+      await tester.tap(find.text('Users'));
+      await waitFor(
+        tester,
+        find.byKey(const Key('user.admin@demo.pca-mhealth.test')),
+      );
+      await tester.pump(const Duration(seconds: 2)); // screenshot: users
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+
+      await tester.tap(find.text('Roles & permissions'));
+      await waitFor(tester, find.byKey(const Key('role.PATHOLOGIST')));
+      await tapKey(tester, 'role.PATHOLOGIST');
+      await waitFor(tester, find.byKey(const Key('perm.patient:read')));
+      await tester.pump(const Duration(seconds: 2)); // screenshot: permissions
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+
+      await tester.tap(find.text('Patient accounts'));
+      await waitFor(tester, find.byKey(Key('account.$newEmail')));
+      await tapKey(tester, 'account.link.$newEmail');
+      await waitFor(tester, find.byKey(const Key('account.confirmLink')));
+      await tester.pump(const Duration(seconds: 2)); // screenshot: match
+      await tapKey(tester, 'account.confirmLink');
+      await waitFor(tester, find.text('Account linked.'));
+
+      // The patient can now see their clinic record.
+      final patient = await api.post<Map<String, dynamic>>(
+        '/auth/login',
+        data: {'email': newEmail, 'password': 'e2e-signup-password-$tag'},
+      );
+      final me = await api.get<Map<String, dynamic>>(
+        '/patients/me',
+        options: Options(
+          headers: {'Authorization': 'Bearer ${patient.data!['accessToken']}'},
+        ),
+      );
+      expect(me.data!['familyName'], 'Signup $tag');
+
+      await store.wipe();
+      await db.close();
+    },
+    skip: _adminEmail.isEmpty,
   );
 }
 

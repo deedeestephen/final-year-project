@@ -126,10 +126,33 @@ Tick each box when it works.
   → *"New screening record"* with a red number on the Messages button. Tap the message to mark it as read.
 - [ ] Tap **Profile**, then **My consents**. If the list is empty, the clinician has not recorded a consent yet (a later phase adds that screen).
   With a consent listed, tap **Withdraw**. The app explains what that means and asks first.
-- [ ] **New patient account.** Sign out. On Sign in, tap **New patient? Create an account** and fill it in with made-up details.
+- [ ] **New patient account.** Sign out. On Sign in, tap **New patient? Create an account** and fill it in with made-up details, including a phone number and an **NRC** (like `123456/78/1`) or a **passport number**.
   → *"Your account is ready."* Sign in with it: Home says *"Almost ready… Ask your clinic to link it"*, because no clinic has linked it to a patient record yet.
 - [ ] **Offline.** Turn **Airplane mode** on and open the tabs again.
   → The app still shows your last results and messages, with *"Offline · showing what was saved on …"*.
+
+### The admin page (users, roles and permissions, patient accounts)
+
+**How to get in:** sign in with **`admin@demo.pca-mhealth.test`** and the **demo password** from Part 1. The first time, you must choose a new password (12 or more letters). **Write it down.** If you lose it, run `dev-up.ps1 -ResetDemoPasswords`.
+
+- [ ] **Admin home.** It shows **Users**, **Roles & permissions** and **Patient accounts**.
+- [ ] **Users.** Tap **Users**.
+  → Every account, with a green *Active*, orange *Locked* or red *Disabled* label. Search by name or email, or filter by role.
+  - Tap a person to change their **roles**, their **facility** (a clinician only sees the patients of their own facility), or switch the **account off**.
+  - **Unlock** appears when someone typed a wrong password 5 times.
+  - **Reset password** shows a one-time password. Give it to the person privately; they choose their own at their next sign-in.
+- [ ] **Add staff user.** On **Users**, tap **Add staff user**. Enter an email and name, tick **Clinician**, choose the facility, and tap **Create account**.
+  → A one-time password appears. Staff accounts are only made here; patients sign up themselves.
+- [ ] **Roles & permissions.** Tap a role, e.g. **Pathologist / Radiologist**.
+  → A list of ticks: what that role may do.
+  - Untick something and tap **Save permissions**. It asks first, then applies to everyone with that role at once.
+  - Tap **Reset to defaults** to undo.
+  - Some boxes are **locked** for safety: the admin role can't lose "manage users/roles" (or nobody could manage accounts again), and patients can't be given access to other people's data.
+- [ ] **Patient accounts (giving a patient access to their own data).**
+  1. As a patient: **New patient? Create an account**, with a made-up NRC such as `654321/12/1`.
+  2. As the clinician: register a patient with the **same NRC**.
+  3. As the admin: **Patient accounts → Not linked → Find record and link**.
+  → *"The NRC matches record … Link?"* Tap **Link**. The patient now sees their results in their app, and gets a message saying so.
 
 ### Phase 3: the server itself
 

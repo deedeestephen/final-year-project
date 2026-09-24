@@ -29,6 +29,11 @@ export const NOTIFICATION_TEXT = {
     title: 'Consent withdrawn',
     body: 'Your consent was withdrawn. You can see the details in Profile.',
   },
+  accountLinked: {
+    type: 'account.linked',
+    title: 'Account linked',
+    body: 'Your account is now linked to your clinic record. You can see your results in the app.',
+  },
 } as const;
 
 type NotificationText =
@@ -67,6 +72,17 @@ export class NotificationsService {
         title: text.title,
         body: text.body,
       },
+    });
+  }
+
+  /** Notifies a user account directly. */
+  async notifyUser(
+    userId: string,
+    text: NotificationText,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.notification.create({
+      data: { userId, type: text.type, title: text.title, body: text.body },
     });
   }
 

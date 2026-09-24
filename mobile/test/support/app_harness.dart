@@ -156,7 +156,11 @@ extension FormHelpers on WidgetTester {
       enterText(await reveal(key), text);
 
   Future<void> tapKey(String key) async {
-    await tap(await reveal(key));
+    final target = await reveal(key);
+    // Let page transitions finish: a route that is still animating in
+    // ignores taps.
+    await pump(const Duration(milliseconds: 400));
+    await tap(target);
     await settle(this);
   }
 }

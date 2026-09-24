@@ -56,6 +56,28 @@ String? validatePhone(String? v) {
       : 'Enter a phone number, e.g. +260971234567.';
 }
 
+String? validateRequiredPhone(String? v) {
+  if ((v?.trim() ?? '').isEmpty) return 'Enter your phone number.';
+  return validatePhone(v);
+}
+
+/// NRC as printed on the card: 123456/78/1 (spaces are ignored).
+String? validateNrc(String? v) {
+  final t = (v ?? '').replaceAll(RegExp(r'\s+'), '');
+  if (t.isEmpty) return 'Enter your NRC number.';
+  return RegExp(r'^\d{6}/\d{2}/\d$').hasMatch(t)
+      ? null
+      : 'Enter the NRC number like 123456/78/1.';
+}
+
+String? validatePassport(String? v) {
+  final t = (v ?? '').replaceAll(RegExp(r'\s+'), '').toUpperCase();
+  if (t.isEmpty) return 'Enter your passport number.';
+  return RegExp(r'^[A-Z0-9]{6,12}$').hasMatch(t)
+      ? null
+      : 'A passport number has 6 to 12 letters or digits.';
+}
+
 String? validateNationalId(String? v) {
   final t = v?.trim() ?? '';
   if (t.isEmpty) return null;

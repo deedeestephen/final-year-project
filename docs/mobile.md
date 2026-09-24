@@ -1,6 +1,6 @@
 # Mobile app (Flutter): Layer 1
 
-Flutter replaces React Native (ADR-001). The design system is Option 2 "Clinical Trust" with Option 1 legibility rules (ADR-002).
+Flutter replaces React Native (ADR-001). The colours are the Zambian national colours (ADR-004), with the legibility rules of ADR-002. There is no national emblem, and every sign-in screen says the app is not an official government service.
 
 ## Structure
 
@@ -108,6 +108,26 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
   - Sign out.
 - **Create an account.** Patients can sign up from the Sign in page. A new account shows "Almost ready" until a clinic links it to a patient record. The linking screen for clinicians is Phase 9.
 - **The chatbot stays in Phase 13** (owner decision), shown on Home under "Coming later".
+
+## Administration
+
+- **Admin home.** The home screen opens **Users**, **Roles & permissions** and **Patient accounts** (`/admin/...`, administrators only).
+- **Users.**
+  - Search and filter by role.
+  - Set roles, facility and active/disabled.
+  - Unlock an account, or reset its password (a one-time password is shown once).
+  - Add staff users. Patients register themselves.
+- **Roles & permissions.**
+  - A checklist per role, grouped by area. Saving asks first, applies to everyone with the role on their next request, and is audited. "Reset to defaults" undoes all changes.
+  - The server's safety locks are shown as locked boxes:
+    - ADMIN always keeps user and role management.
+    - PATIENT can only have permissions about themselves.
+  - Customised roles are kept by the demo seed.
+- **Patient accounts.**
+  - Self-registered accounts show their ID type and the last 4 characters of the ID and phone.
+  - "Find record and link" matches the account's NRC hash exactly against clinic records. The admin sees only the record number and facility, never clinical data.
+  - Unlinking signs the patient out.
+  - Passport holders are linked by the clinic (Phase 9).
 
 ## Galaxy S9+ emulator and a real phone
 

@@ -6,6 +6,7 @@ import 'package:pca_mhealth/core/network/api_exception.dart';
 import 'package:pca_mhealth/shared/widgets/ai_disclaimer_banner.dart';
 import 'package:pca_mhealth/shared/widgets/async_state_view.dart';
 import 'package:pca_mhealth/shared/widgets/clinical_card.dart';
+import 'package:pca_mhealth/shared/widgets/national_stripe.dart';
 import 'package:pca_mhealth/shared/widgets/primary_button.dart';
 import 'package:pca_mhealth/shared/widgets/sync_status_badge.dart';
 
@@ -152,5 +153,21 @@ void main() {
         .where((c) => c.color == AppColors.amber);
     expect(accent, hasLength(1));
     expect(find.text('PSA raised'), findsOneWidget);
+  });
+
+  testWidgets('the national stripe is visible in all four flag colours', (
+    tester,
+  ) async {
+    await pump(tester, const NationalStripe(height: 6));
+    final boxes = tester.widgetList<ColoredBox>(find.byType(ColoredBox));
+    expect(boxes.map((b) => b.color), [
+      AppColors.flagGreen,
+      AppColors.flagRed,
+      AppColors.flagBlack,
+      AppColors.flagOrange,
+    ]);
+    for (final box in find.byType(ColoredBox).evaluate()) {
+      expect(tester.getSize(find.byWidget(box.widget)).height, 6);
+    }
   });
 }

@@ -7,7 +7,7 @@ import '../../app/theme/tokens.dart';
 enum Severity {
   none(AppColors.border),
   info(AppColors.sky),
-  positive(AppColors.teal),
+  positive(AppColors.positive),
   warning(AppColors.amber),
   danger(AppColors.danger);
 

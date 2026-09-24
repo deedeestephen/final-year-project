@@ -110,11 +110,15 @@ class LabelledDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: value,
       decoration: InputDecoration(labelText: label),
       items: [
         for (final e in options.entries)
-          DropdownMenuItem(value: e.key, child: Text(e.value)),
+          DropdownMenuItem(
+            value: e.key,
+            child: Text(e.value, overflow: TextOverflow.ellipsis),
+          ),
       ],
       onChanged: onChanged,
       validator: validator,

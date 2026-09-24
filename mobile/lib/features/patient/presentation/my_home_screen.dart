@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../shared/widgets/clinical_card.dart';
+import '../../../shared/widgets/national_stripe.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../auth/application/session_controller.dart';
 import '../application/patient_providers.dart';
@@ -65,6 +66,7 @@ class MyHomeScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Home')),
       body: Column(
         children: [
+          const NationalStripe(height: 4),
           const OfflineBanner(),
           Expanded(
             child: RefreshIndicator(
@@ -173,7 +175,7 @@ class _LinkedCards extends ConsumerWidget {
           onTap: () => context.go(Routes.myResults),
           child: Row(
             children: [
-              const Icon(Icons.assignment_outlined, color: AppColors.navy),
+              const Icon(Icons.assignment_outlined, color: AppColors.primary),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(
@@ -199,7 +201,7 @@ class _LinkedCards extends ConsumerWidget {
           onTap: () => context.go(Routes.messages),
           child: Row(
             children: [
-              const Icon(Icons.mail_outline, color: AppColors.navy),
+              const Icon(Icons.mail_outline, color: AppColors.primary),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(

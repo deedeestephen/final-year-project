@@ -35,7 +35,10 @@ void main() {
     test(
       'bright accents are genuinely unsafe for body text, which is why they are icon-only',
       () {
-        expect(contrastRatio(AppColors.teal, AppColors.surface), lessThan(4.5));
+        expect(
+          contrastRatio(AppColors.positive, AppColors.surface),
+          lessThan(4.5),
+        );
         expect(
           contrastRatio(AppColors.amber, AppColors.surface),
           lessThan(4.5),

@@ -33,6 +33,13 @@ model User {
   mustChangePassword Boolean    @default(false) @map("must_change_password")
   facilityId         String?    @map("facility_id") @db.Uuid
   isSynthetic        Boolean    @default(false) @map("is_synthetic")
+  /// Patient self-registration: contact phone and identity document, encrypted
+  /// (AES-256-GCM). The HMAC allows exact matching to a clinic record without
+  /// storing the number in clear.
+  phoneEnc           Bytes?     @map("phone_enc")
+  idDocumentType     String?    @map("id_document_type") // NRC | PASSPORT
+  idNumberEnc        Bytes?     @map("id_number_enc")
+  idNumberHmac       String?    @unique @map("id_number_hmac")
   createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -51,6 +58,10 @@ model Role {
   id          String           @id @default(uuid()) @db.Uuid
   name        String           @unique // PATIENT | CLINICIAN | PATHOLOGIST | ADMIN
   description String
+  /// True once an administrator edits this role's permissions; the seed then
+  /// leaves them alone (reset to defaults clears it).
+  customised  Boolean          @default(false)
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
   users       UserRole[]
   permissions RolePermission[]
 

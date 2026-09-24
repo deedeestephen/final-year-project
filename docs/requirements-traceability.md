@@ -148,3 +148,13 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Patient education (FR-07 groundwork) | bundled, sourced English library; Bemba/Nyanja disabled until human-verified | `patient_app_test.dart` | English Verified; chatbot Ph.13; translations pending the owner |
 | Report viewer (FR-08) | Profile › My reports: empty state until reports are released | `patient_app_test.dart` | Shell only; content Ph.10–11 |
 
+## Administration, identity at sign-up and national theme
+
+| Requirement | Implementation | Test | Status |
+|---|---|---|---|
+| UC-09: administrators manage accounts and roles | Users screens: search, roles, facility, disable, unlock, one-time password reset; `POST /users/:id/reset-password`, `GET /users?q=&role=` | `backend/test/db/admin.int-spec.ts`, `mobile/test/features/admin/admin_test.dart`, on-device admin flow | Verified |
+| Editable role permissions with safety locks | `GET /admin/roles`, `PUT /admin/roles/:name/permissions`, `POST /admin/roles/:name/reset`; `roles.customised` kept by the seed | `admin.int-spec.ts` (immediate effect, audit, seed keeps edits, lock-out and patient locks) | Verified |
+| Giving patients access to their own data | `POST /admin/patient-accounts/:id/match|link|unlink` (NRC HMAC match; `patient_account:link`) + notification | `admin.int-spec.ts`, on-device admin flow | Verified |
+| Patient sign-up with phone and NRC or passport | `RegisterDto` + `users.phone_enc`, `id_number_enc`, `id_number_hmac` (unique) | `admin.int-spec.ts`, `patient_app_test.dart` | Verified |
+| Zambian national colours (owner request) | ADR-004; tokens + `NationalStripe`; not-an-official-service notice | `theme_test.dart` (AA contrast), `widgets_test.dart` | Verified |
+

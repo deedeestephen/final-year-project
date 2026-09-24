@@ -75,12 +75,18 @@ class PatientRepository {
     required String displayName,
     required String email,
     required String password,
+    required String phone,
+    required String idDocumentType,
+    required String idNumber,
   }) => _api.post<Map<String, dynamic>>(
     '/auth/register',
     data: {
       'displayName': displayName.trim(),
       'email': email.trim(),
       'password': password,
+      'phone': phone.trim(),
+      'idDocumentType': idDocumentType,
+      'idNumber': idNumber.trim(),
     },
   );
 

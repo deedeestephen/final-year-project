@@ -49,7 +49,7 @@ class MessagesScreen extends ConsumerWidget {
           if (unread > 0)
             TextButton(
               key: const Key('messages.readAll'),
-              style: TextButton.styleFrom(foregroundColor: AppColors.onNavy),
+              style: TextButton.styleFrom(foregroundColor: AppColors.onPrimary),
               onPressed: () => _run(context, ref, repo.markAllRead),
               child: const Text('Mark all read'),
             ),

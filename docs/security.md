@@ -98,5 +98,10 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Patients read only their own records (`requireOwn`), audited with counts only | `ClinicalService.listOwnRecords` | Verified (Ph.8) |
 | Patient app keeps its last good copy only in the encrypted database, and wipes it at sign-out; server errors are never masked by the copy | `PatientRepository` | Verified (Ph.8) |
 | Self-registration: a taken email gets a neutral message in the app (the API's 409 is an accepted Phase 4 trade-off, rate-limited) | `register_account_screen.dart` | Verified (Ph.8) |
+| Sign-up phone and NRC/passport stored encrypted (AES-256-GCM) with an HMAC for exact matching; one account per ID number; a duplicate gets the same neutral message as a duplicate email | `auth.service.ts`, `common/crypto/identity-document.ts`, migration `…_admin_and_registration_id` | Verified |
+| Role permissions editable by administrators, audited with added/removed; locks: ADMIN keeps `user:manage` and `role:manage`, PATIENT may only hold `*_self` permissions; unknown codes rejected | `modules/admin` | Verified |
+| Linking a patient account needs an exact NRC match; the admin sees only record number and facility (data minimisation); linking notifies the patient; unlinking ends their sessions; all audited | `AdminService.link/unlink` | Verified |
+| Admin password reset issues a one-time password, forces a change and ends all sessions; admins cannot reset their own this way | `UsersService.resetPassword` | Verified |
+| No official emblems; every sign-in screen says the app is not an official government service (ADR-004) | `NationalStripe.notOfficial` | Verified |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |
