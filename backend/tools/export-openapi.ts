@@ -4,7 +4,7 @@
  *   npm run openapi:check          fail if the committed file is out of date
  * No database connection is made: clients connect lazily and are never used.
  */
-import { generateKeyPairSync } from 'node:crypto';
+import { generateKeyPairSync, randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { NestFactory } from '@nestjs/core';
@@ -41,6 +41,9 @@ async function main(): Promise<void> {
       'base64',
     );
   }
+  process.env.FIELD_ENCRYPTION_KEY_BASE64 ??=
+    randomBytes(32).toString('base64');
+  process.env.FIELD_HMAC_KEY_BASE64 ??= randomBytes(32).toString('base64');
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: false,

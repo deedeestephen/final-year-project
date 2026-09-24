@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
+import { CryptoModule } from './common/crypto/crypto.module';
 import { AllExceptionsFilter } from './common/http/all-exceptions.filter';
 import {
   AppThrottlerGuard,
@@ -16,7 +17,9 @@ import { JwtAuthGuard } from './modules/access/jwt-auth.guard';
 import { PermissionsGuard } from './modules/access/permissions.guard';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ClinicalModule } from './modules/clinical/clinical.module';
 import { HealthModule } from './modules/health/health.module';
+import { PatientsModule } from './modules/patients/patients.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -42,9 +45,12 @@ import { UsersModule } from './modules/users/users.module';
       ],
     }),
     DatabaseModule,
+    CryptoModule,
     AuditModule,
     AuthModule,
     UsersModule,
+    PatientsModule,
+    ClinicalModule,
     HealthModule,
   ],
   providers: [

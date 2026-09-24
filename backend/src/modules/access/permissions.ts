@@ -12,6 +12,8 @@ export const PERMISSIONS = {
   'clinical:read': 'Read clinical records in own facility',
   'consent:manage': 'Capture or withdraw patient consent',
   'consent:read_self': "Read one's own consents",
+  'consent:withdraw_self':
+    "Withdraw one's own consent (unconditional right, proposal §3.7.1)",
   'imaging:upload': 'Upload imaging studies',
   'imaging:read': 'Read imaging studies',
   'histopathology:submit': 'Submit histopathology slides',
@@ -50,6 +52,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, readonly PermissionCode[]> = {
   PATIENT: [
     'patient:read_self',
     'consent:read_self',
+    'consent:withdraw_self',
     'report:read_self',
     'chatbot:use',
     'notification:read',

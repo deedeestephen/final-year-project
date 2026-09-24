@@ -94,7 +94,10 @@ describe('seed', () => {
     expect(demoUsers.every((u) => u.isSynthetic)).toBe(true);
 
     const demoPatients = await prisma.patient.findMany({
-      where: { mrn: { startsWith: 'SYN-' } },
+      where: {
+        mrn: { in: ['SYN-0001', 'SYN-0002', 'SYN-0003'] },
+        facility: { code: SYNTHETIC_FACILITY_CODE },
+      },
       include: { clinicalRecords: true },
     });
     expect(demoPatients).toHaveLength(3);
@@ -106,7 +109,7 @@ describe('seed', () => {
 
   it('stores patient names encrypted, never in clear text', async () => {
     const patient = await prisma.patient.findFirstOrThrow({
-      where: { mrn: 'SYN-0001' },
+      where: { mrn: 'SYN-0001', facility: { code: SYNTHETIC_FACILITY_CODE } },
     });
     const stored = Buffer.from(patient.givenNameEnc);
     expect(stored.toString('utf8')).not.toContain('SYNTHETIC');

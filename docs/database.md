@@ -59,7 +59,7 @@ Keys are generated server-side (`imaging/2026/09/<uuid>.dcm`) and validated agai
 | Mongo validators + indexes | `npm run db:mongo:migrate` |
 | Integration tests | `npm run test:db` |
 
-Local ports: Postgres 5432, **Mongo 27018** (27017 is left free for a locally installed MongoDB service), Redis 6379, MinIO 9000/9001, Qdrant 6333. To browse the project database with MongoDB Compass, use the `MONGO_URL` in `.env`.
+Local ports: **Postgres 5433**, **Mongo 27018** (5432 and 27017 are left free for the locally installed PostgreSQL and MongoDB services), Redis 6379, MinIO 9000/9001, Qdrant 6333. To browse the project database with MongoDB Compass, use the `MONGO_URL` in `.env`.
 
 ## Test isolation
 `npm run test:db` creates a brand-new database per run (`pca_mhealth_<runId>_test`), applies all migrations with `prisma migrate deploy` (proving the schema builds from clean), and removes only that database afterwards (`KEEP_TEST_DB=1` keeps it). The development database is never reset. `prisma migrate reset` is deliberately not used by automation.

@@ -62,6 +62,19 @@ const schema = z
     LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
     PASSWORD_RESET_TTL_MIN: z.coerce.number().int().min(5).max(240).default(30),
+    // Column encryption of patient identifiers (32-byte keys, base64).
+    FIELD_ENCRYPTION_KEY_BASE64: z
+      .string()
+      .refine(
+        (v) => Buffer.from(v, 'base64').length === 32,
+        'must be 32 bytes, base64',
+      ),
+    FIELD_HMAC_KEY_BASE64: z
+      .string()
+      .refine(
+        (v) => Buffer.from(v, 'base64').length === 32,
+        'must be 32 bytes, base64',
+      ),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && env.CORS_ORIGINS.length === 0) {
@@ -96,6 +109,8 @@ export interface AppConfig {
     rateLimitMax: number;
     passwordResetTtlMin: number;
   };
+  fieldEncryptionKey: Buffer;
+  fieldHmacKey: Buffer;
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -140,5 +155,7 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
       rateLimitMax: e.AUTH_RATE_LIMIT_MAX,
       passwordResetTtlMin: e.PASSWORD_RESET_TTL_MIN,
     },
+    fieldEncryptionKey: Buffer.from(e.FIELD_ENCRYPTION_KEY_BASE64, 'base64'),
+    fieldHmacKey: Buffer.from(e.FIELD_HMAC_KEY_BASE64, 'base64'),
   };
 }

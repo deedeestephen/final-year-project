@@ -163,3 +163,32 @@ strict, pytest 100% coverage, pip-audit). mobile PASS (format, analyze, widget t
 **Open item for the owner:** choose an SMS or e-mail provider for password-reset delivery before any real deployment (it costs money).
 
 **Next:** Phase 5, patients and clinical data.
+
+## 2026-09-24 — Phase 5: Patients, clinical data and consent
+
+**Objective:** Patient registration and profiles, clinical records (PSA, DRE, PI-RADS, demographics, history), consent, and patient history, with sensitive data protected.
+
+**Design decisions**
+- **Facility scoping:** clinical staff see only patients in their own facility; others return 404 (not 403) so their existence is not revealed. Administrators have no routine clinical access (data minimisation).
+- **Identifiers:** given/family name, national ID and phone are stored with AES-256-GCM (`FieldCrypto`, keys from validated config). The national ID also gets an HMAC so duplicates and searches work without clear text, and formatting differences ("123456/78/1" vs "123456 / 78 / 1") still match. Responses show the national ID masked.
+- **Optimistic concurrency:** updates carry `version`; a stale version returns `409 VERSION_CONFLICT` with the current version, never a silent overwrite. This is the basis for the offline conflict handling in Phase 6.
+- **Idempotent offline creation:** a patient or clinical record with an existing `clientUuid` returns the same record (200) instead of a duplicate. The same id from another facility or another patient is refused.
+- **Clinical values** are validated in the API (types, ranges, decimals, real past dates, free PSA ≤ total PSA) and again by DB CHECK constraints. Derived values: PSA density and free/total ratio.
+- **Consent:** staff grant, list and withdraw. Patients can view and withdraw their own consent (new permission `consent:withdraw_self`); withdrawing twice returns 409. AI analysis will check `hasActiveConsent(AI_ANALYSIS)` in Phase 11.
+- **Audit:** reads, searches, creations, updates and consent changes are audited with ids and counts only, never names or national IDs.
+
+**Files created:** `src/modules/patients/*`, `src/modules/clinical/*`, `src/common/crypto/crypto.module.ts`, `src/common/validation/calendar-date.ts`, `test/db/{helpers,patients.int-spec,users-and-edges.int-spec}.ts`.
+**Files modified:** `app.module.ts`, `app-config.ts` (field keys validated), `permissions.ts`, test fixtures, `tools/export-openapi.ts`, OpenAPI document, `postgres.int-spec.ts`.
+
+**Tests:** 253 in total, all passing, stable across repeated runs. Combined coverage: 97% lines / 85% branches / 97% functions.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| Audit-row assertion crashed | `JSON.stringify` cannot serialise the BigInt `seq` column | serialise with a BigInt replacer in the test |
+| Branch coverage 79.9% (< 80%) | untested branches in the users, patients and clinical services | 15 edge-case integration tests (locked status, unlock, role change ending sessions, duplicate MRN, staff without facility, cross-facility clientUuid, account already linked, minimal record, reused client id, unknown ids) → 85% |
+| Seed test failed intermittently in the combined run | new test MRNs `SYN-E-…`/`SYN-D-…` matched the seed test's `SYN-` prefix filter depending on suite order | test MRNs use `EDGE-`; seed assertions check the exact seed MRNs in the seed facility |
+| `prisma migrate deploy`: authentication failed (next morning) | the owner's PostgreSQL 18 Windows service had started on 0.0.0.0:5432 and was answering instead of the Docker database | project Postgres moved to host port **5433** (`POSTGRES_PORT`); the owner's service left untouched; dev data verified intact |
+| DB suites timed out in `beforeAll` only in the combined run | `testTimeout` is a global option, so the DB project's 60 s was ignored and Jest's 5 s default applied to Argon2-heavy setup | `testTimeout: 60000` in the root `jest-all.json` |
+
+**Next:** Phase 7, Flutter app foundation (owner's choice: app before the sync API).

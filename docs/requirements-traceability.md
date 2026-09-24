@@ -8,7 +8,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | ID | Requirement (summary) | Component | Implementation | Test | Phase | Status |
 |---|---|---|---|---|---|---|
 | FR-01 | JWT auth + RBAC for 4 roles; lockout after 5 failed logins | L2/L3 auth | `modules/auth`, `modules/access` (JwtAuthGuard, PermissionsGuard), `modules/users` | `test/db/auth.int-spec.ts` (25 tests), `token.service.spec.ts`, `password.spec.ts` | 4 | **Verified** |
-| FR-02 | Capture/transmit demographics, PSA, DRE, history encrypted over TLS 1.3 | L1 forms, L3 clinical | mobile/features/clinical, backend/modules/clinical | API + widget tests | 5, 9 | Planned |
+| FR-02 | Capture/transmit demographics, PSA, DRE, history encrypted over TLS 1.3 | L1 forms, L3 clinical | `backend/src/modules/{patients,clinical}`; app forms Ph.9 | `test/db/patients.int-spec.ts`, `users-and-edges.int-spec.ts` | 5, 9 | **Backend Verified**; app Ph.9; TLS Ph.15 |
 | FR-03 | Full offline entry, AES-256 SQLite cache, conflict-resolving sync | L1 sync, L3 sync | mobile/core/sync, backend/modules/sync | offline/sync test suite | 6 | Planned |
 | FR-04 | Accept & validate DICOM MRI/TRUS/CT, archive, queue for CNN | L3 imaging, L5 object store | backend/modules/imaging | upload validation tests | 10 | Planned |
 | FR-05 | PCa probability + Gleason grade group ≤3 s P95 | L4 + broker | ai-services router, backend ai-broker | contract tests; latency measured in Ph.17 | 11, 17 | Planned (target, not claimed) |
@@ -25,7 +25,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | UC | Name | Covered by | Status |
 |---|---|---|---|
 | UC-01 | Registration & authentication | FR-01 | **Verified (backend)**; app screens Ph.7 |
-| UC-02 | Offline clinical data capture | FR-02, FR-03 | Planned |
+| UC-02 | Offline clinical data capture | FR-02, FR-03 | **Partial:** server idempotency (`clientUuid`) and optimistic concurrency (`version` → `VERSION_CONFLICT`) Verified; sync API + app offline store Ph.6 |
 | UC-03 | Imaging upload & validation | FR-04 | Planned |
 | UC-04 | Histopathology slide submission | Phase 10 (WSI) + Phase 11 Patch-CNN provider | Planned |
 | UC-05 | AI multi-modal analysis | FR-05 | Planned |
@@ -57,7 +57,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 
 | Requirement | Implementation | Status |
 |---|---|---|
-| Informed consent tracking, withdrawal | consents table, consent-gated processing | **Schema Verified (Ph.2)** (withdrawal consistency CHECK tested); gating in Ph.5 |
+| Informed consent tracking, withdrawal | `/patients/:id/consents` (grant/list/withdraw), `/patients/me/consents` (patient self-view and withdrawal) | **Verified (Ph.5)**; `hasActiveConsent` gates AI analysis in Ph.11 |
 | Data minimisation, role-limited access | DTO field selection per role, facility scoping | Planned |
 | Fairness monitoring (AUC gap > 0.05 flag) | ai-services/fairness | Planned |
 | Data residency | Documented deployment constraint | Documented |
@@ -101,3 +101,14 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Session tokens expire and can be revoked (UC-01) | 15-min access JWT, refresh rotation, logout, family revocation | `auth.int-spec.ts` › sessions | Verified |
 | Password reset architecture | hashed single-use tokens + `ResetDelivery` interface | `auth.int-spec.ts` › password reset | Verified (delivery channel: development only) |
 | Admin user lifecycle (UC-09) | `/api/v1/users` (list/get/create/update, unlock, disable) | `auth.int-spec.ts` › administrator tests | Verified |
+
+## Phase 5 additions (patients, clinical data, consent)
+
+| Requirement | Implementation | Test | Status |
+|---|---|---|---|
+| Patient registration & profiles (UC-02) | `/api/v1/patients` (create, search by national ID/MRN, get, update), `/patients/me` | `patients.int-spec.ts` | Verified |
+| PSA, free PSA, DRE, PI-RADS, volume, biopsy history, symptoms, notes (§3.3.3 module 3 inputs) | `/patients/:id/clinical-records`, derived PSA density and free/total ratio | `patients.int-spec.ts` › clinical records | Verified |
+| Patient history | clinical records newest first; `/clinical-records/:id` | same | Verified |
+| Identifier encryption + exact lookup (NFR-01, NFR-10) | `FieldCrypto` (AES-256-GCM) + HMAC national-ID lookup; national ID masked in responses | `patients.int-spec.ts` › registration and storage | Verified |
+| Facility scoping / data minimisation | `PatientsService.requireInFacility` (other facilities → 404); admins have no clinical access | `patients.int-spec.ts` › access control | Verified |
+| Audit of data access (FR-10) | `patient.read`, `patient.search`, `clinical_record.*`, `consent.*` events without identifiers | `patients.int-spec.ts` | Verified |

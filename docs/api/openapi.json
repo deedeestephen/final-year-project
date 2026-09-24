@@ -391,6 +391,544 @@
         ]
       }
     },
+    "/api/v1/patients": {
+      "post": {
+        "operationId": "PatientsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePatientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Same clientUuid already registered (idempotent retry)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientView"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientView"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A patient with this national ID or MRN already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "patients"
+        ]
+      },
+      "get": {
+        "operationId": "PatientsController_list_v1",
+        "parameters": [
+          {
+            "name": "nationalId",
+            "required": false,
+            "in": "query",
+            "description": "Exact match; formatting differences are ignored",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mrn",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientPage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "patients"
+        ]
+      }
+    },
+    "/api/v1/patients/me": {
+      "get": {
+        "operationId": "PatientsController_me_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The caller's own patient record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "patients"
+        ]
+      }
+    },
+    "/api/v1/patients/{id}": {
+      "get": {
+        "operationId": "PatientsController_get_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "patients"
+        ]
+      },
+      "patch": {
+        "operationId": "PatientsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePatientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientView"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT: the record changed since it was read"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "patients"
+        ]
+      }
+    },
+    "/api/v1/patients/me/consents": {
+      "get": {
+        "operationId": "PatientClinicalController_myConsents_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/me/consents/{consentId}/withdraw": {
+      "post": {
+        "operationId": "PatientClinicalController_withdrawMyConsent_v1",
+        "parameters": [
+          {
+            "name": "consentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{id}/clinical-records": {
+      "post": {
+        "operationId": "PatientClinicalController_createRecord_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClinicalRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Same clientUuid already recorded (idempotent retry)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalRecordView"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalRecordView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      },
+      "get": {
+        "operationId": "PatientClinicalController_listRecords_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Patient history, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalRecordView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{id}/consents": {
+      "post": {
+        "operationId": "PatientClinicalController_grantConsent_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantConsentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      },
+      "get": {
+        "operationId": "PatientClinicalController_listConsents_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/patients/{id}/consents/{consentId}/withdraw": {
+      "post": {
+        "operationId": "PatientClinicalController_withdrawConsent_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "consentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
+    "/api/v1/clinical-records/{id}": {
+      "get": {
+        "operationId": "ClinicalRecordsController_get_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalRecordView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "clinical"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check_v1",
@@ -835,6 +1373,543 @@
             "description": "Clear a sign-in lockout"
           }
         }
+      },
+      "CreatePatientDto": {
+        "type": "object",
+        "properties": {
+          "mrn": {
+            "type": "string",
+            "description": "Facility medical record number; generated when omitted"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "nationalId": {
+            "type": "string",
+            "example": "123456/78/1",
+            "description": "National Registration Card number"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+260971234567"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "example": "1958-03-14",
+            "format": "date"
+          },
+          "regionClass": {
+            "type": "string",
+            "enum": [
+              "URBAN",
+              "PERI_URBAN",
+              "RURAL"
+            ]
+          },
+          "district": {
+            "type": "string"
+          },
+          "clientUuid": {
+            "type": "string",
+            "description": "Client-generated id for offline-created records (idempotency)"
+          }
+        },
+        "required": [
+          "givenName",
+          "familyName",
+          "dateOfBirth",
+          "regionClass"
+        ]
+      },
+      "PatientView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "ageYears": {
+            "type": "number"
+          },
+          "regionClass": {
+            "type": "string",
+            "enum": [
+              "URBAN",
+              "PERI_URBAN",
+              "RURAL"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "facilityId": {
+            "type": "string"
+          },
+          "nationalIdMasked": {
+            "type": "string",
+            "nullable": true,
+            "description": "Masked; only the last characters are shown"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "district": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSynthetic": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "givenName",
+          "familyName",
+          "ageYears",
+          "regionClass",
+          "version",
+          "facilityId",
+          "nationalIdMasked",
+          "phone",
+          "dateOfBirth",
+          "district",
+          "accountUserId",
+          "isSynthetic",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PatientSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "ageYears": {
+            "type": "number"
+          },
+          "regionClass": {
+            "type": "string",
+            "enum": [
+              "URBAN",
+              "PERI_URBAN",
+              "RURAL"
+            ]
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "givenName",
+          "familyName",
+          "ageYears",
+          "regionClass",
+          "version"
+        ]
+      },
+      "PatientPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PatientSummary"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "UpdatePatientDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "Version the client last saw (optimistic concurrency)"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "regionClass": {
+            "type": "string",
+            "enum": [
+              "URBAN",
+              "PERI_URBAN",
+              "RURAL"
+            ]
+          },
+          "district": {
+            "type": "string"
+          },
+          "accountUserId": {
+            "type": "string",
+            "description": "Link the patient's own app account (a PATIENT user)"
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "ConsentView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "patientId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "DATA_PROCESSING",
+              "AI_ANALYSIS",
+              "RESEARCH_USE",
+              "EHR_SHARING"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "GRANTED",
+              "WITHDRAWN"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "WRITTEN",
+              "VERBAL_WITNESSED",
+              "DIGITAL"
+            ]
+          },
+          "consentTextVersion": {
+            "type": "string"
+          },
+          "grantedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "type",
+          "status",
+          "method",
+          "consentTextVersion",
+          "grantedAt",
+          "withdrawnAt",
+          "version"
+        ]
+      },
+      "SymptomsDto": {
+        "type": "object",
+        "properties": {
+          "nocturia": {
+            "type": "boolean"
+          },
+          "frequency": {
+            "type": "boolean"
+          },
+          "urgency": {
+            "type": "boolean"
+          },
+          "weakStream": {
+            "type": "boolean"
+          },
+          "haematuria": {
+            "type": "boolean"
+          },
+          "bonePain": {
+            "type": "boolean"
+          },
+          "weightLoss": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateClinicalRecordDto": {
+        "type": "object",
+        "properties": {
+          "encounterDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-20"
+          },
+          "psaNgMl": {
+            "type": "number",
+            "description": "Total PSA in ng/mL",
+            "example": 6.8
+          },
+          "freePsaNgMl": {
+            "type": "number",
+            "description": "Free PSA in ng/mL; must not exceed total PSA"
+          },
+          "dreFinding": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "ENLARGED_SMOOTH",
+              "NODULAR",
+              "INDURATED",
+              "NOT_PERFORMED"
+            ]
+          },
+          "piradsScore": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "PI-RADS v2.1 category, when imaging exists"
+          },
+          "prostateVolumeMl": {
+            "type": "number",
+            "description": "Prostate volume in mL"
+          },
+          "biopsyHistory": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "PRIOR_NEGATIVE",
+              "PRIOR_POSITIVE",
+              "UNKNOWN"
+            ],
+            "default": "UNKNOWN"
+          },
+          "familyHistory": {
+            "type": "boolean"
+          },
+          "symptoms": {
+            "$ref": "#/components/schemas/SymptomsDto"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "clientUuid": {
+            "type": "string",
+            "description": "Client-generated id; resubmitting the same id returns the existing record"
+          }
+        },
+        "required": [
+          "encounterDate",
+          "dreFinding"
+        ]
+      },
+      "ClinicalRecordView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "patientId": {
+            "type": "string"
+          },
+          "facilityId": {
+            "type": "string"
+          },
+          "recordedById": {
+            "type": "string"
+          },
+          "encounterDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "psaNgMl": {
+            "type": "number",
+            "nullable": true
+          },
+          "freePsaNgMl": {
+            "type": "number",
+            "nullable": true
+          },
+          "freeToTotalPsaRatio": {
+            "type": "number",
+            "nullable": true,
+            "description": "free/total PSA ratio, when both are known"
+          },
+          "dreFinding": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "ENLARGED_SMOOTH",
+              "NODULAR",
+              "INDURATED",
+              "NOT_PERFORMED"
+            ]
+          },
+          "piradsScore": {
+            "type": "number",
+            "nullable": true
+          },
+          "prostateVolumeMl": {
+            "type": "number",
+            "nullable": true
+          },
+          "psaDensity": {
+            "type": "number",
+            "nullable": true,
+            "description": "PSA density (ng/mL per mL), when volume is known"
+          },
+          "biopsyHistory": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "PRIOR_NEGATIVE",
+              "PRIOR_POSITIVE",
+              "UNKNOWN"
+            ]
+          },
+          "familyHistory": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "symptoms": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SymptomsDto"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "number"
+          },
+          "clientUuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "facilityId",
+          "recordedById",
+          "encounterDate",
+          "psaNgMl",
+          "freePsaNgMl",
+          "freeToTotalPsaRatio",
+          "dreFinding",
+          "piradsScore",
+          "prostateVolumeMl",
+          "psaDensity",
+          "biopsyHistory",
+          "familyHistory",
+          "symptoms",
+          "notes",
+          "version",
+          "clientUuid",
+          "createdAt"
+        ]
+      },
+      "GrantConsentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "DATA_PROCESSING",
+              "AI_ANALYSIS",
+              "RESEARCH_USE",
+              "EHR_SHARING"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "WRITTEN",
+              "VERBAL_WITNESSED",
+              "DIGITAL"
+            ]
+          },
+          "consentTextVersion": {
+            "type": "string",
+            "example": "consent-v1.0-en",
+            "description": "Version of the consent text the patient agreed to"
+          }
+        },
+        "required": [
+          "type",
+          "method",
+          "consentTextVersion"
+        ]
       }
     }
   }

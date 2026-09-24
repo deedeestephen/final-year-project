@@ -1,4 +1,4 @@
-import { generateKeyPairSync } from 'node:crypto';
+import { generateKeyPairSync, randomBytes } from 'node:crypto';
 
 /**
  * Throwaway Ed25519 key pair generated per test run. Never used outside tests
@@ -12,6 +12,9 @@ const { privateKey, publicKey } = generateKeyPairSync('ed25519', {
 export const TEST_JWT_ENV = {
   JWT_PRIVATE_KEY_BASE64: Buffer.from(privateKey).toString('base64'),
   JWT_PUBLIC_KEY_BASE64: Buffer.from(publicKey).toString('base64'),
+  // Column-encryption keys for tests (random per run).
+  FIELD_ENCRYPTION_KEY_BASE64: randomBytes(32).toString('base64'),
+  FIELD_HMAC_KEY_BASE64: randomBytes(32).toString('base64'),
 };
 
 /** Minimal valid environment for building an AppConfig in unit tests. */
