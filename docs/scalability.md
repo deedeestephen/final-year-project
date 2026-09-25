@@ -91,7 +91,7 @@ Load was generated with `autocannon`: 50 concurrent connections, 10–15 seconds
 - **Audit logging** writes one row per sensitive action in the same database. At national scale, it would move to a partitioned table or a log pipeline.
 
 ## 5. How to repeat the measurements
-1. Start everything: `scripts\dev-up.ps1`.
+1. Start everything: `6-infrastructure\scripts\dev-up.ps1`.
 2. Create a throwaway admin: `cd backend && npm run e2e:user -- --role admin`.
 3. Start a second instance with the limits raised, for measuring only:
    `PORT=3100 RATE_LIMIT_MAX=10000000 USER_RATE_LIMIT_MAX=10000000 REDIS_URL= node dist/main`

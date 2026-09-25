@@ -4,7 +4,7 @@
 - **Context:** The owner asked for administration to be separate from the mobile app. It should be a web app used on a desktop, and it should still work on smaller screens.
 
 ## Decision
-- **The admin portal lives in `admin-web/`.** It is a single-page app built with Vite, React 19 and TypeScript (strict), plus:
+- **The admin portal lives in `1-presentation-layer/admin-panel-web/`.** It is a single-page app built with Vite, React 19 and TypeScript (strict), plus:
   - React Router for pages
   - TanStack Query for server data (caching and retry for network errors only)
   - Vitest with Testing Library for tests
@@ -33,7 +33,7 @@ The mobile app keeps its refresh token in encrypted storage. A browser has no eq
 - **Server-rendered pages inside the NestJS backend.** This would mix the UI into the API process and scale them together. A static SPA can be served from any CDN.
 
 ## Consequences
-- Two front-end code bases (Flutter and React) share only the API contract. `docs/api/openapi.json` is the source of truth; the portal's types in `admin-web/src/api/admin.ts` mirror it.
-- The portal is static files (`npm run build` produces `admin-web/dist/`, about 100 kB gzipped). It can be hosted on any static host or CDN and scales separately from the API.
+- Two front-end code bases (Flutter and React) share only the API contract. `2-api-gateway/openapi/openapi.json` is the source of truth; the portal's types in `1-presentation-layer/admin-panel-web/src/api/admin.ts` mirror it.
+- The portal is static files (`npm run build` produces `1-presentation-layer/admin-panel-web/dist/`, about 100 kB gzipped). It can be hosted on any static host or CDN and scales separately from the API.
 - For the SameSite=Strict cookie, in production the portal and the API must be **same-site** (for example `admin.example.org` and `api.example.org`). This holds in development: `localhost:5173` and `localhost:3000` are the same site.
 - The quality gate has an `admin-web` target: format, lint (warnings fail), typecheck, tests, build, npm audit.

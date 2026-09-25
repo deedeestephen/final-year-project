@@ -25,7 +25,7 @@ The exact flag colours do not all reach WCAG AA contrast when used behind or as 
 | Red `#DE2010` | about 4.5:1 on its tint | deep red `#B81A0D` |
 | Orange `#EF7D00` | about 2.6:1 on white | deep copper `#A04A00` |
 
-The exact flag colours stay for the stripe and for icons. Every text/background pair is checked in `mobile/test/app/theme_test.dart`.
+The exact flag colours stay for the stripe and for icons. Every text/background pair is checked in `1-presentation-layer/mobile-app/test/app/theme_test.dart`.
 
 ADR-002's legibility rules are unchanged:
 - body text ≥ 15 px
@@ -35,5 +35,5 @@ ADR-002's legibility rules are unchanged:
 - states always written in words
 
 ## Consequences
-- Tokens were renamed from navy/teal to `primary`, `positive` and `linkText` (`mobile/lib/app/theme/tokens.dart`). The flag colours are exposed as `flagGreen`, `flagRed`, `flagBlack` and `flagOrange`.
-- `NationalStripe` (`mobile/lib/shared/widgets/national_stripe.dart`) is purely decorative and excluded from screen readers.
+- Tokens were renamed from navy/teal to `primary`, `positive` and `linkText` (`1-presentation-layer/mobile-app/lib/app/theme/tokens.dart`). The flag colours are exposed as `flagGreen`, `flagRed`, `flagBlack` and `flagOrange`.
+- `NationalStripe` (`1-presentation-layer/mobile-app/lib/shared/widgets/national_stripe.dart`) is purely decorative and excluded from screen readers.

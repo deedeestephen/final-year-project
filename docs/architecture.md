@@ -14,28 +14,29 @@ security, offline-first, AI, chatbot and interoperability requirement from the p
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ L1 PRESENTATION   mobile/  (Flutter)       admin-web/ (React + TS)       │
-│   Patient · Clinician · Pathologist/         Administration (desktop,    │
-│   Radiologist · Chatbot                      responsive; ADR-005)        │
-│   Encrypted local DB (SQLCipher, AES-256) · Sync queue · Report viewer   │
+│ L1 PRESENTATION        1-presentation-layer/                             │
+│   mobile-app/ (Flutter): patient · clinician · pathologist · chatbot UI  │
+│   admin-panel-web/ (React): administration (ADR-005, ADR-006)            │
+│   Encrypted local DB (SQLCipher, AES-256) · sync queue · report viewer   │
 └───────────────────────────────┬──────────────────────────────────────────┘
                                 │ HTTPS (TLS 1.3 in prod) · REST /api/v1 · JWT
 ┌───────────────────────────────▼──────────────────────────────────────────┐
-│ L2 API GATEWAY    backend/src/gateway                                    │
-│   TLS termination (reverse proxy) · JWT verify · RBAC guard · validation │
-│   Rate limits per address and per account (Redis-shared; scalability.md) │
-│   sanitization · rate limit · CORS · security headers · versioning       │
-│   OpenAPI 3.0 · central error filter · request IDs                       │
+│ L2 API GATEWAY         2-api-gateway/ (contracts, reverse proxy)         │
+│                        + backend/src/gateway/ (runs first on every call) │
+│   TLS termination · JWT verify · RBAC guard · validation · sanitisation  │
+│   rate limits per address and per account (Redis-shared) · CORS          │
+│   security headers · versioning · OpenAPI 3.0 · errors · request IDs     │
 └───────────────────────────────┬──────────────────────────────────────────┘
 ┌───────────────────────────────▼──────────────────────────────────────────┐
-│ L3 APPLICATION LOGIC   backend/src/modules/*                             │
-│   auth · users · roles/permissions · facilities · patients · clinical    │
-│   consent · imaging · histopathology · ai-broker · chatbot · notif.      │
-│   audit (append-only) · sync · reports · fhir · admin                    │
+│ L3 APPLICATION LOGIC   3-application-logic/backend/src/services/         │
+│   auth · users · roles/permissions · patients · clinical · consent       │
+│   imaging · histopathology · AI broker · notifications · audit · sync    │
+│   admin · (chatbot Ph.13 · FHIR Ph.14)                                   │
 └──────────────┬──────────────────────────────────┬────────────────────────┘
-               │ HTTP contract (ai-contract.yaml) │ repositories
+               │ HTTP contract (ai-contract.yaml) │ backend/src/persistence/
 ┌──────────────▼───────────────────────┐  ┌───────▼────────────────────────┐
-│ L4 AI INTELLIGENCE  ai-services/     │  │ L5 DATA PERSISTENCE            │
+│ L4 AI INTELLIGENCE                   │  │ L5 DATA PERSISTENCE            │
+│ 4-ai-intelligence-layer/ai-services/ │  │ 5-data-persistence/            │
 │  FastAPI · Model Router              │  │  PostgreSQL  structured data   │
 │  U-Net · ResNet-50 · ANN ·           │  │  MongoDB     AI reports, logs  │
 │  Patch-CNN+MIL · XGBoost fusion      │  │  Object store (S3 API/MinIO)   │
@@ -44,9 +45,9 @@ security, offline-first, AI, chatbot and interoperability requirement from the p
 │  (mock providers labelled as mock)   │  │  Redis  rate limits, job queue │
 └──────────────────────────────────────┘  └────────────────────────────────┘
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ L6 INFRASTRUCTURE  infrastructure/                                       │
-│   Docker Compose (dev) · Dockerfiles · K8s manifests (later) · CI        │
-│   Prometheus metrics endpoint · Grafana (later) · backups                │
+│ L6 INFRASTRUCTURE      6-infrastructure/                                 │
+│   Docker Compose (dev) · scripts · CI · Kubernetes and monitoring plans  │
+│   backups (5-data-persistence/backup-recovery/)                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 

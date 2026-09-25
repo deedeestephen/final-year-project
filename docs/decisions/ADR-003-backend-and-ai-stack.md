@@ -19,4 +19,4 @@ wants: the backend can't import model code, only call the contract.
 
 ## Consequences
 - Node ≥ 20 and Python ≥ 3.11 are both required (both are already installed).
-- Shared contracts live in `docs/api/*.yaml`. Contract tests run on both sides.
+- Shared contracts live in `2-api-gateway/openapi/*.yaml`. Contract tests run on both sides.

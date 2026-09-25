@@ -1,6 +1,6 @@
 # ADR-006: "Clinical Field Health" design system for the admin website
 
-- **Status:** Accepted (owner request, 2026-09-24). Applies to `admin-web/` only. The mobile app keeps ADR-004.
+- **Status:** Accepted (owner request, 2026-09-24). Applies to `1-presentation-layer/admin-panel-web/` only. The mobile app keeps ADR-004.
 - **Context:** The owner supplied a design specification, "Clinical Field Health", and asked for the admin page to follow it. It is written for clinical field work in Zambia:
   - high contrast
   - crisp borders instead of soft shadows (these wash out in sunlight)
@@ -18,7 +18,7 @@
 - **Accessibility adjustments:**
   - The specification's bright Clinical Emerald `#059669` and Amber `#d97706` do not reach WCAG AA as text on white (about 3.8:1 and 3.2:1). They are used only for decoration: accent borders and marks.
   - Text uses `#047857` (5.5:1) and `#b45309` (5.0:1).
-  - `admin-web/src/design/contrast.test.ts` reads the tokens from `index.css` and fails the build if any text/background pair drops below 4.5:1.
+  - `1-presentation-layer/admin-panel-web/src/design/contrast.test.ts` reads the tokens from `index.css` and fails the build if any text/background pair drops below 4.5:1.
 - **Typography:**
   - Plus Jakarta Sans everywhere.
   - Body text is 15 px. 13 px is used only for descriptors and timestamps.
@@ -49,4 +49,4 @@
 
 ## Consequences
 - The admin website and the mobile app now look different: flag green in the app, emerald in the portal. They share the typeface, the stripe and the notice. The app can be moved to this design later if the owner wants.
-- All visual decisions live in CSS custom properties in `admin-web/src/index.css`, so a future change of palette is a token edit, checked by the contrast test.
+- All visual decisions live in CSS custom properties in `1-presentation-layer/admin-panel-web/src/index.css`, so a future change of palette is a token edit, checked by the contrast test.

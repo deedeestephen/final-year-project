@@ -32,7 +32,7 @@ three-state sync. Option 1's advantage is legibility, and that can be carried ov
 The Flutter `ThemeData` + `ThemeExtension` tokens (Phase 7) are generated from Option 2's colours. The contrast of every
 text/background pair gets a WCAG AA check in a unit test.
 
-**Implemented (Phase 7):** `mobile/lib/app/theme/{tokens,app_theme}.dart`, tested in `mobile/test/app/theme_test.dart`.
+**Implemented (Phase 7):** `1-presentation-layer/mobile-app/lib/app/theme/{tokens,app_theme}.dart`, tested in `1-presentation-layer/mobile-app/test/app/theme_test.dart`.
 Design Option 2 teal `#0D9488` and amber `#D97706` fail 4.5:1 as text on white, so they are used only for icons and
 accents; text uses the darker `#0F766E` and `#B45309`. The fonts are variable TTFs from the google/fonts repository
 (SIL OFL 1.1, licences bundled and shown on the licence page).

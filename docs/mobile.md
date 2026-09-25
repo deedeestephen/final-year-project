@@ -5,7 +5,7 @@ Flutter replaces React Native (ADR-001). The colours are the Zambian national co
 ## Structure
 
 ```
-mobile/lib/
+1-presentation-layer/mobile-app/lib/
   main.dart                    ProviderScope + font licence registration
   app/
     app.dart                   MaterialApp.router
@@ -111,7 +111,7 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 
 ## Administration (moved to the web)
 
-- Administration is a **separate web app** in `admin-web/` (ADR-005). The Flutter admin screens were removed.
+- Administration is a **separate web app** in `1-presentation-layer/admin-panel-web/` (ADR-005). The Flutter admin screens were removed.
 - An administrator who signs in on the phone sees one card, **"Administration is on the web"**, with the portal address. The address comes from the dart-define `ADMIN_PORTAL_URL` (default `http://localhost:5173`).
 - Users with more than one role (e.g. admin + clinician) still get their clinical home screens in the app.
 
@@ -122,9 +122,9 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 ## Galaxy S9+ emulator and a real phone
 
 - **Emulator.** An Android Virtual Device `Galaxy_S9_Plus_API_29` ("Samsung Galaxy S9+ (Android 10)") is created from a custom hardware profile in `%USERPROFILE%\.android\devices.xml`: 6.2", 1080x2220 (the S9+ default display setting), 420 dpi, Android 10 / API 29, x86_64 with WHPX acceleration. Widget tests use the same logical screen size.
-- **Real phone (SM-G965U, Android 10).** Run `scripts\phone-usb.ps1` (`adb reverse tcp:3000 tcp:3000`), then use the Android Studio run configuration **App - USB phone** (`API_BASE_URL=http://localhost:3000`).
-- **Run configurations.** `mobile/.run/`: **App - S9+ emulator** and **App - USB phone**.
-- **One command starts the backend and its services:** `scripts\dev-up.ps1`. `scripts\dev-down.ps1` stops them.
+- **Real phone (SM-G965U, Android 10).** Run `6-infrastructure\scripts\phone-usb.ps1` (`adb reverse tcp:3000 tcp:3000`), then use the Android Studio run configuration **App - USB phone** (`API_BASE_URL=http://localhost:3000`).
+- **Run configurations.** `1-presentation-layer/mobile-app/.run/`: **App - S9+ emulator** and **App - USB phone**.
+- **One command starts the backend and its services:** `6-infrastructure\scripts\dev-up.ps1`. `6-infrastructure\scripts\dev-down.ps1` stops them.
 - **End-to-end test on a device.** It uses throwaway synthetic accounts (`npm run e2e:user` for a clinician, `npm run e2e:user -- --role patient` for a linked patient; pass the second with `E2E_PATIENT_EMAIL` / `E2E_PATIENT_PASSWORD`), so the demo accounts are never touched:
   ```
   cd backend && npm run e2e:user
@@ -133,12 +133,12 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 
 ## Running against the local backend
 
-1. Start the services and the API from `backend/`:
+1. Start the services and the API from `3-application-logic/backend/`:
    ```
-   docker compose -f ../infrastructure/docker-compose.yml --env-file ../.env up -d
+   docker compose -f ../6-infrastructure/docker/docker-compose.yml --env-file ../.env up -d
    npm run build && npm run start:prod
    ```
-2. Start an Android emulator from Android Studio (Device Manager), then run from `mobile/`:
+2. Start an Android emulator from Android Studio (Device Manager), then run from `1-presentation-layer/mobile-app/`:
    ```
    flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
    ```
@@ -159,7 +159,7 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 | `test/shared/widgets_test.dart` | shared widgets (AI disclaimer and mock label, sync badge, async states) |
 | `test/live/` | **opt-in** check against a running backend: `LIVE_API_URL=http://localhost:3000 LIVE_API_PASSWORD=… flutter test test/live`. It never changes the demo password. |
 
-Quality gate: `scripts/quality-gate.sh mobile` (format, analyze, tests with coverage, debug APK).
+Quality gate: `6-infrastructure/scripts/quality-gate.sh mobile` (format, analyze, tests with coverage, debug APK).
 
 ## iPhone
 

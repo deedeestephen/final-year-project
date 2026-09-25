@@ -35,7 +35,7 @@ fixtures and screenshots.
 
 ## Quality gate (run at the end of every phase)
 
-`scripts/quality-gate.ps1` / `scripts/quality-gate.sh` run format → lint → type-check → unit → integration → build for each
+`6-infrastructure/scripts/quality-gate.ps1` / `6-infrastructure/scripts/quality-gate.sh` run format → lint → type-check → unit → integration → build for each
 package, plus `npm audit --audit-level=high`, `pip-audit`, and a secret scan (gitleaks). CI (GitHub Actions) runs the same
 script on every push. A phase may not close while the gate fails, unless the failure is recorded as a known non-blocking
 issue in the development log.

@@ -7,20 +7,24 @@ on:
 permissions:
   contents: read
 
+# Folders follow the six architecture layers (see README.md).
+env:
+  GATE: ${{ github.workspace }}/6-infrastructure/scripts/quality-gate.sh
+
 jobs:
   backend:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: backend } }
+    defaults: { run: { working-directory: 3-application-logic/backend } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
+        with: { node-version: 22, cache: npm, cache-dependency-path: 3-application-logic/backend/package-lock.json }
       - run: npm ci
-      - run: ../scripts/quality-gate.sh backend
+      - run: $GATE backend
 
   database:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: backend } }
+    defaults: { run: { working-directory: 3-application-logic/backend } }
     env:
       # Throwaway CI-only credentials for ephemeral service containers (not secrets).
       DATABASE_URL: postgresql://pca:ci-postgres@localhost:5432/pca_mhealth?schema=public
@@ -47,28 +51,28 @@ jobs:
       - name: Start MinIO (service containers cannot pass a start command)
         working-directory: .
         run: |
-          image=$(grep -oE 'quay.io/minio/minio@sha256:[0-9a-f]+' infrastructure/docker-compose.yml)
+          image=$(grep -oE 'quay.io/minio/minio@sha256:[0-9a-f]+' 6-infrastructure/docker/docker-compose.yml)
           docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=ciminio -e MINIO_ROOT_PASSWORD=ci-minio-secret "$image" server /data
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
+        with: { node-version: 22, cache: npm, cache-dependency-path: 3-application-logic/backend/package-lock.json }
       - run: npm ci
       - name: Generate throwaway JWT and field-encryption keys for this CI run
-        run: node ../scripts/gen-keys.mjs >> "$GITHUB_ENV"
-      - run: ../scripts/quality-gate.sh db
+        run: node ../../6-infrastructure/scripts/gen-keys.mjs >> "$GITHUB_ENV"
+      - run: $GATE db
 
   ai-services:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: ai-services } }
+    defaults: { run: { working-directory: 4-ai-intelligence-layer/ai-services } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: python -m venv .venv && .venv/bin/python -m pip install --upgrade pip && .venv/bin/pip install -e ".[dev]"
-      - run: ../scripts/quality-gate.sh ai
+      - run: $GATE ai
 
   mobile:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: mobile } }
+    defaults: { run: { working-directory: 1-presentation-layer/mobile-app } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -76,7 +80,17 @@ jobs:
       - uses: subosito/flutter-action@v2
         with: { flutter-version: "3.35.2", channel: stable, cache: true }
       - run: flutter pub get
-      - run: ../scripts/quality-gate.sh mobile
+      - run: $GATE mobile
+
+  admin-web:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: 1-presentation-layer/admin-panel-web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: 1-presentation-layer/admin-panel-web/package-lock.json }
+      - run: npm ci
+      - run: $GATE admin-web
 
   secrets:
     runs-on: ubuntu-latest

@@ -38,7 +38,7 @@ session after its quality gate:
 - **Stream B, mobile:** 7 → (6 client part) → 8 → 9
 - **Stream C, AI:** 11 → 12 → 13
 
-Contract changes go through the lead session only (`docs/api/openapi.yaml`, `docs/api/ai-contract.yaml`).
+Contract changes go through the lead session only (`2-api-gateway/openapi/openapi.yaml`, `2-api-gateway/openapi/ai-contract.yaml`).
 
 ## Environment blockers (from Phase 0 check)
 

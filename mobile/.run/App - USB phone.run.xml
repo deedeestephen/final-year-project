@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <!-- Real phone over USB: run scripts\phone-usb.ps1 first (adb reverse), then localhost:3000 is the PC. -->
-  <configuration default="false" name="App - USB phone" type="FlutterRunConfigurationType" factoryName="Flutter">
-    <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
-    <option name="additionalArgs" value="--dart-define=API_BASE_URL=http://localhost:3000" />
-    <method v="2" />
-  </configuration>
-</component>

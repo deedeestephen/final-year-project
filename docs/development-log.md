@@ -599,3 +599,36 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 | The "second request while running" test failed now and then | on this busy PC the second HTTP call arrived after the first job had already finished | the test creates a RUNNING job directly, so it no longer depends on timing |
 | Test apps could inherit AI settings from another test file | `process.env` is shared within a run | `createDbTestApp` resets AI settings (AI off) unless a test sets them |
 | Ruff flagged test tokens as hard-coded passwords (S105) | they are test values | marked with `noqa` and a reason |
+
+## 2026-09-25: Owner request: organise the repository by the six architecture layers
+
+**Asked for:** folders named after the six layers of the architecture diagram, each holding that layer's parts. The owner chose "layer folders, backend split inside". (Entries above this one use the old paths.)
+
+**New layout:**
+- `1-presentation-layer/`: `mobile-app/` (was `mobile/`), `admin-panel-web/` (was `admin-web/`)
+- `2-api-gateway/`: `openapi/` (was `docs/api/`), `reverse-proxy/` (new nginx template: TLS 1.3, HSTS, load balancing, streaming uploads; `nginx -t` passes)
+- `3-application-logic/backend/`, with `src/` regrouped into:
+  - `gateway/` (guards, rate limits, validation, uploads, configure-app, OpenAPI, health)
+  - `services/` (every business module)
+  - `persistence/` (Prisma and Mongo clients, storage, vector store, field encryption, seed)
+- `4-ai-intelligence-layer/ai-services/`
+- `5-data-persistence/`:
+  - `postgresql/migrations/`
+  - READMEs for MongoDB, the DICOM archive and the vector database
+  - `backup-recovery/` (new `backup.ps1` and `restore.ps1`; a real backup was taken and verified with `pg_restore -l`: 20 tables)
+- `6-infrastructure/`: `docker/docker-compose.yml`, `scripts/`, and honest plans for `kubernetes/` and `monitoring/`
+- Every layer folder has a README mapping the diagram's boxes to folders.
+
+**How it was done:**
+- Folders were moved with the filesystem so that installed packages moved too.
+- The backend regrouping was done by a script that moved 100 files and rewrote 138 relative imports by resolving each one against its old location.
+- Files that found the repository root by counting `..` now use `repoRoot()` (`src/config/repo-root.ts`), which walks up to `.env.example`. The same applies in ai-services `config.py`. This works from `src/`, `dist/`, tests and tools, and survives future moves.
+- Scripts, CI (plus a new admin-web job), docs and comments were updated.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| `admin-web` and `mobile` could not be moved ("permission denied", "busy") | open in Android Studio and the editors' language servers | copied with robocopy (sources only), checked that every tracked file arrived, then deleted the old folders; only an empty `mobile` folder stays until Android Studio is closed |
+| `prisma generate` installed a second Prisma at the repository root | with the schema outside the backend, Prisma looks for its client next to the schema | the schema stays in `backend/prisma/` (Prisma requires it); the migrations live in `5-data-persistence/postgresql/migrations/`; the stray root install was removed; `migrate diff` confirms the schema and migrations match |
+| The moved Python environment still pointed at the old folder | editable installs record absolute paths | `pip install -e . --no-deps` again |
+| A readiness DB test expected no `ai` field | the test app reads `.env`, and a real AI service was running | the test accepts any AI state (it is informational) |

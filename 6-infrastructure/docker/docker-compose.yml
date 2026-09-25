@@ -1,0 +1,59 @@
+# Development data stores for PCa mHealth. Not a production deployment.
+# Usage (from the repository root): docker compose -f 6-infrastructure/docker/docker-compose.yml --env-file .env up -d
+name: pca-mhealth
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pca}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-pca_mhealth}
+    ports: ["127.0.0.1:${POSTGRES_PORT:-5433}:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pca}"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-pca}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?set MONGO_PASSWORD in .env}
+    ports: ["127.0.0.1:${MONGO_PORT:-27018}:27017"]
+    volumes: [mongodata:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}"]
+    ports: ["127.0.0.1:6379:6379"]
+    restart: unless-stopped
+
+  minio:
+    image: quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-pcaminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+    volumes: [miniodata:/data]
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.4
+    ports: ["127.0.0.1:6333:6333"]
+    volumes: [qdrantdata:/qdrant/storage]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  mongodata:
+  miniodata:
+  qdrantdata:

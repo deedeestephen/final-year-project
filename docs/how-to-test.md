@@ -30,7 +30,7 @@ This guide is written so anyone can follow it. Do the steps **in order**. Each s
 2. Copy this line, paste it into the window (right-click pastes), and press **Enter**:
 
    ```
-   cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File scripts\dev-up.ps1
+   cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1
    ```
 3. Wait. It starts Docker, the databases and the backend. The first time can take a few minutes.
 
@@ -48,7 +48,7 @@ This guide is written so anyone can follow it. Do the steps **in order**. Each s
 ## Part 3: start the Galaxy S9+ pretend phone
 
 1. Open **Android Studio**.
-2. Click **File**, then **Open**, then choose the folder **`pca-mhealth\mobile`**, then **OK**. The first time, click **Trust Project**. Wait until the bar at the bottom stops moving.
+2. Click **File**, then **Open**, then choose the folder **`pca-mhealth\1-presentation-layer\mobile-app`**, then **OK**. The first time, click **Trust Project**. Wait until the bar at the bottom stops moving.
 3. At the top of the window there is a box with a phone name. Click it and choose **Samsung Galaxy S9+ (Android 10)**.
    - Not in the list? Click **Device Manager** (the phone icon on the right side), find **Samsung Galaxy S9+ (Android 10)**, and press its ▶ play button.
 4. Next to it, pick the run setting **App - S9+ emulator**.
@@ -184,9 +184,9 @@ The phone screens for this come in Phase 9. For now you test it on the server's 
 
 1. Make the practice files (they are made up, with no real person in them):
    ```
-   cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth\backend"; npm run fixtures
+   cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth\3-application-logic\backend"; npm run fixtures
    ```
-   → Five files appear in `backend\test\fixtures\files`: `synthetic-mri.dcm`, `synthetic-ct.dcm`, `synthetic-trus.dcm`, `synthetic-slide.tif` and `not-an-image.dcm`.
+   → Five files appear in `3-application-logic\backend\test\fixtures\files`: `synthetic-mri.dcm`, `synthetic-ct.dcm`, `synthetic-trus.dcm`, `synthetic-slide.tif` and `not-an-image.dcm`.
 2. Open **http://localhost:3000/api/docs**. Use **POST /api/v1/auth/login** (Try it out) as the clinician and copy the `accessToken`. Click **Authorize** at the top, paste it, and click **Authorize**.
 3. Find a patient id: **GET /api/v1/patients** → Try it out → Execute, and copy one `id`.
 - [ ] **A good MRI.** Open **POST /api/v1/patients/{id}/imaging**, paste the id, choose modality **MRI**, choose the file `synthetic-mri.dcm`, and click **Execute**.
@@ -227,7 +227,7 @@ The AI service now runs in its own window, *PCa mHealth AI service (mock models)
   → A database called **pca_mhealth**.
 - [ ] **PostgreSQL** (patients and users). In PowerShell:
   ```
-  cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth\backend"; npx prisma studio
+  cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth\3-application-logic\backend"; npx prisma studio
   ```
   → The browser opens tables like `patients` and `users`. Names show as scrambled bytes, because patient names are **encrypted** in the database. That is on purpose.
 
@@ -235,7 +235,7 @@ The AI service now runs in its own window, *PCa mHealth AI service (mock models)
 
 This runs **all** the automated checks (hundreds of tests) for the backend, the AI service, the app and the admin website.
 ```
-cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File scripts\quality-gate.ps1
+cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\quality-gate.ps1
 ```
 → It takes about 10–20 minutes. At the end you should see **QUALITY GATE PASSED (all)**.
 
@@ -248,7 +248,7 @@ cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell 
 3. Plug the phone into the PC with a **data** USB cable. On the phone, tap **Allow** when it asks *"Allow USB debugging?"*.
 4. In PowerShell (with the backend still running from Part 2):
    ```
-   cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File scripts\phone-usb.ps1
+   cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\phone-usb.ps1
    ```
    → *"Connected SM-G965U … the phone can now reach the backend."*
 5. In Android Studio, pick your phone in the device box, pick the run setting **App - USB phone**, and press ▶.
@@ -261,7 +261,7 @@ cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell 
 ## Part 6: switch everything off
 
 ```
-cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File scripts\dev-down.ps1
+cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth"; powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-down.ps1
 ```
 Your data is kept for next time.
 
