@@ -2978,6 +2978,877 @@ class MetaCompanion extends UpdateCompanion<MetaData> {
   }
 }
 
+class $PendingUploadsTable extends PendingUploads
+    with TableInfo<$PendingUploadsTable, PendingUpload> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PendingUploadsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _patientLocalIdMeta = const VerificationMeta(
+    'patientLocalId',
+  );
+  @override
+  late final GeneratedColumn<String> patientLocalId = GeneratedColumn<String>(
+    'patient_local_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _patientServerIdMeta = const VerificationMeta(
+    'patientServerId',
+  );
+  @override
+  late final GeneratedColumn<String> patientServerId = GeneratedColumn<String>(
+    'patient_server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modalityMeta = const VerificationMeta(
+    'modality',
+  );
+  @override
+  late final GeneratedColumn<String> modality = GeneratedColumn<String>(
+    'modality',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _slideFormatMeta = const VerificationMeta(
+    'slideFormat',
+  );
+  @override
+  late final GeneratedColumn<String> slideFormat = GeneratedColumn<String>(
+    'slide_format',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stainMeta = const VerificationMeta('stain');
+  @override
+  late final GeneratedColumn<String> stain = GeneratedColumn<String>(
+    'stain',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _filePathMeta = const VerificationMeta(
+    'filePath',
+  );
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+    'file_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  @override
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeBytesMeta = const VerificationMeta(
+    'sizeBytes',
+  );
+  @override
+  late final GeneratedColumn<int> sizeBytes = GeneratedColumn<int>(
+    'size_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pending'),
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextAttemptAtMeta = const VerificationMeta(
+    'nextAttemptAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextAttemptAt =
+      GeneratedColumn<DateTime>(
+        'next_attempt_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    patientLocalId,
+    patientServerId,
+    kind,
+    modality,
+    slideFormat,
+    stain,
+    filePath,
+    fileName,
+    sizeBytes,
+    status,
+    attempts,
+    nextAttemptAt,
+    lastError,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pending_uploads';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PendingUpload> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('patient_local_id')) {
+      context.handle(
+        _patientLocalIdMeta,
+        patientLocalId.isAcceptableOrUnknown(
+          data['patient_local_id']!,
+          _patientLocalIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_patientLocalIdMeta);
+    }
+    if (data.containsKey('patient_server_id')) {
+      context.handle(
+        _patientServerIdMeta,
+        patientServerId.isAcceptableOrUnknown(
+          data['patient_server_id']!,
+          _patientServerIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_patientServerIdMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('modality')) {
+      context.handle(
+        _modalityMeta,
+        modality.isAcceptableOrUnknown(data['modality']!, _modalityMeta),
+      );
+    }
+    if (data.containsKey('slide_format')) {
+      context.handle(
+        _slideFormatMeta,
+        slideFormat.isAcceptableOrUnknown(
+          data['slide_format']!,
+          _slideFormatMeta,
+        ),
+      );
+    }
+    if (data.containsKey('stain')) {
+      context.handle(
+        _stainMeta,
+        stain.isAcceptableOrUnknown(data['stain']!, _stainMeta),
+      );
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(
+        _filePathMeta,
+        filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileNameMeta);
+    }
+    if (data.containsKey('size_bytes')) {
+      context.handle(
+        _sizeBytesMeta,
+        sizeBytes.isAcceptableOrUnknown(data['size_bytes']!, _sizeBytesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeBytesMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('next_attempt_at')) {
+      context.handle(
+        _nextAttemptAtMeta,
+        nextAttemptAt.isAcceptableOrUnknown(
+          data['next_attempt_at']!,
+          _nextAttemptAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PendingUpload map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PendingUpload(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      patientLocalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}patient_local_id'],
+      )!,
+      patientServerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}patient_server_id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      modality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}modality'],
+      ),
+      slideFormat: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}slide_format'],
+      ),
+      stain: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stain'],
+      ),
+      filePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_path'],
+      )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      )!,
+      sizeBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_bytes'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      nextAttemptAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_attempt_at'],
+      ),
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PendingUploadsTable createAlias(String alias) {
+    return $PendingUploadsTable(attachedDatabase, alias);
+  }
+}
+
+class PendingUpload extends DataClass implements Insertable<PendingUpload> {
+  /// Also sent as the upload's `clientUuid`, so a retry never duplicates.
+  final String id;
+  final String patientLocalId;
+  final String patientServerId;
+
+  /// imaging | slide
+  final String kind;
+  final String? modality;
+  final String? slideFormat;
+  final String? stain;
+  final String filePath;
+  final String fileName;
+  final int sizeBytes;
+
+  /// pending | uploading | rejected
+  final String status;
+  final int attempts;
+  final DateTime? nextAttemptAt;
+  final String? lastError;
+  final DateTime createdAt;
+  const PendingUpload({
+    required this.id,
+    required this.patientLocalId,
+    required this.patientServerId,
+    required this.kind,
+    this.modality,
+    this.slideFormat,
+    this.stain,
+    required this.filePath,
+    required this.fileName,
+    required this.sizeBytes,
+    required this.status,
+    required this.attempts,
+    this.nextAttemptAt,
+    this.lastError,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['patient_local_id'] = Variable<String>(patientLocalId);
+    map['patient_server_id'] = Variable<String>(patientServerId);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || modality != null) {
+      map['modality'] = Variable<String>(modality);
+    }
+    if (!nullToAbsent || slideFormat != null) {
+      map['slide_format'] = Variable<String>(slideFormat);
+    }
+    if (!nullToAbsent || stain != null) {
+      map['stain'] = Variable<String>(stain);
+    }
+    map['file_path'] = Variable<String>(filePath);
+    map['file_name'] = Variable<String>(fileName);
+    map['size_bytes'] = Variable<int>(sizeBytes);
+    map['status'] = Variable<String>(status);
+    map['attempts'] = Variable<int>(attempts);
+    if (!nullToAbsent || nextAttemptAt != null) {
+      map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt);
+    }
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  PendingUploadsCompanion toCompanion(bool nullToAbsent) {
+    return PendingUploadsCompanion(
+      id: Value(id),
+      patientLocalId: Value(patientLocalId),
+      patientServerId: Value(patientServerId),
+      kind: Value(kind),
+      modality: modality == null && nullToAbsent
+          ? const Value.absent()
+          : Value(modality),
+      slideFormat: slideFormat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(slideFormat),
+      stain: stain == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stain),
+      filePath: Value(filePath),
+      fileName: Value(fileName),
+      sizeBytes: Value(sizeBytes),
+      status: Value(status),
+      attempts: Value(attempts),
+      nextAttemptAt: nextAttemptAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextAttemptAt),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory PendingUpload.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PendingUpload(
+      id: serializer.fromJson<String>(json['id']),
+      patientLocalId: serializer.fromJson<String>(json['patientLocalId']),
+      patientServerId: serializer.fromJson<String>(json['patientServerId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      modality: serializer.fromJson<String?>(json['modality']),
+      slideFormat: serializer.fromJson<String?>(json['slideFormat']),
+      stain: serializer.fromJson<String?>(json['stain']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      fileName: serializer.fromJson<String>(json['fileName']),
+      sizeBytes: serializer.fromJson<int>(json['sizeBytes']),
+      status: serializer.fromJson<String>(json['status']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      nextAttemptAt: serializer.fromJson<DateTime?>(json['nextAttemptAt']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'patientLocalId': serializer.toJson<String>(patientLocalId),
+      'patientServerId': serializer.toJson<String>(patientServerId),
+      'kind': serializer.toJson<String>(kind),
+      'modality': serializer.toJson<String?>(modality),
+      'slideFormat': serializer.toJson<String?>(slideFormat),
+      'stain': serializer.toJson<String?>(stain),
+      'filePath': serializer.toJson<String>(filePath),
+      'fileName': serializer.toJson<String>(fileName),
+      'sizeBytes': serializer.toJson<int>(sizeBytes),
+      'status': serializer.toJson<String>(status),
+      'attempts': serializer.toJson<int>(attempts),
+      'nextAttemptAt': serializer.toJson<DateTime?>(nextAttemptAt),
+      'lastError': serializer.toJson<String?>(lastError),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  PendingUpload copyWith({
+    String? id,
+    String? patientLocalId,
+    String? patientServerId,
+    String? kind,
+    Value<String?> modality = const Value.absent(),
+    Value<String?> slideFormat = const Value.absent(),
+    Value<String?> stain = const Value.absent(),
+    String? filePath,
+    String? fileName,
+    int? sizeBytes,
+    String? status,
+    int? attempts,
+    Value<DateTime?> nextAttemptAt = const Value.absent(),
+    Value<String?> lastError = const Value.absent(),
+    DateTime? createdAt,
+  }) => PendingUpload(
+    id: id ?? this.id,
+    patientLocalId: patientLocalId ?? this.patientLocalId,
+    patientServerId: patientServerId ?? this.patientServerId,
+    kind: kind ?? this.kind,
+    modality: modality.present ? modality.value : this.modality,
+    slideFormat: slideFormat.present ? slideFormat.value : this.slideFormat,
+    stain: stain.present ? stain.value : this.stain,
+    filePath: filePath ?? this.filePath,
+    fileName: fileName ?? this.fileName,
+    sizeBytes: sizeBytes ?? this.sizeBytes,
+    status: status ?? this.status,
+    attempts: attempts ?? this.attempts,
+    nextAttemptAt: nextAttemptAt.present
+        ? nextAttemptAt.value
+        : this.nextAttemptAt,
+    lastError: lastError.present ? lastError.value : this.lastError,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  PendingUpload copyWithCompanion(PendingUploadsCompanion data) {
+    return PendingUpload(
+      id: data.id.present ? data.id.value : this.id,
+      patientLocalId: data.patientLocalId.present
+          ? data.patientLocalId.value
+          : this.patientLocalId,
+      patientServerId: data.patientServerId.present
+          ? data.patientServerId.value
+          : this.patientServerId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      modality: data.modality.present ? data.modality.value : this.modality,
+      slideFormat: data.slideFormat.present
+          ? data.slideFormat.value
+          : this.slideFormat,
+      stain: data.stain.present ? data.stain.value : this.stain,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
+      sizeBytes: data.sizeBytes.present ? data.sizeBytes.value : this.sizeBytes,
+      status: data.status.present ? data.status.value : this.status,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      nextAttemptAt: data.nextAttemptAt.present
+          ? data.nextAttemptAt.value
+          : this.nextAttemptAt,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingUpload(')
+          ..write('id: $id, ')
+          ..write('patientLocalId: $patientLocalId, ')
+          ..write('patientServerId: $patientServerId, ')
+          ..write('kind: $kind, ')
+          ..write('modality: $modality, ')
+          ..write('slideFormat: $slideFormat, ')
+          ..write('stain: $stain, ')
+          ..write('filePath: $filePath, ')
+          ..write('fileName: $fileName, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('status: $status, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
+          ..write('lastError: $lastError, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    patientLocalId,
+    patientServerId,
+    kind,
+    modality,
+    slideFormat,
+    stain,
+    filePath,
+    fileName,
+    sizeBytes,
+    status,
+    attempts,
+    nextAttemptAt,
+    lastError,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PendingUpload &&
+          other.id == this.id &&
+          other.patientLocalId == this.patientLocalId &&
+          other.patientServerId == this.patientServerId &&
+          other.kind == this.kind &&
+          other.modality == this.modality &&
+          other.slideFormat == this.slideFormat &&
+          other.stain == this.stain &&
+          other.filePath == this.filePath &&
+          other.fileName == this.fileName &&
+          other.sizeBytes == this.sizeBytes &&
+          other.status == this.status &&
+          other.attempts == this.attempts &&
+          other.nextAttemptAt == this.nextAttemptAt &&
+          other.lastError == this.lastError &&
+          other.createdAt == this.createdAt);
+}
+
+class PendingUploadsCompanion extends UpdateCompanion<PendingUpload> {
+  final Value<String> id;
+  final Value<String> patientLocalId;
+  final Value<String> patientServerId;
+  final Value<String> kind;
+  final Value<String?> modality;
+  final Value<String?> slideFormat;
+  final Value<String?> stain;
+  final Value<String> filePath;
+  final Value<String> fileName;
+  final Value<int> sizeBytes;
+  final Value<String> status;
+  final Value<int> attempts;
+  final Value<DateTime?> nextAttemptAt;
+  final Value<String?> lastError;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const PendingUploadsCompanion({
+    this.id = const Value.absent(),
+    this.patientLocalId = const Value.absent(),
+    this.patientServerId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.modality = const Value.absent(),
+    this.slideFormat = const Value.absent(),
+    this.stain = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.fileName = const Value.absent(),
+    this.sizeBytes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PendingUploadsCompanion.insert({
+    required String id,
+    required String patientLocalId,
+    required String patientServerId,
+    required String kind,
+    this.modality = const Value.absent(),
+    this.slideFormat = const Value.absent(),
+    this.stain = const Value.absent(),
+    required String filePath,
+    required String fileName,
+    required int sizeBytes,
+    this.status = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
+    this.lastError = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       patientLocalId = Value(patientLocalId),
+       patientServerId = Value(patientServerId),
+       kind = Value(kind),
+       filePath = Value(filePath),
+       fileName = Value(fileName),
+       sizeBytes = Value(sizeBytes),
+       createdAt = Value(createdAt);
+  static Insertable<PendingUpload> custom({
+    Expression<String>? id,
+    Expression<String>? patientLocalId,
+    Expression<String>? patientServerId,
+    Expression<String>? kind,
+    Expression<String>? modality,
+    Expression<String>? slideFormat,
+    Expression<String>? stain,
+    Expression<String>? filePath,
+    Expression<String>? fileName,
+    Expression<int>? sizeBytes,
+    Expression<String>? status,
+    Expression<int>? attempts,
+    Expression<DateTime>? nextAttemptAt,
+    Expression<String>? lastError,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (patientLocalId != null) 'patient_local_id': patientLocalId,
+      if (patientServerId != null) 'patient_server_id': patientServerId,
+      if (kind != null) 'kind': kind,
+      if (modality != null) 'modality': modality,
+      if (slideFormat != null) 'slide_format': slideFormat,
+      if (stain != null) 'stain': stain,
+      if (filePath != null) 'file_path': filePath,
+      if (fileName != null) 'file_name': fileName,
+      if (sizeBytes != null) 'size_bytes': sizeBytes,
+      if (status != null) 'status': status,
+      if (attempts != null) 'attempts': attempts,
+      if (nextAttemptAt != null) 'next_attempt_at': nextAttemptAt,
+      if (lastError != null) 'last_error': lastError,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PendingUploadsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? patientLocalId,
+    Value<String>? patientServerId,
+    Value<String>? kind,
+    Value<String?>? modality,
+    Value<String?>? slideFormat,
+    Value<String?>? stain,
+    Value<String>? filePath,
+    Value<String>? fileName,
+    Value<int>? sizeBytes,
+    Value<String>? status,
+    Value<int>? attempts,
+    Value<DateTime?>? nextAttemptAt,
+    Value<String?>? lastError,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return PendingUploadsCompanion(
+      id: id ?? this.id,
+      patientLocalId: patientLocalId ?? this.patientLocalId,
+      patientServerId: patientServerId ?? this.patientServerId,
+      kind: kind ?? this.kind,
+      modality: modality ?? this.modality,
+      slideFormat: slideFormat ?? this.slideFormat,
+      stain: stain ?? this.stain,
+      filePath: filePath ?? this.filePath,
+      fileName: fileName ?? this.fileName,
+      sizeBytes: sizeBytes ?? this.sizeBytes,
+      status: status ?? this.status,
+      attempts: attempts ?? this.attempts,
+      nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
+      lastError: lastError ?? this.lastError,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (patientLocalId.present) {
+      map['patient_local_id'] = Variable<String>(patientLocalId.value);
+    }
+    if (patientServerId.present) {
+      map['patient_server_id'] = Variable<String>(patientServerId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (modality.present) {
+      map['modality'] = Variable<String>(modality.value);
+    }
+    if (slideFormat.present) {
+      map['slide_format'] = Variable<String>(slideFormat.value);
+    }
+    if (stain.present) {
+      map['stain'] = Variable<String>(stain.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
+    if (sizeBytes.present) {
+      map['size_bytes'] = Variable<int>(sizeBytes.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (nextAttemptAt.present) {
+      map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PendingUploadsCompanion(')
+          ..write('id: $id, ')
+          ..write('patientLocalId: $patientLocalId, ')
+          ..write('patientServerId: $patientServerId, ')
+          ..write('kind: $kind, ')
+          ..write('modality: $modality, ')
+          ..write('slideFormat: $slideFormat, ')
+          ..write('stain: $stain, ')
+          ..write('filePath: $filePath, ')
+          ..write('fileName: $fileName, ')
+          ..write('sizeBytes: $sizeBytes, ')
+          ..write('status: $status, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAt: $nextAttemptAt, ')
+          ..write('lastError: $lastError, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2987,6 +3858,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $OutboxTable outbox = $OutboxTable(this);
   late final $SyncConflictsTable syncConflicts = $SyncConflictsTable(this);
   late final $MetaTable meta = $MetaTable(this);
+  late final $PendingUploadsTable pendingUploads = $PendingUploadsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2997,6 +3869,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     outbox,
     syncConflicts,
     meta,
+    pendingUploads,
   ];
 }
 
@@ -4442,6 +5315,406 @@ typedef $$MetaTableProcessedTableManager =
       MetaData,
       PrefetchHooks Function()
     >;
+typedef $$PendingUploadsTableCreateCompanionBuilder =
+    PendingUploadsCompanion Function({
+      required String id,
+      required String patientLocalId,
+      required String patientServerId,
+      required String kind,
+      Value<String?> modality,
+      Value<String?> slideFormat,
+      Value<String?> stain,
+      required String filePath,
+      required String fileName,
+      required int sizeBytes,
+      Value<String> status,
+      Value<int> attempts,
+      Value<DateTime?> nextAttemptAt,
+      Value<String?> lastError,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$PendingUploadsTableUpdateCompanionBuilder =
+    PendingUploadsCompanion Function({
+      Value<String> id,
+      Value<String> patientLocalId,
+      Value<String> patientServerId,
+      Value<String> kind,
+      Value<String?> modality,
+      Value<String?> slideFormat,
+      Value<String?> stain,
+      Value<String> filePath,
+      Value<String> fileName,
+      Value<int> sizeBytes,
+      Value<String> status,
+      Value<int> attempts,
+      Value<DateTime?> nextAttemptAt,
+      Value<String?> lastError,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$PendingUploadsTableFilterComposer
+    extends Composer<_$AppDatabase, $PendingUploadsTable> {
+  $$PendingUploadsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get patientLocalId => $composableBuilder(
+    column: $table.patientLocalId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get patientServerId => $composableBuilder(
+    column: $table.patientServerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modality => $composableBuilder(
+    column: $table.modality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get slideFormat => $composableBuilder(
+    column: $table.slideFormat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stain => $composableBuilder(
+    column: $table.stain,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PendingUploadsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PendingUploadsTable> {
+  $$PendingUploadsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get patientLocalId => $composableBuilder(
+    column: $table.patientLocalId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get patientServerId => $composableBuilder(
+    column: $table.patientServerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modality => $composableBuilder(
+    column: $table.modality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get slideFormat => $composableBuilder(
+    column: $table.slideFormat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stain => $composableBuilder(
+    column: $table.stain,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeBytes => $composableBuilder(
+    column: $table.sizeBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PendingUploadsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PendingUploadsTable> {
+  $$PendingUploadsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get patientLocalId => $composableBuilder(
+    column: $table.patientLocalId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get patientServerId => $composableBuilder(
+    column: $table.patientServerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get modality =>
+      $composableBuilder(column: $table.modality, builder: (column) => column);
+
+  GeneratedColumn<String> get slideFormat => $composableBuilder(
+    column: $table.slideFormat,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get stain =>
+      $composableBuilder(column: $table.stain, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeBytes =>
+      $composableBuilder(column: $table.sizeBytes, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$PendingUploadsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PendingUploadsTable,
+          PendingUpload,
+          $$PendingUploadsTableFilterComposer,
+          $$PendingUploadsTableOrderingComposer,
+          $$PendingUploadsTableAnnotationComposer,
+          $$PendingUploadsTableCreateCompanionBuilder,
+          $$PendingUploadsTableUpdateCompanionBuilder,
+          (
+            PendingUpload,
+            BaseReferences<_$AppDatabase, $PendingUploadsTable, PendingUpload>,
+          ),
+          PendingUpload,
+          PrefetchHooks Function()
+        > {
+  $$PendingUploadsTableTableManager(
+    _$AppDatabase db,
+    $PendingUploadsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PendingUploadsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PendingUploadsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PendingUploadsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> patientLocalId = const Value.absent(),
+                Value<String> patientServerId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> modality = const Value.absent(),
+                Value<String?> slideFormat = const Value.absent(),
+                Value<String?> stain = const Value.absent(),
+                Value<String> filePath = const Value.absent(),
+                Value<String> fileName = const Value.absent(),
+                Value<int> sizeBytes = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<DateTime?> nextAttemptAt = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PendingUploadsCompanion(
+                id: id,
+                patientLocalId: patientLocalId,
+                patientServerId: patientServerId,
+                kind: kind,
+                modality: modality,
+                slideFormat: slideFormat,
+                stain: stain,
+                filePath: filePath,
+                fileName: fileName,
+                sizeBytes: sizeBytes,
+                status: status,
+                attempts: attempts,
+                nextAttemptAt: nextAttemptAt,
+                lastError: lastError,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String patientLocalId,
+                required String patientServerId,
+                required String kind,
+                Value<String?> modality = const Value.absent(),
+                Value<String?> slideFormat = const Value.absent(),
+                Value<String?> stain = const Value.absent(),
+                required String filePath,
+                required String fileName,
+                required int sizeBytes,
+                Value<String> status = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<DateTime?> nextAttemptAt = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => PendingUploadsCompanion.insert(
+                id: id,
+                patientLocalId: patientLocalId,
+                patientServerId: patientServerId,
+                kind: kind,
+                modality: modality,
+                slideFormat: slideFormat,
+                stain: stain,
+                filePath: filePath,
+                fileName: fileName,
+                sizeBytes: sizeBytes,
+                status: status,
+                attempts: attempts,
+                nextAttemptAt: nextAttemptAt,
+                lastError: lastError,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PendingUploadsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PendingUploadsTable,
+      PendingUpload,
+      $$PendingUploadsTableFilterComposer,
+      $$PendingUploadsTableOrderingComposer,
+      $$PendingUploadsTableAnnotationComposer,
+      $$PendingUploadsTableCreateCompanionBuilder,
+      $$PendingUploadsTableUpdateCompanionBuilder,
+      (
+        PendingUpload,
+        BaseReferences<_$AppDatabase, $PendingUploadsTable, PendingUpload>,
+      ),
+      PendingUpload,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4455,4 +5728,6 @@ class $AppDatabaseManager {
   $$SyncConflictsTableTableManager get syncConflicts =>
       $$SyncConflictsTableTableManager(_db, _db.syncConflicts);
   $$MetaTableTableManager get meta => $$MetaTableTableManager(_db, _db.meta);
+  $$PendingUploadsTableTableManager get pendingUploads =>
+      $$PendingUploadsTableTableManager(_db, _db.pendingUploads);
 }

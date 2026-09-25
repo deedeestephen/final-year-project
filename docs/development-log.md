@@ -669,3 +669,23 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 - New `2-api-gateway/openapi/chat-contract.md`: the planned API, marked not implemented.
 - App entry points stay "Coming in build phase 13".
 
+## 2026-09-25: Phase 9: Clinician and pathologist workflow in the app
+
+**Objective:** the Phase 10–12 server features in the app (UC-03 to UC-06, FR-08), built against the AI contract with the labelled mock, so only the AI service changes when the trained models arrive.
+
+**Built:**
+- **Plumbing:** `ApiClient.upload` (fields before the file, progress, the retry after a token refresh rebuilds the form) and `download`; `file_picker`; `ClinicalServerApi`.
+- **Upload queue:** Drift schema v2 adds `pending_uploads` (migration tested with drift's schema verifier). Files are copied into private storage, sent after each sync or on **Try now**, retried with the sync engine's backoff and `Retry-After`, refused files shown with the server's reason, and copies deleted after upload and at sign-out.
+- **Screens:** consent (record, withdraw); images and slides (list, waiting files, add); AI analysis (disabled reasons, polling only while open, at most 2 minutes); the AI report (banner first, no good/bad colours, explanations or their reason, "Evaluation data not yet available."); **AI results to review** (new `GET /ai-jobs`, facility-wide); the pathologist review queue and review form.
+- **Routes:** consent clinician-only, review pathologist-only, AI and images for both.
+- **Backend:** `GET /api/v1/ai-jobs` (recent analyses in the facility, with the record number); OpenAPI re-exported. `npm run e2e:user -- --role pathologist` for the device test.
+
+**Tests:**
+- Mobile: 152 pass, 1 skipped. New: 5 Phase 9 widget tests through the whole app, 6 upload-queue tests, 2 migration tests, 2 route tests.
+- Backend `ai.int-spec.ts`: 11 tests, including the new list and another facility's jobs.
+- Device test extended (consent, MRI upload, mock report; pathologist slide upload and review).
+
+**Found by the tests:** after a queued file finished uploading, the images list did not refresh until pulled down. The screen now reloads the server lists when a file leaves the queue.
+
+**Not done in this session:** the device test was not run. The PC had 1.35 GB free and the emulator refused to start ("not enough disk space"); nothing was deleted to make room. It is ready to run once there is space (see [mobile.md](mobile.md)).
+

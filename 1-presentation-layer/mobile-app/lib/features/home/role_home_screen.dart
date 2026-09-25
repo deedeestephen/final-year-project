@@ -22,6 +22,7 @@ class HomeDestination {
     this.icon, {
     this.phase,
     this.route,
+    this.later = false,
   });
   final String title;
   final String description;
@@ -30,6 +31,9 @@ class HomeDestination {
   /// The build phase that delivers it; null when it is available now.
   final int? phase;
   final String? route;
+
+  /// Planned, but not scheduled in a build phase yet.
+  final bool later;
 }
 
 /// Staff homes. Patients have their own tabbed app (features/patient).
@@ -49,41 +53,42 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
     ),
     HomeDestination(
       'AI results to review',
-      'Decision-support results awaiting you',
+      'Recent AI analyses in your facility (decision support only)',
       Icons.fact_check_outlined,
-      phase: 10,
+      route: Routes.aiResults,
+    ),
+    // The assistant is planned in docs/chatbot-plan.md.
+    HomeDestination(
+      'Ask the assistant',
+      'Guidelines and references for clinicians',
+      Icons.chat_outlined,
+      phase: 13,
     ),
     HomeDestination(
       'Referrals',
       'Referrals and follow-up',
       Icons.send_outlined,
-      phase: 12,
+      later: true,
     ),
   ],
   UserRole.pathologist: [
     HomeDestination(
+      'Review queue',
+      'Slides waiting for your Gleason review',
+      Icons.inbox_outlined,
+      route: Routes.review,
+    ),
+    HomeDestination(
       'Patients',
-      'View patients and their screening records',
+      'Open a patient to see or add images and slides',
       Icons.people_outline,
       route: Routes.patients,
     ),
     HomeDestination(
-      'Review queue',
-      'Cases waiting for specialist review',
-      Icons.inbox_outlined,
-      phase: 11,
-    ),
-    HomeDestination(
-      'Images',
-      'MRI and histopathology uploads',
-      Icons.image_outlined,
-      phase: 9,
-    ),
-    HomeDestination(
-      'Reports',
-      'Signed-off reports',
+      'AI results',
+      'Recent AI analyses in your facility (decision support only)',
       Icons.description_outlined,
-      phase: 11,
+      route: Routes.aiResults,
     ),
   ],
   UserRole.admin: [
@@ -149,10 +154,12 @@ class RoleHomeScreen extends ConsumerWidget {
                                 d.description,
                                 style: theme.textTheme.bodyMedium,
                               ),
-                              if (d.phase != null) ...[
+                              if (d.phase != null || d.later) ...[
                                 const SizedBox(height: AppSizes.xs),
                                 Text(
-                                  'Coming in build phase ${d.phase}',
+                                  d.phase != null
+                                      ? 'Coming in build phase ${d.phase}'
+                                      : 'Planned for a later version',
                                   style: theme.textTheme.bodySmall,
                                 ),
                               ],

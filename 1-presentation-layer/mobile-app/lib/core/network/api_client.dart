@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../storage/token_store.dart';
@@ -56,6 +58,40 @@ class ApiClient {
 
   Future<T> put<T>(String path, {Object? data}) =>
       _send(() => dio.put<T>(path, data: data));
+
+  /// Sends one file as multipart/form-data. The server reads the form fields
+  /// first and the file last, so [fields] are added before the file.
+  Future<T> upload<T>(
+    String path, {
+    required String filePath,
+    required String fileName,
+    Map<String, String> fields = const {},
+    void Function(int sent, int total)? onProgress,
+  }) => _send(
+    () => dio.post<T>(
+      path,
+      data: FormData.fromMap({
+        ...fields,
+        'file': MultipartFile.fromFileSync(filePath, filename: fileName),
+      }),
+      onSendProgress: onProgress,
+      options: Options(
+        contentType: 'multipart/form-data',
+        sendTimeout: const Duration(minutes: 15),
+      ),
+    ),
+  );
+
+  /// Downloads raw bytes, for example an explanation image.
+  Future<Uint8List> download(String path) async {
+    final bytes = await _send(
+      () => dio.get<List<int>>(
+        path,
+        options: Options(responseType: ResponseType.bytes),
+      ),
+    );
+    return Uint8List.fromList(bytes);
+  }
 
   Future<T> _send<T>(Future<Response<T>> Function() request) async {
     try {
@@ -158,6 +194,10 @@ class _AuthInterceptor extends QueuedInterceptor {
       }
       request.headers['Authorization'] = 'Bearer $access';
       request.extra[_retried] = true;
+      // A multipart body can only be sent once; the retry needs a fresh copy.
+      if (request.data is FormData) {
+        request.data = (request.data as FormData).clone();
+      }
       final retried = await client._plainDio.fetch<dynamic>(request);
       return handler.resolve(retried);
     } on ApiException catch (e) {

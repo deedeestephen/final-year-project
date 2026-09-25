@@ -307,6 +307,18 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     return jobs.map((j) => toJobView(j));
   }
 
+  /** Recent analyses in the caller's facility (the "AI results to review" list). */
+  async recent(user: AuthenticatedUser): Promise<AiJobView[]> {
+    const facilityId = this.patients.staffFacility(user);
+    const jobs = await this.prisma.aiJob.findMany({
+      where: { patient: { facilityId } },
+      include: { patient: { select: { mrn: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return jobs.map((j) => ({ ...toJobView(j), patientMrn: j.patient.mrn }));
+  }
+
   async get(
     jobId: string,
     user: AuthenticatedUser,

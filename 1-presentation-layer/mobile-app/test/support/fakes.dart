@@ -66,7 +66,17 @@ class FakeHttpAdapter implements HttpClientAdapter {
     Object? body;
     if (requestStream != null) {
       final bytes = await requestStream.expand((c) => c).toList();
-      body = bytes.isEmpty ? null : jsonDecode(utf8.decode(bytes));
+      final form = options.data;
+      if (form is FormData) {
+        // Multipart uploads: record the form, not the raw bytes.
+        body = {
+          'fields': {for (final f in form.fields) f.key: f.value},
+          'files': [for (final f in form.files) f.value.filename],
+          'bytes': bytes.length,
+        };
+      } else {
+        body = bytes.isEmpty ? null : jsonDecode(utf8.decode(bytes));
+      }
     }
     final request = RecordedRequest(
       options.method,
@@ -76,6 +86,16 @@ class FakeHttpAdapter implements HttpClientAdapter {
     );
     requests.add(request);
     final response = await handler(request);
+    final raw = response.body;
+    if (raw is Uint8List) {
+      return ResponseBody.fromBytes(
+        raw,
+        response.status,
+        headers: {
+          Headers.contentTypeHeader: ['image/png'],
+        },
+      );
+    }
     return ResponseBody.fromString(
       response.body == null ? '' : jsonEncode(response.body),
       response.status,

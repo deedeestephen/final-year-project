@@ -81,6 +81,16 @@ export class PatientAiController {
 export class AiJobsController {
   constructor(private readonly ai: AiService) {}
 
+  @Get()
+  @RequirePermissions('ai:read')
+  @ApiOkResponse({
+    type: [AiJobView],
+    description: 'Recent analyses in your facility, newest first (no reports)',
+  })
+  recent(@CurrentUser() user: AuthenticatedUser): Promise<AiJobView[]> {
+    return this.ai.recent(user);
+  }
+
   @Get(':id')
   @RequirePermissions('ai:read')
   @ApiOkResponse({

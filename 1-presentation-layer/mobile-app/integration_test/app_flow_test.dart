@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +13,8 @@ import 'package:pca_mhealth/core/db/local_store.dart';
 import 'package:pca_mhealth/core/db/open_database.dart';
 import 'package:pca_mhealth/core/providers.dart';
 import 'package:pca_mhealth/core/storage/token_store.dart';
+import 'package:pca_mhealth/features/clinical_server/application/clinical_server_providers.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// End-to-end on a real Android device or emulator, against the running
 /// backend: real SQLCipher database, real secure storage, real network.
@@ -28,6 +33,40 @@ const _patientPassword = String.fromEnvironment('E2E_PATIENT_PASSWORD');
 // From `npm run e2e:user -- --role admin` (optional third flow).
 const _adminEmail = String.fromEnvironment('E2E_ADMIN_EMAIL');
 const _adminPassword = String.fromEnvironment('E2E_ADMIN_PASSWORD');
+// From `npm run e2e:user -- --role pathologist` (optional fourth flow).
+const _pathologistEmail = String.fromEnvironment('E2E_PATHOLOGIST_EMAIL');
+const _pathologistPassword = String.fromEnvironment('E2E_PATHOLOGIST_PASSWORD');
+
+/// The backend's synthetic test files (3-application-logic/backend/test/
+/// fixtures/files): a tiny MRI DICOM and a 1x1 TIFF, no real images.
+const _syntheticMri =
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    'AAAAAAAAAAAAAAAAAAAAAAAAAABESUNNAgAAAFVMBACAAAAAAgABAE9CAAACAAAAAAECAAIA'
+    'VUkaADEuMi44NDAuMTAwMDguNS4xLjQuMS4xLjQAAgADAFVJLAAyLjI1LjEwMDkwNDk4MzY3'
+    'NzQyMjEwMjUyOTgxMzYyMzE4MTM2MTk4OTg5MAIAEABVSRQAMS4yLjg0MC4xMDAwOC4xLjIu'
+    'MQAIABYAVUkaADEuMi44NDAuMTAwMDguNS4xLjQuMS4xLjQACAAYAFVJLAAyLjI1LjEwMDkw'
+    'NDk4MzY3NzQyMjEwMjUyOTgxMzYyMzE4MTM2MTk4OTg5MAgAYABDUwIATVIQABAAUE4OAFNZ'
+    'TlRIRVRJQ15URVNUEAAgAExPDgBTWU5USEVUSUMtMDAwMCAADQBVSSwAMi4yNS4xMTUyNDkw'
+    'MjczOTA1NTE3NTA4MzkwODA4MDU1MzkxNzc4ODE0NDggAA4AVUksADIuMjUuMjg2MjI4MjY4'
+    'MjI4NTgxMzczNzA0MzM3MjQ4NjYyNDM0NzEzMDcxKAACAFVTAgABACgABABDUwwATU9OT0NI'
+    'Uk9NRTIgKAAQAFVTAgAIACgAEQBVUwIACAAoAAABVVMCABAAKAABAVVTAgAMACgAAgFVUwIA'
+    'CwAoAAMBVVMCAAAA4H8QAE9XAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+const _syntheticSlide =
+    'SUkqAAgAAAAJAAABAwABAAAAAQAAAAEBAwABAAAAAQAAAAIBAwABAAAACAAAAAMBAwABAAAA'
+    'AQAAAAYBAwABAAAAAQAAABEBBAABAAAAegAAABUBAwABAAAAAQAAABYBAwABAAAAAQAAABcB'
+    'BAABAAAAAQAAAAAAAAAA';
+
+/// Writes a synthetic file into the phone's temporary folder for the file
+/// chooser override (a test cannot drive the system file picker).
+Future<PickedFile> _syntheticFile(String name, String base64) async {
+  final dir = await getTemporaryDirectory();
+  final file = File('${dir.path}/$name');
+  await file.writeAsBytes(base64Decode(base64));
+  return PickedFile(file.path, name);
+}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -79,10 +118,14 @@ void main() {
       final store = LocalStore(db);
       await store.wipe();
       await SecureTokenStore().clear();
+      final mri = await _syntheticFile('synthetic-mri.dcm', _syntheticMri);
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [appDatabaseProvider.overrideWithValue(db)],
+          overrides: [
+            appDatabaseProvider.overrideWithValue(db),
+            filePickerProvider.overrideWithValue(() async => mri),
+          ],
           child: const PcaApp(),
         ),
       );
@@ -166,6 +209,70 @@ void main() {
       expect(records, hasLength(1));
       expect((records.single as Map)['psaNgMl'], 6.8);
       expect((records.single as Map)['dreFinding'], 'ENLARGED_SMOOTH');
+
+      // Phase 9: consent, an image upload and an AI analysis (labelled mock).
+      await tapKey(tester, 'patient.consents');
+      await waitFor(tester, find.byKey(const Key('consent.add')));
+      await tapKey(tester, 'consent.add');
+      await waitFor(tester, find.byKey(const Key('consent.save')));
+      await tapKey(tester, 'consent.save');
+      await waitFor(
+        tester,
+        find.byKey(const Key('consent.withdraw.AI_ANALYSIS')),
+      );
+      await tester.pump(const Duration(seconds: 2)); // screenshot: consent
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+
+      await tapKey(tester, 'patient.imaging');
+      await waitFor(tester, find.byKey(const Key('imaging.add')));
+      await tapKey(tester, 'imaging.add');
+      await waitFor(tester, find.byKey(const Key('upload.pick')));
+      await tapKey(tester, 'upload.pick');
+      await waitFor(tester, find.text('synthetic-mri.dcm'));
+      await tester.pump(const Duration(seconds: 2)); // screenshot: upload
+      await tapKey(tester, 'upload.save');
+      final study = find.byWidgetPredicate(
+        (w) =>
+            w.key is ValueKey<String> &&
+            (w.key! as ValueKey<String>).value.startsWith('imaging.study.'),
+      );
+      await waitFor(tester, study);
+      await tester.pump(const Duration(seconds: 2)); // screenshot: images
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+
+      await tapKey(tester, 'patient.ai');
+      await waitFor(tester, find.byKey(const Key('ai.request')));
+      // Enabled once consent and the synced record are both seen.
+      for (var i = 0; i < 50; i++) {
+        final button = tester.widget<ButtonStyleButton>(
+          find.byKey(const Key('ai.request')),
+        );
+        if (button.onPressed != null) break;
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      await tapKey(tester, 'ai.request');
+      await waitFor(
+        tester,
+        find.text('Finished'),
+        timeout: const Duration(seconds: 90),
+      );
+      await tester.tap(find.text('Finished').first);
+      await waitFor(tester, find.byKey(const Key('ai.report.banner')));
+      expect(find.textContaining('DEVELOPMENT MOCK DATA'), findsWidgets);
+      await tester.pump(const Duration(seconds: 3)); // screenshot: report
+      final evaluation = find.byKey(const Key('ai.report.evaluation'));
+      await tester.scrollUntilVisible(
+        evaluation,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(
+        find.text('Accuracy figures: Evaluation data not yet available.'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 3)); // screenshot: explanations
 
       // Leave the device clean.
       await store.wipe();
@@ -381,6 +488,130 @@ void main() {
       await db.close();
     },
     skip: _adminEmail.isEmpty,
+  );
+  testWidgets(
+    'pathologist uploads a slide, then reviews it from the queue',
+    (tester) async {
+      // Arrange through the API: the clinic registers a synthetic patient.
+      final api = Dio(BaseOptions(baseUrl: AppEnv.apiRoot));
+      final tag = DateTime.now().millisecondsSinceEpoch % 1000000;
+      final clinician = await api.post<Map<String, dynamic>>(
+        '/auth/login',
+        data: {'email': _email, 'password': _password},
+      );
+      await api.post<Map<String, dynamic>>(
+        '/patients',
+        data: {
+          'givenName': 'SYNTHETIC',
+          'familyName': 'Slide $tag',
+          'dateOfBirth': '1955-06-06',
+          'regionClass': 'URBAN',
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${clinician.data!['accessToken']}',
+          },
+        ),
+      );
+
+      final AppDatabase db = await openAppDatabase();
+      final store = LocalStore(db);
+      await store.wipe();
+      await SecureTokenStore().clear();
+      final slide = await _syntheticFile(
+        'synthetic-slide.tif',
+        _syntheticSlide,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appDatabaseProvider.overrideWithValue(db),
+            filePickerProvider.overrideWithValue(() async => slide),
+          ],
+          child: const PcaApp(),
+        ),
+      );
+      await waitFor(tester, find.byKey(const Key('login.email')));
+      await enter(tester, 'login.email', _pathologistEmail);
+      await enter(tester, 'login.password', _pathologistPassword);
+      await tapKey(tester, 'login.submit');
+      await waitFor(tester, find.text('Review queue'));
+
+      // Find the patient (pulled by sync) and upload the slide.
+      await tester.tap(find.text('Patients').first);
+      await waitFor(tester, find.byKey(const Key('patients.search')));
+      await waitForServerId(db, 'Slide $tag');
+      await enter(tester, 'patients.search', 'Slide $tag');
+      await waitFor(tester, find.text('SYNTHETIC Slide $tag'));
+      await tester.tap(find.text('SYNTHETIC Slide $tag'));
+      await waitFor(tester, find.byKey(const Key('patient.imaging')));
+      await tapKey(tester, 'patient.imaging');
+      await waitFor(tester, find.byKey(const Key('imaging.add')));
+      await tapKey(tester, 'imaging.add');
+      await waitFor(tester, find.byKey(const Key('upload.kind')));
+      await tester.tap(find.text('Slide'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tapKey(tester, 'upload.pick');
+      await waitFor(tester, find.text('synthetic-slide.tif'));
+      await tapKey(tester, 'upload.save');
+      await waitFor(tester, find.text('Waiting for a pathologist'));
+      await tester.pump(const Duration(seconds: 2)); // screenshot: slide
+
+      // Review it from the queue.
+      final pathologist = await api.post<Map<String, dynamic>>(
+        '/auth/login',
+        data: {'email': _pathologistEmail, 'password': _pathologistPassword},
+      );
+      final patientId =
+          (await (db.select(
+                db.localPatients,
+              )..where((p) => p.familyName.equals('Slide $tag'))).getSingle())
+              .serverId!;
+      final slides = (await api.get<List<dynamic>>(
+        '/patients/$patientId/histopathology',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${pathologist.data!['accessToken']}',
+          },
+        ),
+      )).data!;
+      final slideId = (slides.single as Map)['id'] as String;
+
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.text('Review queue'));
+      final card = find.byKey(Key('review.slide.$slideId'));
+      await waitFor(tester, find.byType(Scrollable));
+      await tester.scrollUntilVisible(
+        card,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tapKey(tester, 'review.slide.$slideId');
+      await waitFor(tester, find.byKey(const Key('review.primary')));
+      for (final (key, option) in [
+        ('review.primary', 'Pattern 4'),
+        ('review.secondary', 'Pattern 3'),
+      ]) {
+        await tapKey(tester, key);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(option).last);
+        await tester.pumpAndSettle();
+      }
+      await tester.pump(const Duration(seconds: 2)); // screenshot: review form
+      await tapKey(tester, 'review.save');
+      await waitFor(tester, find.byKey(const Key('review.result')));
+      expect(find.text('4 + 3 = 7'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3)); // screenshot: reviewed
+
+      await store.wipe();
+      await db.close();
+    },
+    skip: _pathologistEmail.isEmpty,
   );
 }
 

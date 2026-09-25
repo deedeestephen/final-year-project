@@ -12,6 +12,10 @@ abstract final class Routes {
   static const newPatient = '/patients/new';
   static const sync = '/sync';
 
+  // Clinician and pathologist server features (Phase 9).
+  static const aiResults = '/ai-jobs';
+  static const review = '/review';
+
   // Patient app (bottom tabs).
   static const me = '/me';
   static const myHome = '/me/home';
@@ -29,20 +33,33 @@ abstract final class Routes {
   static String editPatient(String id) => '/patients/$id/edit';
   static String newRecord(String id) => '/patients/$id/records/new';
   static String article(String id) => '/me/learn/$id';
+  static String consents(String id) => '/patients/$id/consents';
+  static String imaging(String id) => '/patients/$id/imaging';
+  static String uploadImaging(String id) => '/patients/$id/imaging/upload';
+  static String analyses(String id) => '/patients/$id/ai';
+  static String aiJob(String id) => '/ai-jobs/$id';
+  static String reviewSlide(String id) => '/review/$id';
 }
 
 const _publicRoutes = {Routes.login, Routes.register, Routes.forgotPassword};
 
-/// Routes that change clinical data.
+/// Routes only clinicians use: they change clinical data or record consent.
 bool _isEditRoute(String location) =>
     location == Routes.newPatient ||
     location.endsWith('/edit') ||
-    location.endsWith('/records/new');
+    location.endsWith('/records/new') ||
+    location.endsWith('/consents');
+
+bool _isReviewRoute(String location) =>
+    location == Routes.review || location.startsWith('${Routes.review}/');
 
 bool _isClinicalRoute(String location) =>
     location == Routes.sync ||
     location == Routes.patients ||
-    location.startsWith('${Routes.patients}/');
+    location.startsWith('${Routes.patients}/') ||
+    location == Routes.aiResults ||
+    location.startsWith('${Routes.aiResults}/') ||
+    _isReviewRoute(location);
 
 bool _isPatientAppRoute(String location) =>
     location.startsWith('${Routes.me}/');
@@ -63,6 +80,10 @@ String? resolveRedirect(SessionState session, String location) {
       if (_isClinicalRoute(location)) {
         if (!user.canSync) return home;
         if (_isEditRoute(location) && !user.canEditPatients) return home;
+        if (_isReviewRoute(location) &&
+            !user.roles.contains(UserRole.pathologist)) {
+          return home;
+        }
         return null;
       }
       if (_isPatientAppRoute(location)) {

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -92,6 +94,7 @@ List<Override> testOverrides({
   required InMemoryTokenStore store,
   FakeConnectivity? connectivity,
   AppDatabase? database,
+  List<Override> extra = const [],
 }) => [
   appDatabaseProvider.overrideWithValue(database ?? memoryDatabase()),
   tokenStoreProvider.overrideWithValue(store),
@@ -99,7 +102,18 @@ List<Override> testOverrides({
   connectivityServiceProvider.overrideWithValue(
     connectivity ?? FakeConnectivity(),
   ),
+  // Queued upload copies go to a throwaway folder, never the real app storage.
+  uploadDirectoryProvider.overrideWithValue(testUploadDirectory()),
+  ...extra,
 ];
+
+/// One throwaway folder per test app. Created synchronously: real async file
+/// operations do not complete inside widget tests' fake time.
+Future<Directory> Function() testUploadDirectory() {
+  Directory? dir;
+  return () async =>
+      dir ??= Directory.systemTemp.createTempSync('pca-uploads-');
+}
 
 /// Pumps the full app (router, theme, session) against the fake backend.
 Future<void> pumpApp(
@@ -108,6 +122,7 @@ Future<void> pumpApp(
   required InMemoryTokenStore store,
   FakeConnectivity? connectivity,
   AppDatabase? database,
+  List<Override> overrides = const [],
 }) async {
   final db = database ?? memoryDatabase();
   addTearDown(db.close);
@@ -122,6 +137,7 @@ Future<void> pumpApp(
         store: store,
         connectivity: connectivity,
         database: db,
+        extra: overrides,
       ),
       child: const PcaApp(),
     ),

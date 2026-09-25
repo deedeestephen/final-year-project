@@ -135,13 +135,21 @@ Map<String, Object> _withoutNulls(Map<String, Object?> map) => {
 /// All reads and writes of clinical data on the device. Every change is
 /// saved locally first and queued in the outbox, so nothing is lost offline.
 class LocalStore {
-  LocalStore(this.db, {Uuid? uuid, DateTime Function()? now})
-    : _uuid = uuid ?? const Uuid(),
-      _now = now ?? DateTime.now;
+  LocalStore(
+    this.db, {
+    Uuid? uuid,
+    DateTime Function()? now,
+    Future<void> Function()? onWipe,
+  }) : _onWipe = onWipe,
+       _uuid = uuid ?? const Uuid(),
+       _now = now ?? DateTime.now;
 
   final AppDatabase db;
   final Uuid _uuid;
   final DateTime Function() _now;
+
+  /// Extra clean-up at wipe time (the upload queue's private file copies).
+  final Future<void> Function()? _onWipe;
 
   // ---------------------------------------------------------------------------
   // Settings, owner and cached profile
@@ -182,15 +190,19 @@ class LocalStore {
 
   /// Removes all clinical data, the queue and the cached profile. The device
   /// id is kept.
-  Future<void> wipe() => db.transaction(() async {
-    await db.delete(db.localClinicalRecords).go();
-    await db.delete(db.localPatients).go();
-    await db.delete(db.outbox).go();
-    await db.delete(db.syncConflicts).go();
-    await (db.delete(
-      db.meta,
-    )..where((m) => m.key.isNotValue(MetaKey.deviceId))).go();
-  });
+  Future<void> wipe() async {
+    await db.transaction(() async {
+      await db.delete(db.localClinicalRecords).go();
+      await db.delete(db.localPatients).go();
+      await db.delete(db.outbox).go();
+      await db.delete(db.syncConflicts).go();
+      await db.delete(db.pendingUploads).go();
+      await (db.delete(
+        db.meta,
+      )..where((m) => m.key.isNotValue(MetaKey.deviceId))).go();
+    });
+    await _onWipe?.call();
+  }
 
   // ---------------------------------------------------------------------------
   // Queries

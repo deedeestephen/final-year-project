@@ -76,6 +76,12 @@ export class AiReportView {
 export class AiJobView {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ format: 'uuid' }) patientId!: string;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: 'Facility record number; only on the facility-wide list',
+  })
+  patientMrn?: string | null;
   @ApiProperty({ enum: AI_JOB_STATUSES }) status!: string;
   @ApiProperty({ format: 'uuid' }) requestedById!: string;
   @ApiPropertyOptional({

@@ -95,12 +95,56 @@ class Meta extends Table {
   Set<Column> get primaryKey => {key};
 }
 
+/// Image and slide files waiting to be uploaded. The file is a private copy
+/// in the app's own storage and is deleted once the server has it.
+class PendingUploads extends Table {
+  /// Also sent as the upload's `clientUuid`, so a retry never duplicates.
+  TextColumn get id => text()();
+  TextColumn get patientLocalId => text()();
+  TextColumn get patientServerId => text()();
+
+  /// imaging | slide
+  TextColumn get kind => text()();
+  TextColumn get modality => text().nullable()(); // MRI | TRUS | CT
+  TextColumn get slideFormat => text().nullable()(); // SVS | TIFF | NDPI
+  TextColumn get stain => text().nullable()();
+  TextColumn get filePath => text()();
+  TextColumn get fileName => text()();
+  IntColumn get sizeBytes => integer()();
+
+  /// pending | uploading | rejected
+  TextColumn get status => text().withDefault(const Constant('pending'))();
+  IntColumn get attempts => integer().withDefault(const Constant(0))();
+  DateTimeColumn get nextAttemptAt => dateTime().nullable()();
+  TextColumn get lastError => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
-  tables: [LocalPatients, LocalClinicalRecords, Outbox, SyncConflicts, Meta],
+  tables: [
+    LocalPatients,
+    LocalClinicalRecords,
+    Outbox,
+    SyncConflicts,
+    Meta,
+    PendingUploads,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
+  /// 1: Phase 6 (patients, records, outbox). 2: Phase 9 (upload queue).
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await m.createTable(pendingUploads);
+    },
+  );
 }

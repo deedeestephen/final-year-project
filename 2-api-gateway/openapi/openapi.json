@@ -2030,6 +2030,35 @@
         ]
       }
     },
+    "/api/v1/ai-jobs": {
+      "get": {
+        "operationId": "AiJobsController_recent_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Recent analyses in your facility, newest first (no reports)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiJobView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/ai-jobs/{id}": {
       "get": {
         "operationId": "AiJobsController_get_v1",
@@ -4105,6 +4134,11 @@
           "patientId": {
             "type": "string",
             "format": "uuid"
+          },
+          "patientMrn": {
+            "type": "string",
+            "nullable": true,
+            "description": "Facility record number; only on the facility-wide list"
           },
           "status": {
             "type": "string",

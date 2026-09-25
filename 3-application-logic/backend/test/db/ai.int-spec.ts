@@ -482,6 +482,26 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
       id: job.id,
       report: null,
     });
+    // The facility-wide list includes it, with the record number; other facilities do not.
+    const recent = await http()
+      .get('/api/v1/ai-jobs')
+      .set(as(clinician))
+      .expect(200);
+    expect(recent.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: job.id,
+          patientMrn: expect.stringMatching(/^PCA-/) as string,
+        }),
+      ]),
+    );
+    const elsewhere = await http()
+      .get('/api/v1/ai-jobs')
+      .set(as(otherClinician))
+      .expect(200);
+    expect((elsewhere.body as JobBody[]).some((j) => j.id === job.id)).toBe(
+      false,
+    );
   });
 
   it('syncs the model registry from the AI service, without metrics', async () => {

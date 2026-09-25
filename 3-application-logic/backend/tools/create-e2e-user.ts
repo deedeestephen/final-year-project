@@ -5,6 +5,7 @@
  *
  *   npm run e2e:user                   -> a clinician
  *   npm run e2e:user -- --role admin   -> an administrator
+ *   npm run e2e:user -- --role pathologist -> a pathologist in the demo facility
  *   npm run e2e:user -- --role patient -> a patient app account linked to a
  *                                         synthetic patient with one screening
  *                                         record, one consent and one message
@@ -30,6 +31,7 @@ async function main(): Promise<void> {
     : 'clinician';
   const asPatient = roleArg === 'patient';
   const asAdmin = roleArg === 'admin';
+  const asPathologist = roleArg === 'pathologist';
   const prisma = new PrismaClient();
   try {
     const facility = await prisma.facility.findUnique({
@@ -37,7 +39,15 @@ async function main(): Promise<void> {
     });
     if (!facility) throw new Error('Run "npm run db:seed" first');
     const role = await prisma.role.findUniqueOrThrow({
-      where: { name: asPatient ? 'PATIENT' : asAdmin ? 'ADMIN' : 'CLINICIAN' },
+      where: {
+        name: asPatient
+          ? 'PATIENT'
+          : asAdmin
+            ? 'ADMIN'
+            : asPathologist
+              ? 'PATHOLOGIST'
+              : 'CLINICIAN',
+      },
     });
     const tag = randomUUID().slice(0, 8);
     const email = `e2e-${roleArg}-${tag}@${DEMO_EMAIL_DOMAIN}`;
@@ -49,7 +59,9 @@ async function main(): Promise<void> {
           ? 'SYNTHETIC E2E Patient'
           : asAdmin
             ? 'SYNTHETIC E2E Admin'
-            : 'SYNTHETIC E2E Clinician',
+            : asPathologist
+              ? 'SYNTHETIC E2E Pathologist'
+              : 'SYNTHETIC E2E Clinician',
         passwordHash: await argon2.hash(password, ARGON2_OPTIONS),
         facilityId: asPatient ? null : facility.id,
         isSynthetic: true,

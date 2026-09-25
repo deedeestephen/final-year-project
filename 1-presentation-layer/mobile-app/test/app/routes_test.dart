@@ -120,4 +120,50 @@ void main() {
     expect(resolveRedirect(const SignedOut(), Routes.register), isNull);
     expect(resolveRedirect(signedIn(['PATIENT']), Routes.register), '/me/home');
   });
+
+  test('consent capture is for clinicians; images and AI for both clinical '
+      'roles', () {
+    final clinician = signedIn(['CLINICIAN']);
+    final pathologist = signedIn(['PATHOLOGIST']);
+    for (final path in [
+      Routes.consents('p-1'),
+      Routes.imaging('p-1'),
+      Routes.uploadImaging('p-1'),
+      Routes.analyses('p-1'),
+      Routes.aiResults,
+      Routes.aiJob('job-1'),
+    ]) {
+      expect(resolveRedirect(clinician, path), isNull, reason: path);
+    }
+    expect(
+      resolveRedirect(pathologist, Routes.consents('p-1')),
+      '/home/pathologist',
+    );
+    for (final path in [
+      Routes.imaging('p-1'),
+      Routes.analyses('p-1'),
+      Routes.aiResults,
+      Routes.aiJob('job-1'),
+    ]) {
+      expect(resolveRedirect(pathologist, path), isNull, reason: path);
+    }
+    expect(
+      resolveRedirect(signedIn(['PATIENT']), Routes.aiResults),
+      '/me/home',
+    );
+  });
+
+  test('only pathologists open the review queue', () {
+    final pathologist = signedIn(['PATHOLOGIST']);
+    expect(resolveRedirect(pathologist, Routes.review), isNull);
+    expect(resolveRedirect(pathologist, Routes.reviewSlide('s-1')), isNull);
+    expect(
+      resolveRedirect(signedIn(['CLINICIAN']), Routes.review),
+      '/home/clinician',
+    );
+    expect(
+      resolveRedirect(signedIn(['ADMIN']), Routes.reviewSlide('s-1')),
+      '/home/admin',
+    );
+  });
 }

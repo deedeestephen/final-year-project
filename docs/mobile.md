@@ -19,6 +19,9 @@ Flutter replaces React Native (ADR-001). The colours are the Zambian national co
     network/api_exception.dart backend error envelope → typed exception
     storage/token_store.dart   tokens in Android Keystore / iOS Keychain
     connectivity/              online/offline stream
+    db/                        Drift + SQLCipher database (schema v2), LocalStore
+    sync/                      outbox sync engine and scheduler
+    uploads/upload_queue.dart  files waiting to upload (offline-safe, retried)
     providers.dart             dependency wiring (overridden in tests)
   shared/widgets/              AsyncStateView, SyncStatusBadge, AiDisclaimerBanner,
                                ClinicalCard, PrimaryButton, OfflineBanner
@@ -27,6 +30,10 @@ Flutter replaces React Native (ADR-001). The colours are the Zambian national co
                                · application (SessionController) · presentation
                                (login, change password, forgot password)
     home/                      role home screens + drawer (sign out, role switch)
+    patients/                  offline patient register and screening records
+    patient/                   the patient app (Phase 8)
+    clinical_server/           consent, images and slides, AI analysis and
+                               report, pathologist review (Phase 9)
 ```
 
 Features are organised feature-first, each with its own domain, data, application and presentation layers. State and dependency injection use Riverpod 3.
@@ -106,8 +113,29 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
   - **My reports**, empty until AI reports are released (Phases 10–11).
   - Change password, which is not forced here.
   - Sign out.
-- **Create an account.** Patients can sign up from the Sign in page. A new account shows "Almost ready" until a clinic links it to a patient record. The linking screen for clinicians is Phase 9.
+- **Create an account.** Patients can sign up from the Sign in page. A new account shows "Almost ready" until an administrator links it to a patient record on the admin website.
 - **The chatbot stays in Phase 13** (owner decision), shown on Home under "Coming later".
+
+## Clinician and pathologist workflow (Phase 9)
+
+These screens talk to the server directly. They need the patient's **server id**, so before the first sync the patient page shows "available after this patient has synced" instead.
+
+- **Patient page.** Three cards under the patient's details: **Consent** (clinicians only), **Images and slides**, **AI analysis**.
+- **Consent.** List, record (type, method, consent text version) and withdraw (asks first). `POST /patients/{id}/consents`, `…/withdraw`.
+- **Images and slides.** Pick a file (`file_picker`), choose what it is (MRI, TRUS or CT; pathologists can also choose a slide: TIFF, SVS or NDPI, with an optional stain) and save.
+  - The file goes into the **upload queue** first (`core/uploads/upload_queue.dart`, Drift table `pending_uploads`, schema v2). The queue copies it into the app's private storage, so the upload survives no connection, closing the app and the user moving the original.
+  - The queue runs after every sync and when the user taps **Try now**. It sends the form fields first, then the file (as the server requires), with a progress bar.
+  - Retries use the sync engine's rules: 2 s doubling to 15 min with jitter, and never sooner than `Retry-After`. Network errors, 408, 429 and 5xx are retried. Any other refusal (for example 415 "not a medical image") is shown in plain words and not retried.
+  - Each file has a `clientUuid`, so a retry after a lost answer never creates a second copy on the server.
+  - The private copy is deleted once the server has the file, when the user removes it, and at sign-out.
+- **AI analysis.**
+  - **Request AI analysis** is disabled with a plain reason when the phone is offline, AI consent is missing, or there is no synced screening record. Server refusals (`CONSENT_REQUIRED`, `AI_JOB_IN_PROGRESS`, `AI_UNAVAILABLE`, `RATE_LIMITED`) are shown in plain words.
+  - While the screen is open and a job is waiting or running, it checks every 3 s for at most 2 minutes. Nothing runs in the background.
+  - **AI results to review** on the clinician home lists recent analyses in the facility (`GET /ai-jobs`).
+- **AI report.** `AiDisclaimerBanner` comes first ("DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT." for mock output). Then the values in the clinical number font with no good/bad colours, the modules used (with model versions) and skipped (with reasons), and the explanations: the image from `/explanations/{id}/content` when one exists, otherwise the server's reason. Accuracy is always "Evaluation data not yet available." until stored evaluations exist.
+- **Pathologist review.** **Review queue** (oldest first) → slide → Gleason primary and secondary (3–5) → **Save review**. The server works out the ISUP grade group and allows one review per slide.
+- **Routes.** `/patients/:id/consents` is clinician-only. `/review` and `/review/:slideId` are pathologist-only. `/patients/:id/imaging`, `/patients/:id/ai`, `/ai-jobs` and `/ai-jobs/:jobId` are for both clinical roles. Patients and administrators are redirected home.
+- **The model screens are ready for the real models.** When the trained models replace the mocks, only the AI service changes ([ai-model-integration-guide.md](ai-model-integration-guide.md)); the banner switches to the research-model wording from the report's `provenance`.
 
 ## Administration (moved to the web)
 
@@ -125,10 +153,10 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 - **Real phone (SM-G965U, Android 10).** Run `6-infrastructure\scripts\phone-usb.ps1` (`adb reverse tcp:3000 tcp:3000`), then use the Android Studio run configuration **App - USB phone** (`API_BASE_URL=http://localhost:3000`).
 - **Run configurations.** `1-presentation-layer/mobile-app/.run/`: **App - S9+ emulator** and **App - USB phone**.
 - **One command starts the backend and its services:** `6-infrastructure\scripts\dev-up.ps1`. `6-infrastructure\scripts\dev-down.ps1` stops them.
-- **End-to-end test on a device.** It uses throwaway synthetic accounts (`npm run e2e:user` for a clinician, `npm run e2e:user -- --role patient` for a linked patient; pass the second with `E2E_PATIENT_EMAIL` / `E2E_PATIENT_PASSWORD`), so the demo accounts are never touched:
+- **End-to-end test on a device.** It uses throwaway synthetic accounts, so the demo accounts are never touched: `npm run e2e:user` for a clinician; `-- --role patient`, `-- --role admin` and `-- --role pathologist` for the optional flows (pass them with `E2E_PATIENT_*`, `E2E_ADMIN_*` and `E2E_PATHOLOGIST_*` `EMAIL`/`PASSWORD`). The clinician flow also records consent, uploads the synthetic MRI and opens the mock AI report; the pathologist flow uploads the synthetic slide and reviews it. The synthetic files are built into the test and given to the app through a `filePickerProvider` override, because a test cannot drive the system file chooser. The backend and the AI service must be running.
   ```
-  cd backend && npm run e2e:user
-  cd mobile && flutter test integration_test -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000 --dart-define=E2E_EMAIL=... --dart-define=E2E_PASSWORD=...
+  cd 3-application-logic/backend && npm run e2e:user && npm run e2e:user -- --role pathologist
+  cd 1-presentation-layer/mobile-app && flutter test integration_test -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000 --dart-define=E2E_EMAIL=... --dart-define=E2E_PASSWORD=... --dart-define=E2E_PATHOLOGIST_EMAIL=... --dart-define=E2E_PATHOLOGIST_PASSWORD=...
   ```
 
 ## Running against the local backend
@@ -157,6 +185,9 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 | `test/app/routes_test.dart` | every redirect rule, including cross-role access |
 | `test/widget_test.dart` | full app against a scripted backend: validation, each sign-in error, role homes, forced password change, forgot password, sign-out, offline banner |
 | `test/shared/widgets_test.dart` | shared widgets (AI disclaimer and mock label, sync badge, async states) |
+| `test/core/upload_queue_test.dart` | upload queue: private copy, fields and file sent, backoff and `Retry-After`, refusal not retried, missing file, discard, sign-out deletes copies |
+| `test/core/migration_test.dart` | database v1 → v2 gives exactly the v2 schema and keeps saved patients |
+| `test/features/clinical_server/clinical_server_test.dart` | consent record and withdraw, a file saved offline then uploaded once, AI disabled reasons, mock report (banner, skipped modules, unavailable explanations, no metrics), pathologist review |
 | `test/live/` | **opt-in** check against a running backend: `LIVE_API_URL=http://localhost:3000 LIVE_API_PASSWORD=… flutter test test/live`. It never changes the demo password. |
 
 Quality gate: `6-infrastructure/scripts/quality-gate.sh mobile` (format, analyze, tests with coverage, debug APK).

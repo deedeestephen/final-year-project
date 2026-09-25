@@ -8,6 +8,10 @@ import '../features/auth/presentation/change_password_screen.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_account_screen.dart';
+import '../features/clinical_server/presentation/ai_screens.dart';
+import '../features/clinical_server/presentation/consent_screen.dart';
+import '../features/clinical_server/presentation/imaging_screens.dart';
+import '../features/clinical_server/presentation/review_screens.dart';
 import '../features/home/role_home_screen.dart';
 import '../features/patient/presentation/learn_screen.dart';
 import '../features/patient/presentation/messages_screen.dart';
@@ -74,7 +78,51 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) =>
                     AddRecordScreen(patientId: state.pathParameters['id']!),
               ),
+              GoRoute(
+                path: 'consents',
+                builder: (_, state) =>
+                    ConsentScreen(patientId: state.pathParameters['id']!),
+              ),
+              GoRoute(
+                path: 'imaging',
+                builder: (_, state) =>
+                    ImagingScreen(patientId: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'upload',
+                    builder: (_, state) =>
+                        UploadScreen(patientId: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'ai',
+                builder: (_, state) =>
+                    AnalysesScreen(patientId: state.pathParameters['id']!),
+              ),
             ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.aiResults,
+        builder: (_, _) => const RecentAnalysesScreen(),
+        routes: [
+          GoRoute(
+            path: ':jobId',
+            builder: (_, state) =>
+                AiReportScreen(jobId: state.pathParameters['jobId']!),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.review,
+        builder: (_, _) => const ReviewQueueScreen(),
+        routes: [
+          GoRoute(
+            path: ':slideId',
+            builder: (_, state) =>
+                ReviewSlideScreen(slideId: state.pathParameters['slideId']!),
           ),
         ],
       ),

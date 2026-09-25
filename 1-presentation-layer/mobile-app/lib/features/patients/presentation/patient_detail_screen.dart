@@ -11,6 +11,7 @@ import '../../../shared/widgets/clinical_card.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../../shared/widgets/sync_status_badge.dart';
 import '../../auth/application/session_controller.dart';
+import '../../clinical_server/presentation/patient_server_sections.dart';
 import '../../sync/device_sync_button.dart';
 import '../application/patient_providers.dart';
 import 'clinical_formats.dart';
@@ -76,6 +77,8 @@ class PatientDetailScreen extends ConsumerWidget {
                             ),
                         ],
                         const SizedBox(height: AppSizes.lg),
+                        PatientServerSections(patient: p),
+                        const SizedBox(height: AppSizes.md),
                         Text(
                           'Screening records',
                           style: Theme.of(context).textTheme.titleMedium,

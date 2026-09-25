@@ -125,12 +125,46 @@ Tick each box when it works.
 - [ ] **A message arrives.** Sign out, sign in as the **clinician**, and open **Patients**, then **Patient 001, SYNTHETIC**, then **Add screening record**. Add a PSA value, then sign out.
   Sign in as the **patient** again and tap **Messages**.
   → *"New screening record"* with a red number on the Messages button. Tap the message to mark it as read.
-- [ ] Tap **Profile**, then **My consents**. If the list is empty, the clinician has not recorded a consent yet (a later phase adds that screen).
+- [ ] Tap **Profile**, then **My consents**. If the list is empty, the clinician has not recorded a consent yet (see Phase 9).
   With a consent listed, tap **Withdraw**. The app explains what that means and asks first.
 - [ ] **New patient account.** Sign out. On Sign in, tap **New patient? Create an account** and fill it in with made-up details, including a phone number and an **NRC** (like `123456/78/1`) or a **passport number**.
   → *"Your account is ready."* Sign in with it: Home says *"Almost ready… Ask your clinic to link it"*, because no clinic has linked it to a patient record yet.
 - [ ] **Offline.** Turn **Airplane mode** on and open the tabs again.
   → The app still shows your last results and messages, with *"Offline · showing what was saved on …"*.
+
+### Phase 9: the clinician and pathologist screens (consent, pictures, AI, review)
+
+Everything here needs the patient to be **synced** first (green **Synced** badge). Before that, the patient page says *"Consent, images and AI analysis become available after this patient has synced to the server."*
+
+**Put a practice picture on the pretend phone** (one time only):
+1. Make the practice files if you have not yet: `cd "C:\Users\deede\OneDrive\Desktop\Final Year Project\pca-mhealth\3-application-logic\backend"; npm run fixtures`
+2. Open the folder `3-application-logic\backend\test\fixtures\files` in File Explorer.
+3. **Drag `synthetic-mri.dcm` onto the pretend phone's screen** and let go. It is copied into the phone's **Downloads**. Do the same with `synthetic-slide.tif` for the pathologist test.
+
+Sign in as the **clinician** and open **Patients**, then a synced patient. Below the patient's details there are now three cards: **Consent**, **Images and slides**, **AI analysis**.
+
+- [ ] **AI analysis before consent.** Tap **AI analysis**.
+  → The **Request AI analysis** button is grey, with the reason: *"The patient has not consented to AI analysis. Record it under Consent first."*
+- [ ] **Record consent.** Go back, tap **Consent**, then **Record consent**. Leave *AI analysis*, *Written* and *v1* as they are and tap **Save consent**.
+  → *AI analysis* is listed as given, with a **Withdraw** button (it asks before withdrawing).
+- [ ] **Add a picture.** Go back, tap **Images and slides**, then **Add a file**. Leave the type as **MRI**, tap **Choose file**, pick `synthetic-mri.dcm` from Downloads, then tap **Save and upload**.
+  → A moment later the file is listed under *Images on the server*.
+- [ ] **Add a picture with no internet.** Turn **Airplane mode** on and add the same file again.
+  → It waits under *Waiting on this phone*: *"Saved on this phone, will upload when online"*. Turn Airplane mode off and tap **Try now** (or just wait): it uploads and moves to the server list. Nothing is sent twice.
+- [ ] **A file that is not a picture** (optional: drag `not-an-image.dcm` onto the phone and add it).
+  → It is marked *Not accepted*, with the server's reason in plain words. Tap **Remove**.
+- [ ] **Ask the AI.** Go back, tap **AI analysis**. The button is now blue. Tap **Request AI analysis**.
+  → A card says *Waiting to start*, then *Running*, then **Finished** after a few seconds (the screen checks by itself while it is open).
+- [ ] **Read the report.** Tap the **Finished** card.
+  → At the very top, the banner **"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."** Then the result, the parts of the AI that ran (and why the others did not), **Why (explanations)** saying each one is not available yet, and *"Accuracy figures: Evaluation data not yet available."* No coloured "good/bad" words, and no pretend heatmaps.
+- [ ] **All AI results.** On the clinician home, tap **AI results to review**.
+  → Every recent analysis in your clinic, with the patient's record number.
+- [ ] **Pathologist: add a slide.** Sign out, sign in as **`pathologist@demo.pca-mhealth.test`**. Open **Patients**, a synced patient, **Images and slides**, **Add a file**. Choose **Slide**, format **TIFF**, pick `synthetic-slide.tif`, and tap **Save and upload**.
+  → The slide is listed as *Waiting for a pathologist*.
+- [ ] **Pathologist: review it.** Go back to the home page and tap **Review queue**, then the slide. Tap **Save review** without choosing anything first.
+  → *"Choose the primary pattern."* Now choose **Pattern 4** and **Pattern 3**, then **Save review**.
+  → *Reviewed*: **Gleason 4 + 3 = 7**, **ISUP grade group 3**. The server works out the grade group itself, and a slide can only be reviewed once.
+- [ ] **Who sees what.** The pathologist has no **Consent** card (only clinicians record consent), and the clinician has no **Review queue**.
 
 ### The admin website (users, roles and permissions, patient accounts)
 
@@ -180,7 +214,7 @@ The admin page is now a **website on your PC**, not part of the phone app. `dev-
 
 ### Phase 10: pictures and slides (on the server)
 
-The phone screens for this come in Phase 9. For now you test it on the server's own web page.
+You can do this on the phone (see Phase 9 above). The steps below test the server on its own web page.
 
 1. Make the practice files (they are made up, with no real person in them):
    ```
@@ -200,7 +234,7 @@ The phone screens for this come in Phase 9. For now you test it on the server's 
 
 ### Phase 11: the AI helper (practice models only)
 
-The AI service now runs in its own window, *PCa mHealth AI service (mock models)*, started by `dev-up.ps1`. It uses **practice ("mock") models**: their numbers are made up on purpose and every answer says **"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."** The phone screens for this come in Phase 9; for now use the server's web page.
+The AI service now runs in its own window, *PCa mHealth AI service (mock models)*, started by `dev-up.ps1`. It uses **practice ("mock") models**: their numbers are made up on purpose and every answer says **"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."** The phone screens are in Phase 9 above; the steps below use the server's web page.
 
 1. Open **http://localhost:3000/api/docs**, sign in as the clinician (**POST /api/v1/auth/login**), and click **Authorize** with the `accessToken`.
 2. Pick a patient id from **GET /api/v1/patients**.

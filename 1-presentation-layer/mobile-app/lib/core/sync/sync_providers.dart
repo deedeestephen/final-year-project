@@ -52,7 +52,9 @@ final syncSchedulerProvider = Provider<void>((ref) {
     return;
   }
   final engine = ref.watch(syncEngineProvider);
-  void run() => unawaited(engine.sync());
+  final uploads = ref.watch(uploadQueueProvider);
+  // Records first (a patient must exist on the server), then queued files.
+  void run() => unawaited(engine.sync().then((_) => uploads.process()));
 
   final timer = Timer.periodic(const Duration(minutes: 5), (_) => run());
   ref.onDispose(timer.cancel);
