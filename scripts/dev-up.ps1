@@ -3,6 +3,7 @@
 #   2. the databases (PostgreSQL, MongoDB, MinIO, Qdrant, Redis) in Docker
 #   3. the backend API on http://localhost:3000 (in its own window)
 #   4. the admin website on http://localhost:5173 (in its own window)
+#   5. the AI service (development mock models) on http://127.0.0.1:8000 (in its own window)
 #
 # Usage (from the project folder, in PowerShell):
 #   powershell -ExecutionPolicy Bypass -File scripts\dev-up.ps1
@@ -14,6 +15,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $backend = Join-Path $root 'backend'
 $adminWeb = Join-Path $root 'admin-web'
+$aiServices = Join-Path $root 'ai-services'
 
 function Say($text) { Write-Host "==> $text" -ForegroundColor Cyan }
 function Fail($text) { Write-Host "!! $text" -ForegroundColor Red; exit 1 }
@@ -107,9 +109,27 @@ if (-not $adminRunning) {
   )
 }
 
+$aiPython = Join-Path $aiServices '.venv\Scripts\python.exe'
+if (-not (Test-Path $aiPython)) {
+  Write-Host '!! The AI service is not installed yet, so AI analysis will say it is unavailable.' -ForegroundColor Yellow
+  Write-Host "   To install it once:  cd `"$aiServices`"; py -3 -m venv .venv; .venv\Scripts\python -m pip install -e `".[dev]`""
+} else {
+  $aiRunning = Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
+    Where-Object { $_.CommandLine -match 'uvicorn' -and $_.CommandLine -match 'app\.main:app' }
+  if (-not $aiRunning) {
+    Say 'Starting the AI service in a new window (keep that window open)...'
+    # The service reads AI_SERVICE_TOKEN from .env itself, so no secret is on a command line.
+    Start-Process powershell -WorkingDirectory $aiServices -ArgumentList @(
+      '-NoExit', '-Command',
+      "`$Host.UI.RawUI.WindowTitle = 'PCa mHealth AI service (mock models) - close this window to stop'; .venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+    )
+  }
+}
+
 Write-Host ''
 Write-Host 'READY!' -ForegroundColor Green
 Write-Host '  Backend health:  http://localhost:3000/api/v1/health'
 Write-Host '  API explorer:    http://localhost:3000/api/docs'
 Write-Host '  Admin website:   http://localhost:5173  (open it in Chrome or Edge on this PC)'
+Write-Host '  AI service:      http://127.0.0.1:8000/v1/health  (development mock models only)'
 Write-Host '  Next: open the "mobile" folder in Android Studio, pick the Galaxy S9+ emulator, press Run.'

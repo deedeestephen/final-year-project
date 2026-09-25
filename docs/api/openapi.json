@@ -1953,6 +1953,147 @@
         ]
       }
     },
+    "/api/v1/patients/{id}/ai-jobs": {
+      "post": {
+        "operationId": "PatientAiController_request_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Queued; poll GET /ai-jobs/{id} for the result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiJobView"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONSENT_REQUIRED, CLINICAL_RECORD_REQUIRED or AI_JOB_IN_PROGRESS"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: AI analysis is switched off"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      },
+      "get": {
+        "operationId": "PatientAiController_list_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newest first, no reports",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiJobView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai-jobs/{id}": {
+      "get": {
+        "operationId": "AiJobsController_get_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Includes the report once the job has succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiJobView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/models": {
+      "get": {
+        "operationId": "AiModelsController_models_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The model registry; MOCK models are development placeholders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiModelView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check_v1",
@@ -3698,6 +3839,267 @@
         "required": [
           "gleasonPrimary",
           "gleasonSecondary"
+        ]
+      },
+      "SkippedModuleView": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "example": "resnet50_imaging"
+          },
+          "reason": {
+            "type": "string",
+            "example": "No imaging study was provided"
+          }
+        },
+        "required": [
+          "module",
+          "reason"
+        ]
+      },
+      "AiOutputsView": {
+        "type": "object",
+        "properties": {
+          "pcaProbability": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "probabilityInterval": {
+            "nullable": true,
+            "description": "[low, high]",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "gleasonGradeGroup": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 5
+          },
+          "modulesUsed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modulesSkipped": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkippedModuleView"
+            }
+          }
+        },
+        "required": [
+          "modulesUsed",
+          "modulesSkipped"
+        ]
+      },
+      "ExplanationView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "Stored artifact id (Phase 12), when one exists"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "GRADCAM",
+              "SHAP",
+              "MIL_ATTENTION"
+            ]
+          },
+          "module": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "False when no explanation could be produced"
+          },
+          "unavailableReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "values": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "SHAP contributions, only from a real model"
+          }
+        },
+        "required": [
+          "kind",
+          "module",
+          "available"
+        ]
+      },
+      "AiReportView": {
+        "type": "object",
+        "properties": {
+          "provenance": {
+            "type": "string",
+            "enum": [
+              "MOCK",
+              "RESEARCH_MODEL"
+            ]
+          },
+          "isMock": {
+            "type": "boolean",
+            "description": "True for development mock output: show the disclaimer prominently"
+          },
+          "disclaimer": {
+            "type": "string",
+            "example": "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."
+          },
+          "modelVersions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/AiOutputsView"
+          },
+          "explanations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExplanationView"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provenance",
+          "isMock",
+          "disclaimer",
+          "modelVersions",
+          "outputs",
+          "explanations",
+          "createdAt"
+        ]
+      },
+      "AiJobView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "TIMED_OUT"
+            ]
+          },
+          "requestedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why it failed, in plain words"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "finishedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "report": {
+            "nullable": true,
+            "description": "Present on the single-job endpoint once the job succeeded",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AiReportView"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "status",
+          "requestedById",
+          "createdAt"
+        ]
+      },
+      "AiModelView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "architecture": {
+            "type": "string",
+            "enum": [
+              "UNET",
+              "RESNET50",
+              "ANN",
+              "PATCH_CNN_MIL",
+              "XGBOOST_FUSION"
+            ]
+          },
+          "version": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "string",
+            "enum": [
+              "MOCK",
+              "RESEARCH_MODEL"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REGISTERED",
+              "ACTIVE",
+              "RETIRED"
+            ]
+          },
+          "evaluationAvailable": {
+            "type": "boolean",
+            "description": "True only when a stored evaluation run exists"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "architecture",
+          "version",
+          "provenance",
+          "status",
+          "evaluationAvailable"
         ]
       }
     }

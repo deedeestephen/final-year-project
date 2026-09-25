@@ -23,6 +23,7 @@ import { JwtAuthGuard } from './modules/access/jwt-auth.guard';
 import { PermissionsGuard } from './modules/access/permissions.guard';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ImagingModule } from './modules/imaging/imaging.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
@@ -75,6 +76,7 @@ import { UsersModule } from './modules/users/users.module';
     AdminModule,
     SyncModule,
     ImagingModule,
+    AiModule,
     HealthModule,
   ],
   providers: [

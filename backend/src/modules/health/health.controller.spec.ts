@@ -1,7 +1,12 @@
 import type { Response } from 'express';
 import type { MongoService } from '../../infrastructure/database/mongo.service';
 import type { PrismaService } from '../../infrastructure/database/prisma.service';
+import type { AiBrokerService } from '../ai/ai-broker.service';
 import { HealthController } from './health.controller';
+
+const aiDown = {
+  health: () => Promise.resolve('down'),
+} as unknown as AiBrokerService;
 
 function controller(postgresUp: boolean, mongoUp: boolean): HealthController {
   const fake = (up: boolean) => ({
@@ -10,6 +15,7 @@ function controller(postgresUp: boolean, mongoUp: boolean): HealthController {
   return new HealthController(
     fake(postgresUp) as unknown as PrismaService,
     fake(mongoUp) as unknown as MongoService,
+    aiDown,
   );
 }
 
@@ -34,8 +40,9 @@ describe('HealthController', () => {
     const res = fakeResponse();
     await expect(controller(true, true).ready(res)).resolves.toEqual({
       status: 'ok',
-      checks: { postgres: 'up', mongodb: 'up' },
+      checks: { postgres: 'up', mongodb: 'up', ai: 'down' },
     });
+    // The AI service is optional: its absence never makes the API unready.
     expect(res.statusCode).toBe(200);
   });
 
@@ -43,7 +50,7 @@ describe('HealthController', () => {
     const res = fakeResponse();
     await expect(controller(true, false).ready(res)).resolves.toEqual({
       status: 'unavailable',
-      checks: { postgres: 'up', mongodb: 'down' },
+      checks: { postgres: 'up', mongodb: 'down', ai: 'down' },
     });
     expect(res.statusCode).toBe(503);
   });
@@ -53,6 +60,7 @@ describe('HealthController', () => {
     const hung = new HealthController(
       { ping: () => new Promise(() => undefined) } as unknown as PrismaService,
       { ping: () => Promise.resolve() } as unknown as MongoService,
+      aiDown,
     );
     const res = fakeResponse();
     const pending = hung.ready(res);

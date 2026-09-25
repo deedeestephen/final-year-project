@@ -33,6 +33,10 @@ export async function createDbTestApp(
       os.tmpdir(),
       `pca-mhealth-objects-${process.env.TEST_RUN_ID ?? 'local'}`,
     ),
+    // AI analysis off unless a test points it at its own fake AI service.
+    AI_SERVICE_URL: 'http://127.0.0.1:9',
+    AI_SERVICE_TOKEN: '',
+    AI_TIMEOUT_MS: '30000',
     ...TEST_JWT_ENV,
     ...env,
   });

@@ -198,6 +198,20 @@ The phone screens for this come in Phase 9. For now you test it on the server's 
 - [ ] **Slides and review** (sign in as `pathologist@demo.pca-mhealth.test`): upload `synthetic-slide.tif` with **POST /api/v1/patients/{id}/histopathology**, then **GET /api/v1/histopathology/review-queue** lists it. **POST /api/v1/histopathology/{id}/review** with `{"gleasonPrimary": 4, "gleasonSecondary": 3}`.
   → `"isupGradeGroup": 3`. The server works that out itself.
 
+### Phase 11: the AI helper (practice models only)
+
+The AI service now runs in its own window, *PCa mHealth AI service (mock models)*, started by `dev-up.ps1`. It uses **practice ("mock") models**: their numbers are made up on purpose and every answer says **"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."** The phone screens for this come in Phase 9; for now use the server's web page.
+
+1. Open **http://localhost:3000/api/docs**, sign in as the clinician (**POST /api/v1/auth/login**), and click **Authorize** with the `accessToken`.
+2. Pick a patient id from **GET /api/v1/patients**.
+- [ ] **No permission yet.** **POST /api/v1/patients/{id}/ai-jobs** → Execute.
+  → Code **409** *"The patient has not consented to AI analysis."* The system asks the patient first.
+- [ ] **Give permission.** **POST /api/v1/patients/{id}/consents** with `{"type": "AI_ANALYSIS", "method": "WRITTEN", "consentTextVersion": "v1"}`.
+- [ ] **Ask again.** **POST /api/v1/patients/{id}/ai-jobs** → code **202**, `"status": "QUEUED"`. Copy the `id`.
+- [ ] **Read the answer.** **GET /api/v1/ai-jobs/{id}** (wait a few seconds).
+  → `"status": "SUCCEEDED"`, `"isMock": true`, and the disclaimer. `modulesSkipped` explains, for each missing input, why that part did not run (for example *"No imaging study was provided"*).
+- [ ] **Which models?** **GET /api/v1/ai/models** → five models, all `MOCK`, `mock-0.1`, and `evaluationAvailable: false` (no made-up accuracy numbers).
+
 ### Phase 3: the server itself
 
 - [ ] Open **http://localhost:3000/api/docs** in your browser.

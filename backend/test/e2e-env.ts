@@ -12,5 +12,6 @@ Object.assign(process.env, {
   USER_RATE_LIMIT_MAX: '20',
   RATE_LIMIT_TTL_MS: '60000',
   AUTH_RATE_LIMIT_MAX: '10',
+  AI_SERVICE_TOKEN: '',
   ...TEST_JWT_ENV,
 });

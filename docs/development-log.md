@@ -563,3 +563,39 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 | TypeScript narrowed variables set inside upload callbacks to their initial values | control-flow narrowing | keep upload state in a holder object |
 | Prisma client could not be regenerated | the running backend held the query engine open on Windows | stop the backend first |
 | The `db` gate step once exited silently right after the backend step | memory pressure (emulator, Android Studio, Docker) during a heavy build and audit | re-ran on its own: passed, 317 tests |
+
+## 2026-09-25: Phase 11: AI service foundation
+
+**Built:**
+- **ai-services** (FastAPI):
+  - `config.py`: `AI_SERVICE_TOKEN` from the environment or the root `.env`.
+  - `auth.py`: bearer token with `hmac.compare_digest`, fail closed (503) without a token.
+  - `contract.py`: Pydantic mirror of `ai-contract.yaml`, strict, with a validator that rejects a MOCK result without the exact disclaimer and an explanation without an artifact or a reason.
+  - `providers/`: `ModelProvider` protocol and **mock** U-Net, ResNet-50, ANN, Patch-CNN+MIL and XGBoost fusion. Outputs come from a hash of the job id only. The mock U-Net never draws a mask.
+  - `router.py`: runs the modules the inputs allow, lists skipped modules with reasons, fuses probabilities, and returns 422 when nothing can run.
+  - Endpoints: `GET /v1/models`, `POST /v1/infer`.
+- **Backend** `modules/ai`:
+  - `AiBrokerService`: token, timeout, zod contract check.
+  - `InProcessJobQueue`: bounded concurrency, behind a `JobQueue` interface for a later Redis queue.
+  - `AiService`:
+    - checks consent, record and "already running"
+    - sends a pseudonym, values and storage keys
+    - stores reports in `ai_reports` and a timeline in `ai_inference_logs`
+    - marks jobs TIMED_OUT or FAILED with a plain reason
+    - audits requests, completions and reads
+    - recovers stale jobs after a restart
+  - Routes: `POST/GET /patients/:id/ai-jobs`, `GET /ai-jobs/:id`, `GET /ai/models` (registry sync, no metrics).
+  - `/health/ready` reports `ai` for information only.
+- `dev-up.ps1` starts ai-services on 127.0.0.1:8000, and `dev-down.ps1` stops it. `AI_SERVICE_URL` is now `127.0.0.1`, because Node may try IPv6 `::1` first for `localhost`.
+
+**Tests:**
+- ai-services: 24 tests, 98.7% coverage, ruff and mypy strict clean.
+- Backend: `ai.int-spec.ts` (9 tests, against a fake AI server) and `ai.spec.ts` (6 tests).
+- Live check against the real services: consent → job → SUCCEEDED, MOCK report with the exact disclaimer, five mock models in the registry.
+
+**Errors and fixes**
+| Problem | Root cause | Fix |
+|---|---|---|
+| The "second request while running" test failed now and then | on this busy PC the second HTTP call arrived after the first job had already finished | the test creates a RUNNING job directly, so it no longer depends on timing |
+| Test apps could inherit AI settings from another test file | `process.env` is shared within a run | `createDbTestApp` resets AI settings (AI off) unless a test sets them |
+| Ruff flagged test tokens as hard-coded passwords (S105) | they are test values | marked with `noqa` and a reason |

@@ -117,5 +117,10 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Imaging and slide reads facility-scoped (other facilities get 404), every list and download audited without identifiers; downloads sent as attachments with `nosniff` | `ImagingService` | Verified (Ph.10) |
 | Only technical DICOM fields (UIDs, modality, size) copied to MongoDB; patient name and ID tags never read | `dicom-header.ts` | Verified (Ph.10) |
 | Pathologist review: one review per slide (conditional update, 409 on repeat), ISUP grade group computed by the server, Gleason values kept out of the audit details | `ImagingService.review` | Verified (Ph.10) |
+| AI service reachable only with a service token (constant-time comparison); without a configured token it refuses to work (fail closed) | `ai-services/app/auth.py` | Verified (Ph.11) |
+| AI requests need the patient's active `AI_ANALYSIS` consent and a screening record; only a keyed pseudonym (`p_` + HMAC), clinical values and storage keys are sent, never names, IDs, phone numbers or record ids | `AiService.request` | Verified (Ph.11, `ai.int-spec.ts` inspects what is sent) |
+| Every AI response is validated against the contract before it is stored or shown; a MOCK result without the exact disclaimer is rejected and the job marked FAILED | `ai-contract.ts`, `ai-services/app/contract.py` | Verified (Ph.11) |
+| Mock model outputs depend only on the job id, never on the patient's values, so they cannot be read as an assessment | `ai-services/app/providers/mock.py` | Verified (Ph.11, test changes PSA and gets the same number) |
+| AI jobs: one at a time per patient, timeout marked TIMED_OUT, requests, completions and report reads audited | `AiService` | Verified (Ph.11) |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |

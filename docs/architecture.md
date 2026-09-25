@@ -69,12 +69,7 @@ client UUID, an idempotency key and a `base_version`. When connectivity is detec
 returns a `conflict` result and does **not** overwrite. The client shows the conflict for manual resolution, and a
 per-record sync log is kept.
 
-**AI analysis (UC-05).** Clinician → `POST /ai/inference` → the backend creates an `ai_job` (Postgres) and returns `202 + jobId`.
-The AI broker calls ai-services `/v1/infer` with object-storage references, never raw file bytes where avoidable. The Model
-Router dispatches to providers, fusion runs, and explainability artifacts are produced. The result is stored in Mongo
-`ai_reports` with model versions, and the client polls `GET /ai/inference/:id`. Every result carries `provenance` =
-`MOCK | RESEARCH_MODEL` plus the model version. A mock result is always rendered with
-"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."
+**AI analysis (UC-05), built in Phase 11.** Clinician → `POST /api/v1/patients/{id}/ai-jobs`. The backend checks facility, `AI_ANALYSIS` consent and that a screening record exists, then creates an `ai_jobs` row (QUEUED) and answers `202`. A job queue (in-process now; Redis/BullMQ when there are several API instances) runs the job: the broker calls ai-services `POST /v1/infer` with the service token, a keyed pseudonym, clinical values and storage keys, and a timeout. The Model Router in ai-services runs every module the inputs allow and says why the others were skipped. Until trained models exist, every module is a **labelled MOCK** whose numbers depend only on the job id. The backend validates the answer against the contract, stores the report in MongoDB `ai_reports` and a timeline in `ai_inference_logs`, and marks the job SUCCEEDED, FAILED or TIMED_OUT. The client reads `GET /api/v1/ai-jobs/{id}`.
 
 **Chatbot (UC-07).** Query → language detection (en / bem / nya) → embedding → Qdrant top-k (k=5) → safety filter
 (diagnosis requests, self-harm, prompt injection) → LLM provider (interface; a local/extractive fallback when no LLM is

@@ -93,6 +93,18 @@ const schema = z
     S3_SECRET_KEY: z.string().min(1).optional(),
     MAX_IMAGING_MB: z.coerce.number().int().min(1).max(4096).default(512),
     MAX_SLIDE_MB: z.coerce.number().int().min(1).max(8192).default(2048),
+    // AI service (Phase 11). Reached only by the backend, with the service token.
+    AI_SERVICE_URL: z
+      .url({ protocol: /^https?$/ })
+      .default('http://localhost:8000'),
+    AI_SERVICE_TOKEN: z.string().trim().default(''),
+    AI_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .max(300_000)
+      .default(30_000),
+    AI_MAX_CONCURRENT_JOBS: z.coerce.number().int().min(1).max(32).default(2),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {
@@ -157,6 +169,13 @@ export interface AppConfig {
         secretAccessKey: string;
       };
   uploads: { maxImagingBytes: number; maxSlideBytes: number };
+  ai: {
+    serviceUrl: string;
+    /** Empty means AI analysis is switched off (requests get 503). */
+    serviceToken: string;
+    timeoutMs: number;
+    maxConcurrentJobs: number;
+  };
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -221,6 +240,12 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
     uploads: {
       maxImagingBytes: e.MAX_IMAGING_MB * 1024 * 1024,
       maxSlideBytes: e.MAX_SLIDE_MB * 1024 * 1024,
+    },
+    ai: {
+      serviceUrl: e.AI_SERVICE_URL.replace(/\/+$/, ''),
+      serviceToken: e.AI_SERVICE_TOKEN,
+      timeoutMs: e.AI_TIMEOUT_MS,
+      maxConcurrentJobs: e.AI_MAX_CONCURRENT_JOBS,
     },
   };
 }

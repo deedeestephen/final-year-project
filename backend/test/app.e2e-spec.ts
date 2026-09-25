@@ -210,7 +210,10 @@ describe('readiness (e2e)', () => {
     const app = await createTestApp({ postgresUp: true, mongoUp: true });
     await request(app.getHttpServer())
       .get('/api/v1/health/ready')
-      .expect(200, { status: 'ok', checks: { postgres: 'up', mongodb: 'up' } });
+      .expect(200, {
+        status: 'ok',
+        checks: { postgres: 'up', mongodb: 'up', ai: 'disabled' },
+      });
     await app.close();
   });
 
@@ -220,7 +223,7 @@ describe('readiness (e2e)', () => {
       .get('/api/v1/health/ready')
       .expect(503, {
         status: 'unavailable',
-        checks: { postgres: 'down', mongodb: 'up' },
+        checks: { postgres: 'down', mongodb: 'up', ai: 'disabled' },
       });
     await app.close();
   });

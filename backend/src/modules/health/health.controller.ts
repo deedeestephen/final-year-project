@@ -9,6 +9,7 @@ import type { Response } from 'express';
 import { Public } from '../access/access.decorators';
 import { MongoService } from '../../infrastructure/database/mongo.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { AiBrokerService } from '../ai/ai-broker.service';
 
 export interface HealthStatus {
   status: 'ok';
@@ -20,7 +21,12 @@ export type DependencyState = 'up' | 'down';
 
 export interface ReadinessStatus {
   status: 'ok' | 'unavailable';
-  checks: { postgres: DependencyState; mongodb: DependencyState };
+  checks: {
+    postgres: DependencyState;
+    mongodb: DependencyState;
+    /** Informational: without the AI service only AI analysis is unavailable. */
+    ai: DependencyState | 'disabled';
+  };
 }
 
 export const READINESS_TIMEOUT_MS = 3_000;
@@ -51,6 +57,7 @@ export class HealthController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mongo: MongoService,
+    private readonly ai: AiBrokerService,
   ) {}
 
   /** Liveness: the process is running. No dependency checks. */
@@ -73,12 +80,16 @@ export class HealthController {
   async ready(
     @Res({ passthrough: true }) res: Response,
   ): Promise<ReadinessStatus> {
-    const [postgres, mongodb] = await Promise.all([
+    const [postgres, mongodb, ai] = await Promise.all([
       probe(() => this.prisma.ping()),
       probe(() => this.mongo.ping()),
+      this.ai.health(),
     ]);
     const ok = postgres === 'up' && mongodb === 'up';
     res.status(ok ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
-    return { status: ok ? 'ok' : 'unavailable', checks: { postgres, mongodb } };
+    return {
+      status: ok ? 'ok' : 'unavailable',
+      checks: { postgres, mongodb, ai },
+    };
   }
 }

@@ -60,8 +60,17 @@ describe('readiness endpoint with the real application and databases', () => {
   });
 
   it('reports PostgreSQL and MongoDB as up', async () => {
-    await request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .get('/api/v1/health/ready')
-      .expect(200, { status: 'ok', checks: { postgres: 'up', mongodb: 'up' } });
+      .expect(200);
+    expect(res.body).toEqual({
+      status: 'ok',
+      // The AI service is informational and depends on what runs locally.
+      checks: {
+        postgres: 'up',
+        mongodb: 'up',
+        ai: expect.stringMatching(/^(up|down|disabled)$/) as string,
+      },
+    });
   });
 });

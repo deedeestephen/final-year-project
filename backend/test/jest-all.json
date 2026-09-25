@@ -13,12 +13,7 @@
     "!src/infrastructure/mongo/migrate.ts"
   ],
   "coverageDirectory": "<rootDir>/coverage",
-  "coverageReporters": [
-    "text",
-    "text-summary",
-    "json-summary",
-    "lcovonly"
-  ],
+  "coverageReporters": ["text", "text-summary", "json-summary", "lcovonly"],
   "coverageThreshold": {
     "global": {
       "branches": 80,

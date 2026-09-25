@@ -11,14 +11,14 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | FR-02 | Capture/transmit demographics, PSA, DRE, history encrypted over TLS 1.3 | L1 forms, L3 clinical | `backend/src/modules/{patients,clinical}`; app forms Ph.9 | `test/db/patients.int-spec.ts`, `users-and-edges.int-spec.ts` | 5, 9 | **Backend Verified**; app Ph.9; TLS Ph.15 |
 | FR-03 | Full offline entry, AES-256 SQLite cache, conflict-resolving sync | L1 sync, L3 sync | `mobile/lib/core/{db,sync}`, `backend/src/modules/sync` | `backend/test/db/sync.int-spec.ts`, `mobile/test/core/sync_test.dart`, `mobile/test/features/patients/patients_flow_test.dart`, on-device `mobile/integration_test/app_flow_test.dart` | 6 | **Verified** |
 | FR-04 | Accept & validate DICOM MRI/TRUS/CT, archive, queue for CNN | L3 imaging, L5 object store | `backend/src/modules/imaging` (streamed multipart upload, magic-byte check, DICOM header parse, size caps, retry-safe `clientUuid`), `common/upload/*`, `StorageModule` (local or S3/MinIO, streamed) | `test/db/imaging.int-spec.ts` (11 tests incl. MinIO), `file-signatures.spec.ts`, `imaging.spec.ts` | 10 | **Verified** for upload, validation and archive; queueing for the CNN is Phase 11 |
-| FR-05 | PCa probability + Gleason grade group ≤3 s P95 | L4 + broker | ai-services router, backend ai-broker | contract tests; latency measured in Ph.17 | 11, 17 | Planned (target, not claimed) |
+| FR-05 | PCa probability + Gleason grade group ≤3 s P95 | L4 + broker | `ai-services/app/{router,contract}.py` (Model Router, provider interface, **labelled MOCK providers**), backend `modules/ai` (broker with service token, timeout and contract validation; job queue; reports in MongoDB) | `ai-services/tests/*` (24 tests, 98.7%), `backend/test/db/ai.int-spec.ts` (9), `ai.spec.ts` | 11, 17 | **Pipeline Verified with mock models only.** No trained model exists, so no real probability or grade is produced; latency target measured in Ph.17 |
 | FR-06 | Grad-CAM for CNN outputs, SHAP for ANN outputs | L4 explainability | ai-services/explain | artifact tests | 12 | Planned |
 | FR-07 | RAG chatbot, ≤2 s, English/Bemba/Nyanja | L4 RAG + L3 chatbot | ai-services/rag, backend/modules/chatbot | retrieval/safety/multilingual tests | 13 | Planned |
 | FR-08 | Render AI report: probability, Gleason, heatmap, CI, recommendations | L1 report viewer | mobile/features/ai_report | widget tests | 9 | Planned |
 | FR-09 | De-identified FHIR R4 JSON export (SmartCare Pro) | L3 fhir | backend/modules/fhir | serialization tests | 14 | Planned |
 | FR-10 | Immutable timestamped audit log of access/modify/AI/export | L3 audit, L5 | DB layer: `prisma/migrations/*_constraints_and_audit` (append-only triggers + SHA-256 chain + `audit_logs_verify_chain()`); `modules/audit/audit.service.ts` writes auth, access-denied and user-admin events (fail-closed) | `postgres.int-spec.ts` › audit log; `auth.int-spec.ts` | 2, 4 | **Verified** for auth/admin events; clinical, AI and export events as those modules land |
 | FR-11 | Disaggregated AI metrics (age, region, stage) | L4 fairness | ai-services/fairness | unit tests; shows "Evaluation data not yet available" | 12 | Planned |
-| FR-12 | Retraining support, model registry, A/B before promotion | L4 registry | ai-services/registry, ai_models table | registry tests | 11 | Planned (registry only; retraining pipeline documented) |
+| FR-12 | Retraining support, model registry, A/B before promotion | L4 registry | `GET /v1/models` (ai-services) synced into `ai_models` by `GET /api/v1/ai/models`; evaluation only from stored runs | `test_infer.py`, `ai.int-spec.ts` | 11 | **Partial:** registry and versions Verified; retraining and A/B documented as future work |
 
 ## Use cases
 
@@ -28,7 +28,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | UC-02 | Offline clinical data capture | FR-02, FR-03 | **Verified (Ph.6):** register patients and add PSA/DRE/PI-RADS records offline; queued, synced idempotently, conflicts shown for the user to resolve; checked on the Galaxy S9+ (Android 10) emulator against the live backend. Richer clinical forms (symptoms, history) Ph.8 |
 | UC-03 | Imaging upload & validation | FR-04 | **Verified (Ph.10, API)**; app screens Ph.9 |
 | UC-04 | Histopathology slide submission | Ph.10: slide upload (TIFF/SVS/NDPI), review queue, Gleason review with server-computed ISUP grade group; Ph.11: Patch-CNN provider | **Partial:** upload and review Verified (API); AI provider Ph.11; app screens Ph.9 |
-| UC-05 | AI multi-modal analysis | FR-05 | Planned |
+| UC-05 | AI multi-modal analysis | FR-05 | **Verified (Ph.11, API, mock models):** consent-gated request, queue, timeout, labelled report; app screens Ph.9 |
 | UC-06 | Diagnostic report delivery | FR-08 | Planned |
 | UC-07 | Chatbot interaction | FR-07 | Planned |
 | UC-08 | National EHR export | FR-09 | Planned |
