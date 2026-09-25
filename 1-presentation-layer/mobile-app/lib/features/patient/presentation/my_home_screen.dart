@@ -120,6 +120,7 @@ class MyHomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSizes.lg),
+                  // The assistant is planned in docs/chatbot-plan.md (Phase 13).
                   Text('Coming later', style: theme.textTheme.titleMedium),
                   const SizedBox(height: AppSizes.sm),
                   for (final (title, icon) in const [

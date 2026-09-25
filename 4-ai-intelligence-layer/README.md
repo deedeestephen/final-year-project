@@ -15,4 +15,6 @@ The AI service ([`ai-services/`](ai-services/), Python + FastAPI). Only the back
 
 **Every result from a mock model is labelled "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."** Mock numbers depend only on the job id, never on the patient's values. The backend refuses any mock result without this label.
 
+**Plugging in the trained models (from Kaggle):** see [docs/ai-model-integration-guide.md](../docs/ai-model-integration-guide.md): what to export, what evaluation to save, and the steps. Only this layer changes.
+
 The contract with the backend is [`2-api-gateway/openapi/ai-contract.yaml`](../2-api-gateway/openapi/ai-contract.yaml).

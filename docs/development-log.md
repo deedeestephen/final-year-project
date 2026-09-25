@@ -656,3 +656,16 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 **Tests:**
 - ai-services: 30 tests, 98.8%.
 - Backend AI: 11 integration and 8 unit tests. The explanation test covers the stored PNG coming back byte for byte, a non-PNG image, a refused reference, SHAP values, a passed-through reason, the database rows, no image data in the report, the audit entry and the facility check.
+
+## 2026-09-25: Owner direction: AI models trained separately; chatbot planned, not built
+
+- The owner is cleaning data and training the five models on Kaggle. No model code is built here. The AI layer stays as labelled mocks plus the finished pipeline.
+- New `docs/ai-model-integration-guide.md`: what to export per model (ONNX or XGBoost JSON, the input and output spec, the preprocessing), `evaluation.json` including per-group fairness figures, the plug-in steps (a `ModelProvider` and an `Explainer`; only the AI service changes), and a checklist before switching off a mock.
+- New `docs/chatbot-plan.md` (for patients and clinicians):
+  - RAG from a curated, clinician-signed knowledge base
+  - an offline extractive mode by default; an LLM only with the owner's approval
+  - safety checks, human-verified Bemba and Nyanja
+  - build steps and decisions needed
+- New `2-api-gateway/openapi/chat-contract.md`: the planned API, marked not implemented.
+- App entry points stay "Coming in build phase 13".
+
