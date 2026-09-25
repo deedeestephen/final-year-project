@@ -8,9 +8,9 @@ The AI service ([`ai-services/`](ai-services/), Python + FastAPI). Only the back
 | ANN clinical module (PSA, DRE, demographics, PI-RADS) | `ai-services/app/providers/` | Mock only |
 | DL histopathology: Patch-CNN + MIL (Gleason grading) | `ai-services/app/providers/` | Mock only |
 | XGBoost multi-modal fusion engine | `ai-services/app/providers/`, `app/router.py` (Model Router) | Mock only |
-| Grad-CAM explainability, SHAP values | Phase 12 | Honest "unavailable" states until a real model exists |
+| Grad-CAM explainability, SHAP values, MIL attention | `ai-services/app/explain/` (explainer per module); images stored by the backend | Built: mock modules always give an honest "unavailable" reason |
 | Model registry and versioning | `GET /v1/models`, synced into the `ai_models` table | Built |
-| Fairness monitoring | Phase 12 ("Evaluation data not yet available") | Planned |
+| Fairness monitoring | `GET /api/v1/ai/models/{id}/evaluation`: only from a stored evaluation run | Built: says "Evaluation data not yet available." |
 | A/B testing framework | Future work (documented) | Not built |
 
 **Every result from a mock model is labelled "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT."** Mock numbers depend only on the job id, never on the patient's values. The backend refuses any mock result without this label.

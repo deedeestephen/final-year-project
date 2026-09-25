@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { inferenceResultSchema, MOCK_DISCLAIMER } from './ai-contract';
+import {
+  inferenceResultSchema,
+  MAX_ARTIFACT_BASE64,
+  MOCK_DISCLAIMER,
+} from './ai-contract';
 import { InProcessJobQueue } from './job-queue';
 
 const result = (overrides: Record<string, unknown> = {}) => ({
@@ -52,6 +56,46 @@ describe('AI contract check', () => {
     });
     expect(inferenceResultSchema.safeParse(ok).success).toBe(true);
     expect(inferenceResultSchema.safeParse(neither).success).toBe(false);
+  });
+});
+
+describe('explanation images in the contract', () => {
+  const withExplanation = (e: Record<string, unknown>) =>
+    inferenceResultSchema.safeParse(result({ explanations: [e] })).success;
+
+  it('accepts a PNG image or a reason, but not both and not another type', () => {
+    const artifact = { contentType: 'image/png', dataBase64: 'iVBORw0KGgo=' };
+    expect(withExplanation({ kind: 'GRADCAM', module: 'm', artifact })).toBe(
+      true,
+    );
+    expect(
+      withExplanation({
+        kind: 'GRADCAM',
+        module: 'm',
+        artifact,
+        unavailableReason: 'x',
+      }),
+    ).toBe(false);
+    expect(
+      withExplanation({
+        kind: 'GRADCAM',
+        module: 'm',
+        artifact: { contentType: 'image/jpeg', dataBase64: 'abcdefgh' },
+      }),
+    ).toBe(false);
+  });
+
+  it('refuses oversized images', () => {
+    expect(
+      withExplanation({
+        kind: 'GRADCAM',
+        module: 'm',
+        artifact: {
+          contentType: 'image/png',
+          dataBase64: 'A'.repeat(MAX_ARTIFACT_BASE64 + 1),
+        },
+      }),
+    ).toBe(false);
   });
 });
 

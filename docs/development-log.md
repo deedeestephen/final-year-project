@@ -632,3 +632,27 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 | `prisma generate` installed a second Prisma at the repository root | with the schema outside the backend, Prisma looks for its client next to the schema | the schema stays in `backend/prisma/` (Prisma requires it); the migrations live in `5-data-persistence/postgresql/migrations/`; the stray root install was removed; `migrate diff` confirms the schema and migrations match |
 | The moved Python environment still pointed at the old folder | editable installs record absolute paths | `pip install -e . --no-deps` again |
 | A readiness DB test expected no `ai` field | the test app reads `.env`, and a real AI service was running | the test accepts any AI state (it is informational) |
+
+## 2026-09-25: Phase 12: Explainable AI
+
+**Built:**
+- **Contract v0.2** (additive): `Explanation.artifact {contentType: image/png, dataBase64}`, because the AI service cannot write to the backend's storage.
+- **ai-services** `app/explain/`:
+  - an `Explainer` interface, with each module mapped to its kind: Grad-CAM for ResNet-50, SHAP for the ANN and the fusion model, MIL attention for Patch-CNN+MIL
+  - The Model Router explains every module that ran.
+  - Mock modules use `UnavailableExplainer` ("Explanations need a trained research model; none is loaded (development mock).").
+  - The image path is exercised only by a test explainer that builds a genuine 1×1 PNG.
+- **Backend:**
+  - Every explanation is turned into a stored one:
+    - a real PNG within 2 MB goes to object storage (`xai/…`) with an `explainability_artifacts` row
+    - an invalid image, or a storage **reference** from the AI service (which could point at another patient's file), becomes "unavailable" with a reason and never fails the analysis
+    - SHAP values are kept in the report
+  - The report stores references, never image data.
+  - Routes:
+    - `GET /ai-jobs/{id}/explanations`
+    - `GET /explanations/{id}/content` (facility-scoped, audited)
+    - `GET /ai/models/{id}/evaluation`: only a stored evaluation run, otherwise "Evaluation data not yet available." (FR-11)
+
+**Tests:**
+- ai-services: 30 tests, 98.8%.
+- Backend AI: 11 integration and 8 unit tests. The explanation test covers the stored PNG coming back byte for byte, a non-PNG image, a refused reference, SHAP values, a passed-through reason, the database rows, no image data in the report, the audit entry and the facility check.

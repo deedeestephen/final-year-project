@@ -1,10 +1,13 @@
 openapi: 3.0.3
 info:
   title: PCa mHealth AI Services contract (Layer 4)
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Internal contract between the backend AI broker (Layer 3) and ai-services (Layer 4).
-    Frozen at v0 in Phase 3; implemented in Phases 11-13. Only the backend may call it
+    Frozen at v0 in Phase 3; implemented in Phases 11-13.
+    v0.2 (Phase 12, additive): `Explanation.artifact` carries an explanation image inline,
+    because the AI service cannot write to the backend's storage; the backend validates it
+    (PNG, at most 2 MB) and stores it. Only the backend may call it
     (internal network + `Authorization: Bearer <AI_SERVICE_TOKEN>`).
 
     Rules that every implementation must follow:
@@ -126,6 +129,14 @@ components:
         kind: { type: string, enum: [GRADCAM, SHAP, MIL_ATTENTION] }
         module: { type: string }
         storageKey: { type: string, nullable: true }
+        artifact:
+          type: object
+          nullable: true
+          description: An explanation image (e.g. a Grad-CAM heatmap) from a real model.
+          required: [contentType, dataBase64]
+          properties:
+            contentType: { type: string, enum: [image/png] }
+            dataBase64: { type: string, minLength: 8, maxLength: 2800000 }
         values:
           type: object
           nullable: true

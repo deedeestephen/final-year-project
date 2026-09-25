@@ -5,13 +5,19 @@ import { AiBrokerService } from './ai-broker.service';
 import {
   AiJobsController,
   AiModelsController,
+  ExplanationsController,
   PatientAiController,
 } from './ai.controller';
 import { AiService } from './ai.service';
 
 @Module({
   imports: [PatientsModule, ClinicalModule],
-  controllers: [PatientAiController, AiJobsController, AiModelsController],
+  controllers: [
+    PatientAiController,
+    AiJobsController,
+    AiModelsController,
+    ExplanationsController,
+  ],
   providers: [AiBrokerService, AiService],
   exports: [AiService, AiBrokerService],
 })

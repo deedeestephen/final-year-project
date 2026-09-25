@@ -2065,6 +2065,44 @@
         ]
       }
     },
+    "/api/v1/ai-jobs/{id}/explanations": {
+      "get": {
+        "operationId": "AiJobsController_explanations_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One per module that ran: an image, SHAP values, or the reason there is none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExplanationView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/ai/models": {
       "get": {
         "operationId": "AiModelsController_models_v1",
@@ -2082,6 +2120,69 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/models/{id}/evaluation": {
+      "get": {
+        "operationId": "AiModelsController_evaluation_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stored evaluation and fairness figures, or \"Evaluation data not yet available.\"",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/explanations/{id}/content": {
+      "get": {
+        "operationId": "ExplanationsController_content_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The explanation image (e.g. Grad-CAM)"
           }
         },
         "security": [
@@ -3923,6 +4024,10 @@
             "type": "boolean",
             "description": "False when no explanation could be produced"
           },
+          "hasImage": {
+            "type": "boolean",
+            "description": "True when an image can be fetched from GET /explanations/{id}/content"
+          },
           "unavailableReason": {
             "type": "string",
             "nullable": true
@@ -3939,7 +4044,8 @@
         "required": [
           "kind",
           "module",
-          "available"
+          "available",
+          "hasImage"
         ]
       },
       "AiReportView": {
@@ -4100,6 +4206,34 @@
           "provenance",
           "status",
           "evaluationAvailable"
+        ]
+      },
+      "EvaluationView": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "True only when a stored evaluation run exists"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "example": "Evaluation data not yet available."
+          },
+          "evaluation": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "The stored evaluation (metrics, including per-group fairness figures)"
+          }
+        },
+        "required": [
+          "modelId",
+          "available"
         ]
       }
     }

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { crc32, deflateSync } from 'node:zlib';
 import {
   createServer,
   type IncomingMessage,
@@ -59,7 +60,69 @@ interface Received {
 
 /** Stands in for ai-services; each test decides how it answers. */
 type Behaviour =
-  'mock' | 'unlabelled' | 'insufficient' | { delayMs: number; then: 'mock' };
+  | 'mock'
+  | 'unlabelled'
+  | 'insufficient'
+  | 'explained'
+  | { delayMs: number; then: 'mock' };
+
+/** A valid 1x1 grey PNG, built here (stands in for a real model's heatmap). */
+function tinyPng(): Buffer {
+  const chunk = (kind: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(kind, 'latin1'), data]);
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([length, body, crc]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(1, 0);
+  header.writeUInt32BE(1, 4);
+  header.writeUInt8(8, 8); // bit depth; colour type, compression, filter, interlace stay 0
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(Buffer.from([0x00, 0x80]))),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+const HEATMAP = tinyPng();
+
+/** One of each kind of explanation a real service might send. */
+const explanations = () => [
+  {
+    kind: 'GRADCAM',
+    module: 'resnet50_imaging',
+    artifact: {
+      contentType: 'image/png',
+      dataBase64: HEATMAP.toString('base64'),
+    },
+  },
+  {
+    kind: 'SHAP',
+    module: 'xgboost_fusion',
+    artifact: {
+      contentType: 'image/png',
+      dataBase64: Buffer.from('<svg>not a png</svg>').toString('base64'),
+    },
+  },
+  {
+    kind: 'MIL_ATTENTION',
+    module: 'patch_cnn_mil_histopathology',
+    storageKey: 'imaging/2026/09/someone-else.dcm',
+  },
+  {
+    kind: 'SHAP',
+    module: 'ann_clinical',
+    values: { psaNgMl: 0.12, ageYears: -0.03 },
+  },
+  {
+    kind: 'GRADCAM',
+    module: 'unet_segmentation',
+    unavailableReason: 'Explanations need a trained research model.',
+  },
+];
 
 const mockResult = (jobId: string) => ({
   jobId,
@@ -176,6 +239,12 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
         ) as Received['body'];
         received.push({ authorization: req.headers.authorization, body });
         const current = behaviour;
+        if (current === 'explained') {
+          return send(200, {
+            ...mockResult(body.jobId),
+            explanations: explanations(),
+          });
+        }
         if (current === 'insufficient') {
           return send(422, { detail: { message: 'No module could run' } });
         }
@@ -430,6 +499,153 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
         }),
       ]),
     );
+  });
+
+  describe('explanations (Phase 12)', () => {
+    interface ExplanationBody {
+      id: string | null;
+      kind: string;
+      module: string;
+      available: boolean;
+      hasImage: boolean;
+      unavailableReason: string | null;
+      values: Record<string, number> | null;
+    }
+
+    it('stores real images, refuses bad ones and never follows references', async () => {
+      const patientId = await newPatient({ consent: true, record: true });
+      behaviour = 'explained';
+      const job = (await requestJob(patientId).expect(202)).body as JobBody;
+      await idle();
+      expect((await getJob(job.id)).status).toBe('SUCCEEDED');
+
+      const list = (
+        await http()
+          .get(`/api/v1/ai-jobs/${job.id}/explanations`)
+          .set(as(clinician))
+          .expect(200)
+      ).body as ExplanationBody[];
+      const by = Object.fromEntries(list.map((e) => [e.module, e]));
+
+      // A real PNG: stored and served back byte for byte.
+      expect(by.resnet50_imaging).toMatchObject({
+        kind: 'GRADCAM',
+        available: true,
+        hasImage: true,
+      });
+      const image = await http()
+        .get(`/api/v1/explanations/${by.resnet50_imaging.id}/content`)
+        .set(as(clinician))
+        .buffer(true)
+        .parse((r, done) => {
+          const chunks: Buffer[] = [];
+          r.on('data', (c: Buffer) => chunks.push(c));
+          r.on('end', () => done(null, Buffer.concat(chunks)));
+        })
+        .expect(200);
+      expect(image.headers['content-type']).toBe('image/png');
+      expect(Buffer.compare(image.body as Buffer, HEATMAP)).toBe(0);
+
+      // Not a PNG: discarded, with a reason.
+      expect(by.xgboost_fusion).toMatchObject({
+        available: false,
+        hasImage: false,
+        unavailableReason:
+          'The explanation image was not a valid PNG within 2 MB and was discarded.',
+      });
+      // A storage reference (could point at another patient's file): refused.
+      expect(by.patch_cnn_mil_histopathology.available).toBe(false);
+      expect(by.patch_cnn_mil_histopathology.unavailableReason).toMatch(
+        /references are not accepted/,
+      );
+      // SHAP values from a model: kept as they are, no image.
+      expect(by.ann_clinical).toMatchObject({
+        available: true,
+        hasImage: false,
+        values: { psaNgMl: 0.12, ageYears: -0.03 },
+      });
+      // A stated reason is passed through.
+      expect(by.unet_segmentation.unavailableReason).toBe(
+        'Explanations need a trained research model.',
+      );
+
+      // One database row per image or reason (not for plain values).
+      const rows = await prisma.explainabilityArtifact.findMany({
+        where: { jobId: job.id },
+      });
+      expect(rows).toHaveLength(4);
+      expect(rows.filter((r) => r.storageKey !== null)).toHaveLength(1);
+
+      // The report keeps references, never the image data itself.
+      const mongo = createMongoClient(process.env.MONGO_URL!);
+      try {
+        const report = await mongo
+          .db()
+          .collection('ai_reports')
+          .findOne({ jobId: job.id });
+        expect(JSON.stringify(report)).not.toContain('dataBase64');
+        expect(JSON.stringify(report)).not.toContain('someone-else');
+      } finally {
+        await mongo.close();
+      }
+
+      // Viewing the image is audited; other facilities cannot see it.
+      const audit = await prisma.auditLog.findFirst({
+        where: { action: 'ai_explanation.content_read', entityId: job.id },
+      });
+      expect(audit).not.toBeNull();
+      await http()
+        .get(`/api/v1/explanations/${by.resnet50_imaging.id}/content`)
+        .set(as(otherClinician))
+        .expect(404);
+      // A reason-only row has no image to fetch.
+      const reasonRow = rows.find((r) => r.storageKey === null)!;
+      await http()
+        .get(`/api/v1/explanations/${reasonRow.id}/content`)
+        .set(as(clinician))
+        .expect(404);
+    });
+
+    it('reports evaluation figures only from a stored evaluation run', async () => {
+      const models = (
+        await http().get('/api/v1/ai/models').set(as(clinician)).expect(200)
+      ).body as { id: string; name: string }[];
+      const ann = models.find((m) => m.name === 'ann_clinical')!;
+      const none = await http()
+        .get(`/api/v1/ai/models/${ann.id}/evaluation`)
+        .set(as(clinician))
+        .expect(200);
+      expect(none.body).toEqual({
+        modelId: ann.id,
+        available: false,
+        message: 'Evaluation data not yet available.',
+        evaluation: null,
+      });
+
+      // A stored run (test data, clearly not a real result) is returned as is.
+      const stored = await prisma.aiModel.create({
+        data: {
+          name: `test_model_${randomUUID().slice(0, 6)}`,
+          architecture: 'ANN',
+          version: 'test-1',
+          provenance: 'RESEARCH_MODEL',
+          evaluation: { source: 'integration test fixture', auc: 0.5 },
+        },
+      });
+      const some = await http()
+        .get(`/api/v1/ai/models/${stored.id}/evaluation`)
+        .set(as(clinician))
+        .expect(200);
+      expect(some.body).toMatchObject({
+        available: true,
+        message: null,
+        evaluation: { source: 'integration test fixture' },
+      });
+      await http()
+        .get(`/api/v1/ai/models/${randomUUID()}/evaluation`)
+        .set(as(clinician))
+        .expect(404);
+    });
   });
 
   it('answers 503 when AI analysis is switched off', async () => {

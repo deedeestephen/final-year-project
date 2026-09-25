@@ -8,12 +8,20 @@ import {
   OnModuleInit,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import type { AiJob, AiModel, Prisma } from '@prisma/client';
+import type { AiJob, AiModel, ExplanationKind, Prisma } from '@prisma/client';
+import { createHash, randomUUID } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { FieldCrypto } from '../../persistence/crypto/field-crypto';
 import { ageInYears } from '../../gateway/validation/calendar-date';
 import { APP_CONFIG, type AppConfig } from '../../config/app-config';
 import { MongoService } from '../../persistence/database/mongo.service';
 import { PrismaService } from '../../persistence/database/prisma.service';
+import {
+  generateObjectKey,
+  type ObjectStorage,
+} from '../../persistence/storage/object-storage';
+import { OBJECT_STORAGE } from '../../persistence/storage/storage.module';
+import { sniffFile } from '../../gateway/upload/file-signatures';
 import type {
   AuthenticatedUser,
   RequestContext,
@@ -26,11 +34,16 @@ import {
   AiServiceError,
   type AiFailureKind,
 } from './ai-broker.service';
-import type { InferenceRequest, InferenceResult } from './ai-contract';
+import type {
+  ContractExplanation,
+  InferenceRequest,
+  InferenceResult,
+} from './ai-contract';
 import type {
   AiJobView,
   AiModelView,
   AiReportView,
+  EvaluationView,
   ExplanationView,
 } from './ai.dto';
 import { InProcessJobQueue, type JobQueue } from './job-queue';
@@ -38,10 +51,30 @@ import { InProcessJobQueue, type JobQueue } from './job-queue';
 /** The last few validated files of each kind are sent; enough for one analysis. */
 const MAX_FILES_PER_KIND = 5;
 
-interface StoredReport extends InferenceResult {
+/** An explanation as kept in the report: images are referenced, never inlined. */
+interface StoredExplanation {
+  kind: ExplanationKind;
+  module: string;
+  /** ExplainabilityArtifact id, when a row exists (image or stated reason). */
+  artifactId: string | null;
+  available: boolean;
+  unavailableReason: string | null;
+  values: Record<string, number> | null;
+}
+
+interface StoredReport extends Omit<InferenceResult, 'explanations'> {
+  explanations: StoredExplanation[];
   patientRef: string;
   createdAt: Date;
 }
+
+/** Largest explanation image kept (bytes). */
+const MAX_ARTIFACT_BYTES = 2 * 1024 * 1024;
+
+const NOT_ACCEPTED_REFERENCE =
+  'The AI service referred to a stored file instead of sending the image; such references are not accepted.';
+const INVALID_IMAGE =
+  'The explanation image was not a valid PNG within 2 MB and was discarded.';
 
 const toNumber = (v: Prisma.Decimal | null): number | undefined =>
   v === null ? undefined : Number(v);
@@ -72,6 +105,20 @@ function toModelView(m: AiModel): AiModelView {
   };
 }
 
+function toExplanationView(e: StoredExplanation): ExplanationView {
+  return {
+    id: e.artifactId,
+    kind: e.kind,
+    module: e.module,
+    available: e.available,
+    hasImage: e.available && e.artifactId !== null,
+    unavailableReason: e.unavailableReason,
+    values: e.values,
+  };
+}
+
+const randomId = (): string => randomUUID();
+
 /**
  * AI analysis jobs (UC-05): a clinician asks, the job waits in a queue, the
  * broker calls ai-services, and the validated report is kept in MongoDB.
@@ -91,6 +138,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     private readonly audit: AuditService,
     private readonly broker: AiBrokerService,
     private readonly crypto: FieldCrypto,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {
     this.queue = new InProcessJobQueue(
@@ -264,14 +312,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     user: AuthenticatedUser,
     ctx: RequestContext,
   ): Promise<AiJobView> {
-    const job = await this.prisma.aiJob.findUnique({ where: { id: jobId } });
-    if (!job) throw this.jobNotFound();
-    try {
-      await this.patients.requireInFacility(user, job.patientId);
-    } catch (err) {
-      if (err instanceof NotFoundException) throw this.jobNotFound();
-      throw err;
-    }
+    const job = await this.requireJob(jobId, user);
     if (job.status !== 'SUCCEEDED') return toJobView(job);
 
     const stored = await (
@@ -340,13 +381,21 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         ...(job.inputs as unknown as Omit<InferenceRequest, 'jobId'>),
       };
       const result = await this.broker.infer(request);
+      const prepared = await this.prepareExplanations(result);
       const db = await this.mongo.db();
       const inserted = await db.collection('ai_reports').insertOne({
         ...result,
+        explanations: prepared.map((p) => p.stored),
         patientRef: request.patientRef,
         createdAt: new Date(),
       });
       await this.prisma.$transaction(async (tx) => {
+        for (const p of prepared) {
+          if (!p.row) continue;
+          await tx.explainabilityArtifact.create({
+            data: { id: p.stored.artifactId!, jobId, ...p.row },
+          });
+        }
         await tx.aiJob.update({
           where: { id: jobId },
           data: {
@@ -407,15 +456,201 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private toReportView(r: StoredReport): AiReportView {
-    const explanations: ExplanationView[] = r.explanations.map((e) => ({
-      id: null,
+  async explanations(
+    jobId: string,
+    user: AuthenticatedUser,
+  ): Promise<ExplanationView[]> {
+    const job = await this.requireJob(jobId, user);
+    const stored = await (
+      await this.mongo.db()
+    )
+      .collection<StoredReport>('ai_reports')
+      .findOne({ jobId: job.id });
+    return (stored?.explanations ?? []).map(toExplanationView);
+  }
+
+  /** The stored explanation image (for example a Grad-CAM heatmap). */
+  async explanationContent(
+    artifactId: string,
+    user: AuthenticatedUser,
+    ctx: RequestContext,
+  ): Promise<{ body: Readable; fileName: string }> {
+    const artifact = await this.prisma.explainabilityArtifact.findUnique({
+      where: { id: artifactId },
+      include: { job: true },
+    });
+    if (!artifact) throw this.explanationNotFound();
+    try {
+      await this.patients.requireInFacility(user, artifact.job.patientId);
+    } catch (err) {
+      if (err instanceof NotFoundException) throw this.explanationNotFound();
+      throw err;
+    }
+    if (!artifact.storageKey) throw this.explanationNotFound();
+    await this.audit.record({
+      action: 'ai_explanation.content_read',
+      entityType: 'ai_job',
+      entityId: artifact.jobId,
+      outcome: 'SUCCESS',
+      actorUserId: user.id,
+      actorRole: user.roles.join(','),
+      details: { patientId: artifact.job.patientId, kind: artifact.kind },
+      ...ctx,
+    });
+    return {
+      body: await this.storage.get(artifact.storageKey),
+      fileName: `${artifact.id}.png`,
+    };
+  }
+
+  /**
+   * Performance and fairness figures for one model: only from a stored
+   * evaluation run, never estimated or invented.
+   */
+  async evaluation(modelId: string): Promise<EvaluationView> {
+    const model = await this.prisma.aiModel.findUnique({
+      where: { id: modelId },
+    });
+    if (!model) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Model not found',
+      });
+    }
+    if (model.evaluation === null) {
+      return {
+        modelId: model.id,
+        available: false,
+        message: 'Evaluation data not yet available.',
+        evaluation: null,
+      };
+    }
+    return {
+      modelId: model.id,
+      available: true,
+      message: null,
+      evaluation: model.evaluation as Record<string, unknown>,
+    };
+  }
+
+  /**
+   * Turns the AI service's explanations into stored ones. Images are checked
+   * (real PNG, at most 2 MB) and written to object storage. A reason is
+   * recorded when there is no image. Anything invalid becomes "unavailable"
+   * with a reason; it never fails the whole analysis.
+   */
+  private async prepareExplanations(result: InferenceResult): Promise<
+    {
+      stored: StoredExplanation;
+      row?: {
+        kind: ExplanationKind;
+        storageKey: string | null;
+        unavailableReason: string | null;
+        modelId: string | null;
+      };
+    }[]
+  > {
+    const prepared = [];
+    for (const e of result.explanations) {
+      const modelId = await this.modelIdFor(e.module, result);
+      const unavailable = (reason: string) => ({
+        stored: this.storedExplanation(e, randomId(), reason),
+        row: {
+          kind: e.kind,
+          storageKey: null,
+          unavailableReason: reason,
+          modelId,
+        },
+      });
+      if (e.artifact) {
+        const bytes = Buffer.from(e.artifact.dataBase64, 'base64');
+        if (
+          bytes.length === 0 ||
+          bytes.length > MAX_ARTIFACT_BYTES ||
+          sniffFile(bytes)?.kind !== 'PNG'
+        ) {
+          prepared.push(unavailable(INVALID_IMAGE));
+          continue;
+        }
+        const key = generateObjectKey('xai', '.png');
+        await this.storage.put(key, Readable.from(bytes), {
+          contentType: 'image/png',
+          sha256: createHash('sha256').update(bytes).digest('hex'),
+        });
+        const id = randomId();
+        prepared.push({
+          stored: this.storedExplanation(e, id, null),
+          row: {
+            kind: e.kind,
+            storageKey: key,
+            unavailableReason: null,
+            modelId,
+          },
+        });
+      } else if (e.storageKey) {
+        prepared.push(unavailable(NOT_ACCEPTED_REFERENCE));
+      } else if (e.values) {
+        // SHAP values from a real model: kept in the report, no image.
+        prepared.push({ stored: this.storedExplanation(e, null, null) });
+      } else {
+        prepared.push(unavailable(e.unavailableReason ?? INVALID_IMAGE));
+      }
+    }
+    return prepared;
+  }
+
+  private storedExplanation(
+    e: ContractExplanation,
+    artifactId: string | null,
+    reason: string | null,
+  ): StoredExplanation {
+    return {
       kind: e.kind,
       module: e.module,
-      available: e.unavailableReason == null,
-      unavailableReason: e.unavailableReason ?? null,
-      values: e.values ?? null,
-    }));
+      artifactId,
+      available: reason === null,
+      unavailableReason: reason,
+      values: reason === null ? (e.values ?? null) : null,
+    };
+  }
+
+  private async modelIdFor(
+    module: string,
+    result: InferenceResult,
+  ): Promise<string | null> {
+    const version = result.modelVersions[module];
+    if (!version) return null;
+    const model = await this.prisma.aiModel.findUnique({
+      where: { name_version: { name: module, version } },
+      select: { id: true },
+    });
+    return model?.id ?? null;
+  }
+
+  private async requireJob(
+    jobId: string,
+    user: AuthenticatedUser,
+  ): Promise<AiJob> {
+    const job = await this.prisma.aiJob.findUnique({ where: { id: jobId } });
+    if (!job) throw this.jobNotFound();
+    try {
+      await this.patients.requireInFacility(user, job.patientId);
+    } catch (err) {
+      if (err instanceof NotFoundException) throw this.jobNotFound();
+      throw err;
+    }
+    return job;
+  }
+
+  private explanationNotFound(): NotFoundException {
+    return new NotFoundException({
+      code: 'NOT_FOUND',
+      message: 'Explanation image not found',
+    });
+  }
+
+  private toReportView(r: StoredReport): AiReportView {
+    const explanations = r.explanations.map(toExplanationView);
     return {
       provenance: r.provenance,
       isMock: r.provenance === 'MOCK',

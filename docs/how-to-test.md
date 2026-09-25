@@ -212,6 +212,13 @@ The AI service now runs in its own window, *PCa mHealth AI service (mock models)
   → `"status": "SUCCEEDED"`, `"isMock": true`, and the disclaimer. `modulesSkipped` explains, for each missing input, why that part did not run (for example *"No imaging study was provided"*).
 - [ ] **Which models?** **GET /api/v1/ai/models** → five models, all `MOCK`, `mock-0.1`, and `evaluationAvailable: false` (no made-up accuracy numbers).
 
+### Phase 12: why did the AI say that? (explanations)
+
+- [ ] After the Phase 11 steps, open **GET /api/v1/ai-jobs/{id}/explanations** with the same job id.
+  → One entry for each part of the AI that ran (for example *ann_clinical* **SHAP**, *xgboost_fusion* **SHAP**). Each says `"available": false` with *"Explanations need a trained research model; none is loaded (development mock)."* That is honest: practice models have nothing real to explain, so the system does **not** draw a pretend heatmap.
+- [ ] **Model quality figures.** **GET /api/v1/ai/models**, copy a model `id`, then **GET /api/v1/ai/models/{id}/evaluation**.
+  → *"Evaluation data not yet available."* Accuracy and fairness numbers will only ever come from a real, stored evaluation.
+
 ### Phase 3: the server itself
 
 - [ ] Open **http://localhost:3000/api/docs** in your browser.

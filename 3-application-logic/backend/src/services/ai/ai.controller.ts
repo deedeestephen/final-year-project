@@ -6,12 +6,14 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Res,
 } from '@nestjs/common';
 import {
   ApiAcceptedResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiOkResponse,
+  ApiProduces,
   ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -22,7 +24,14 @@ import {
   type AuthenticatedUser,
   type RequestContext,
 } from '../../gateway/access/access.decorators';
-import { AiJobView, AiModelView } from './ai.dto';
+import type { Response } from 'express';
+import { pipeline } from 'node:stream/promises';
+import {
+  AiJobView,
+  AiModelView,
+  EvaluationView,
+  ExplanationView,
+} from './ai.dto';
 import { AiService } from './ai.service';
 
 const uuid = () => new ParseUUIDPipe();
@@ -85,6 +94,45 @@ export class AiJobsController {
   ): Promise<AiJobView> {
     return this.ai.get(id, user, ctx);
   }
+
+  @Get(':id/explanations')
+  @RequirePermissions('ai:read')
+  @ApiOkResponse({
+    type: [ExplanationView],
+    description:
+      'One per module that ran: an image, SHAP values, or the reason there is none',
+  })
+  explanations(
+    @Param('id', uuid()) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ExplanationView[]> {
+    return this.ai.explanations(id, user);
+  }
+}
+
+@ApiTags('ai')
+@ApiBearerAuth()
+@Controller('explanations')
+export class ExplanationsController {
+  constructor(private readonly ai: AiService) {}
+
+  @Get(':id/content')
+  @RequirePermissions('ai:read')
+  @ApiProduces('image/png')
+  @ApiOkResponse({ description: 'The explanation image (e.g. Grad-CAM)' })
+  async content(
+    @Param('id', uuid()) id: string,
+    @Res() res: Response,
+    @CurrentUser() user: AuthenticatedUser,
+    @Ctx() ctx: RequestContext,
+  ): Promise<void> {
+    const { body, fileName } = await this.ai.explanationContent(id, user, ctx);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    await pipeline(body, res);
+  }
 }
 
 @ApiTags('ai')
@@ -101,5 +149,16 @@ export class AiModelsController {
   })
   models(): Promise<AiModelView[]> {
     return this.ai.models();
+  }
+
+  @Get('models/:id/evaluation')
+  @RequirePermissions('ai:models:read')
+  @ApiOkResponse({
+    type: EvaluationView,
+    description:
+      'Stored evaluation and fairness figures, or "Evaluation data not yet available."',
+  })
+  evaluation(@Param('id', uuid()) id: string): Promise<EvaluationView> {
+    return this.ai.evaluation(id);
   }
 }

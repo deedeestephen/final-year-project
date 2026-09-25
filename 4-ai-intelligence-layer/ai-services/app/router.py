@@ -6,12 +6,14 @@ from collections.abc import Sequence
 from app.contract import (
     MOCK_DISCLAIMER,
     RESEARCH_DISCLAIMER,
+    Explanation,
     InferenceOutputs,
     InferenceRequest,
     InferenceResult,
     ModelInfo,
     SkippedModule,
 )
+from app.explain.base import KIND_FOR_MODULE, Explainer, UnavailableExplainer
 from app.providers.base import ModelProvider, ModuleOutput
 from app.providers.mock import MockXgboostFusion, mock_modules
 
@@ -25,9 +27,15 @@ class InsufficientInputsError(Exception):
 
 
 class ModelRouter:
-    def __init__(self, modules: Sequence[ModelProvider], fusion: ModelProvider) -> None:
+    def __init__(
+        self,
+        modules: Sequence[ModelProvider],
+        fusion: ModelProvider,
+        explainers: dict[str, Explainer] | None = None,
+    ) -> None:
         self._modules = list(modules)
         self._fusion = fusion
+        self._explainers = explainers or {}
 
     def models(self) -> list[ModelInfo]:
         return [m.info for m in [*self._modules, self._fusion]]
@@ -75,6 +83,13 @@ class ModelRouter:
             (o.segmentation_mask_key for o in outputs.values() if o.segmentation_mask_key),
             None,
         )
+        explanations: list[Explanation] = []
+        for module in used:
+            explainer = self._explainers.get(module.module)
+            if explainer is not None:
+                output = outputs.get(module.module) or ModuleOutput(probability=probability)
+                explanations.append(explainer.explain(module.module, request, output))
+
         # One mock module is enough to make the whole result a mock.
         is_mock = any(m.info.provenance == "MOCK" for m in used)
 
@@ -91,10 +106,14 @@ class ModelRouter:
                 modulesUsed=[m.module for m in used],
                 modulesSkipped=skipped,
             ),
-            explanations=[],
+            explanations=explanations,
         )
 
 
 def default_router() -> ModelRouter:
-    """Development: every module is a labelled mock until trained models are registered."""
-    return ModelRouter(mock_modules(), MockXgboostFusion())
+    """Development: every module is a labelled mock until trained models are registered,
+    and a mock module never gets an invented explanation."""
+    explainers: dict[str, Explainer] = {
+        module: UnavailableExplainer(kind) for module, kind in KIND_FOR_MODULE.items()
+    }
+    return ModelRouter(mock_modules(), MockXgboostFusion(), explainers)

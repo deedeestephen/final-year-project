@@ -9,20 +9,32 @@ export const MOCK_DISCLAIMER = 'DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT.
 
 export const provenanceSchema = z.enum(['MOCK', 'RESEARCH_MODEL']);
 
+/** Largest explanation image accepted, as base64 (about 2 MB of PNG). */
+export const MAX_ARTIFACT_BASE64 = 2_800_000;
+
 const explanationSchema = z
   .object({
     kind: z.enum(['GRADCAM', 'SHAP', 'MIL_ATTENTION']),
     module: z.string().min(1).max(100),
     storageKey: z.string().max(512).nullable().optional(),
+    artifact: z
+      .object({
+        contentType: z.literal('image/png'),
+        dataBase64: z.string().min(8).max(MAX_ARTIFACT_BASE64),
+      })
+      .nullable()
+      .optional(),
     values: z.record(z.string(), z.number()).nullable().optional(),
     unavailableReason: z.string().min(1).max(500).nullable().optional(),
   })
   .refine(
     (e) =>
-      (e.storageKey != null || e.values != null) !==
+      (e.storageKey != null || e.artifact != null || e.values != null) !==
       (e.unavailableReason != null),
     'an explanation needs an artifact or an unavailableReason',
   );
+
+export type ContractExplanation = z.infer<typeof explanationSchema>;
 
 export const inferenceResultSchema = z
   .object({

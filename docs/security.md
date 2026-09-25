@@ -122,5 +122,8 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Every AI response is validated against the contract before it is stored or shown; a MOCK result without the exact disclaimer is rejected and the job marked FAILED | `ai-contract.ts`, `4-ai-intelligence-layer/ai-services/app/contract.py` | Verified (Ph.11) |
 | Mock model outputs depend only on the job id, never on the patient's values, so they cannot be read as an assessment | `4-ai-intelligence-layer/ai-services/app/providers/mock.py` | Verified (Ph.11, test changes PSA and gets the same number) |
 | AI jobs: one at a time per patient, timeout marked TIMED_OUT, requests, completions and report reads audited | `AiService` | Verified (Ph.11) |
+| Explanation images from the AI service are checked (real PNG by magic bytes, at most 2 MB) before storage; invalid ones are discarded with a reason; storage references sent by the AI service are refused (they could point at another patient's file) | `AiService.prepareExplanations` | Verified (Ph.12) |
+| Explanation images are facility-scoped, audited when viewed, and kept out of the report document (only references) | `AiService.explanationContent` | Verified (Ph.12) |
+| Model performance and fairness figures only from a stored evaluation run, otherwise "Evaluation data not yet available." | `AiService.evaluation` | Verified (Ph.12) |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |

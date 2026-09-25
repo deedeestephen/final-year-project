@@ -78,17 +78,34 @@ class InferenceRequest(_Strict):
     inputs: InferenceInputs
 
 
+#: Largest explanation image accepted (2 MB of PNG, about 2.8 MB as base64).
+MAX_ARTIFACT_BASE64 = 2_800_000
+
+
+class ExplanationArtifact(_Strict):
+    """An explanation image (for example a Grad-CAM heatmap), sent inline.
+
+    The AI service cannot write to the backend's storage, so the backend
+    checks the image and stores it (contract v0.2)."""
+
+    contentType: Literal["image/png"]
+    dataBase64: str = Field(min_length=8, max_length=MAX_ARTIFACT_BASE64)
+
+
 class Explanation(_Strict):
     kind: Literal["GRADCAM", "SHAP", "MIL_ATTENTION"]
     module: str
     storageKey: str | None = None
+    artifact: ExplanationArtifact | None = None
     values: dict[str, float] | None = None
     unavailableReason: str | None = None
 
     @model_validator(mode="after")
     def _artifact_or_reason(self) -> "Explanation":
-        # NFR-09: an explanation is either real (artifact or values) or says why not.
-        has_artifact = self.storageKey is not None or self.values is not None
+        # NFR-09: an explanation is either real (image or values) or says why not.
+        has_artifact = (
+            self.storageKey is not None or self.artifact is not None or self.values is not None
+        )
         if has_artifact == (self.unavailableReason is not None):
             raise ValueError("an explanation needs an artifact or an unavailableReason, not both")
         return self

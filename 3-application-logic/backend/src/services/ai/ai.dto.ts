@@ -41,6 +41,11 @@ export class ExplanationView {
   @ApiProperty() module!: string;
   @ApiProperty({ description: 'False when no explanation could be produced' })
   available!: boolean;
+  @ApiProperty({
+    description:
+      'True when an image can be fetched from GET /explanations/{id}/content',
+  })
+  hasImage!: boolean;
   @ApiPropertyOptional({ nullable: true, type: String })
   unavailableReason!: string | null;
   @ApiPropertyOptional({
@@ -106,4 +111,26 @@ export class AiModelView {
     description: 'True only when a stored evaluation run exists',
   })
   evaluationAvailable!: boolean;
+}
+
+export class EvaluationView {
+  @ApiProperty({ format: 'uuid' }) modelId!: string;
+  @ApiProperty({
+    description: 'True only when a stored evaluation run exists',
+  })
+  available!: boolean;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    example: 'Evaluation data not yet available.',
+  })
+  message!: string | null;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: 'object',
+    additionalProperties: true,
+    description:
+      'The stored evaluation (metrics, including per-group fairness figures)',
+  })
+  evaluation!: Record<string, unknown> | null;
 }
