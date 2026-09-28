@@ -105,8 +105,35 @@ const schema = z
       .max(300_000)
       .default(30_000),
     AI_MAX_CONCURRENT_JOBS: z.coerce.number().int().min(1).max(32).default(2),
+    // FHIR export (Phase 14). SmartCare Pro FHIR base URL; empty = sending is off.
+    SMARTCARE_FHIR_URL: z
+      .union([z.literal(''), z.url({ protocol: /^https?$/ })])
+      .default(''),
+    SMARTCARE_TOKEN: z.string().trim().default(''),
+    SMARTCARE_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .max(300_000)
+      .default(30_000),
+    FHIR_EXPORT_MAX_PATIENTS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100_000)
+      .default(5000),
   })
   .superRefine((env, ctx) => {
+    if (
+      env.NODE_ENV === 'production' &&
+      env.SMARTCARE_FHIR_URL.startsWith('http:')
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SMARTCARE_FHIR_URL'],
+        message: 'must use https in production',
+      });
+    }
     if (env.STORAGE_DRIVER === 's3') {
       for (const key of [
         'S3_ENDPOINT',
@@ -175,6 +202,14 @@ export interface AppConfig {
     serviceToken: string;
     timeoutMs: number;
     maxConcurrentJobs: number;
+  };
+  fhir: {
+    /** SmartCare Pro FHIR base URL; empty means sending is switched off. */
+    smartcareUrl: string;
+    smartcareToken: string;
+    timeoutMs: number;
+    /** Largest number of patients in one export. */
+    maxPatients: number;
   };
 }
 
@@ -246,6 +281,12 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
       serviceToken: e.AI_SERVICE_TOKEN,
       timeoutMs: e.AI_TIMEOUT_MS,
       maxConcurrentJobs: e.AI_MAX_CONCURRENT_JOBS,
+    },
+    fhir: {
+      smartcareUrl: e.SMARTCARE_FHIR_URL.replace(/\/+$/, ''),
+      smartcareToken: e.SMARTCARE_TOKEN,
+      timeoutMs: e.SMARTCARE_TIMEOUT_MS,
+      maxPatients: e.FHIR_EXPORT_MAX_PATIENTS,
     },
   };
 }

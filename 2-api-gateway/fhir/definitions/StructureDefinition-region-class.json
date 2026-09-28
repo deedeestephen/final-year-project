@@ -1,0 +1,59 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "region-class",
+  "url": "https://fhir.pca-mhealth.example/StructureDefinition/region-class",
+  "version": "0.1.0",
+  "name": "RegionClass",
+  "title": "Region class (urban, peri-urban, rural)",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "PCa mHealth research prototype (ZCAS University)",
+  "description": "The patient's setting: urban, peri-urban or rural. Used for fairness monitoring; it does not identify a place. Draft for a research prototype, not an official Ministry of Health definition.",
+  "fhirVersion": "4.0.1",
+  "kind": "complex-type",
+  "abstract": false,
+  "context": [
+    {
+      "type": "element",
+      "expression": "Patient"
+    }
+  ],
+  "type": "Extension",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Extension",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Extension",
+        "path": "Extension",
+        "short": "Urban, peri-urban or rural",
+        "definition": "The patient's setting: urban, peri-urban or rural.",
+        "max": "1"
+      },
+      {
+        "id": "Extension.extension",
+        "path": "Extension.extension",
+        "max": "0"
+      },
+      {
+        "id": "Extension.url",
+        "path": "Extension.url",
+        "fixedUri": "https://fhir.pca-mhealth.example/StructureDefinition/region-class"
+      },
+      {
+        "id": "Extension.value[x]",
+        "path": "Extension.value[x]",
+        "min": 1,
+        "type": [
+          {
+            "code": "Coding"
+          }
+        ],
+        "binding": {
+          "strength": "required",
+          "valueSet": "https://fhir.pca-mhealth.example/ValueSet/region-class"
+        }
+      }
+    ]
+  }
+}

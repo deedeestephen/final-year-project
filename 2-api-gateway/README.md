@@ -6,6 +6,7 @@ The single door into the system. Every request passes these checks before any bu
 |---|---|
 | OpenAPI 3.0 RESTful endpoints | [`openapi/openapi.json`](openapi/openapi.json) (generated from the code; `npm run openapi:export`), live at `/api/docs` in development |
 | Contract with the AI layer | [`openapi/ai-contract.yaml`](openapi/ai-contract.yaml) |
+| FHIR R4 definitions of the project's own codes and extension (for SmartCare Pro and the HL7 validator) | [`fhir/definitions/`](fhir/definitions/) (generated; `npm run fhir:definitions`), see [docs/fhir-export.md](../docs/fhir-export.md) |
 | HTTPS / TLS 1.3, request routing and load balancing | [`reverse-proxy/nginx.conf`](reverse-proxy/nginx.conf), a template for deployment |
 | JWT authentication middleware | `3-application-logic/backend/src/gateway/access/jwt-auth.guard.ts` |
 | RBAC permission enforcement | `…/src/gateway/access/permissions.guard.ts`, `permissions.ts` |

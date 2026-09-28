@@ -181,6 +181,35 @@ Sign in as the **clinician** and open **Patients**, then a synced patient. Below
 - [ ] **Same as the phone:** choose it, then pull down the phone's quick settings and turn on **Dark theme**.
   → The app follows the phone.
 
+### Phase 14: sharing data in the international format (FHIR export)
+
+The export only includes patients who agreed. So first give one made-up patient the right consent:
+
+1. In the phone app, as the **clinician**, open a synced patient, then **Consent**, then **Record consent**.
+2. Choose **Use in research**, then **Save consent**. For the SmartCare Pro test, also record **Sharing with other health records**.
+
+Then, on the **admin website** (http://localhost:5173), signed in as the administrator:
+
+- [ ] Click **FHIR export** in the menu.
+  → You see how many patients agreed, and what the file will contain: patients, screening visits, results, pathology reviews. A blue note says the practice (mock) AI results are left out: practice results are never shared.
+- [ ] Read **What is removed**.
+  → Names, phone numbers, NRC, record numbers, districts, exact dates (only the year is kept) and notes are all taken out.
+- [ ] Click **Download FHIR file (.json)**.
+  → A file called `pca-mhealth-fhir-research-<date>.json` is saved. Open it in Notepad: you will find PSA values and years, but **no name, phone, NRC or record number**. Each person has a long code instead of a name.
+- [ ] Choose **SmartCare Pro (national EHR)**.
+  → The counts change to the patients who agreed to national sharing. **Send to SmartCare Pro** is grey: *"Sending is off"*, because no SmartCare address is set yet.
+- [ ] **Try sending to the practice SmartCare Pro** (optional).
+  1. Open a new PowerShell window:
+     ```
+     cd "D:\Final Year Project\pca-mhealth\3-application-logic\backend"; npm run smartcare:mock
+     ```
+     → *"SmartCare Pro mock (development only) on http://localhost:8090/fhir"*. Leave this window open.
+  2. Open the `.env` file in the project folder and set `SMARTCARE_FHIR_URL=http://localhost:8090/fhir`. Save it, then close the backend window and run `dev-up.ps1` again.
+  3. On the FHIR export page, choose **SmartCare Pro (national EHR)** and click **Send to SmartCare Pro**, then **Send**.
+     → *"Sent to localhost:8090 … SmartCare Pro accepted it (reference …)"*. The mock window prints what it received. The file is saved in `var\smartcare-mock`.
+- [ ] **Only for the curious: the official FHIR check.** In Git Bash: `bash 6-infrastructure/scripts/fhir-validate.sh`
+  → After a minute or two: *"Success: 0 errors"*. The warnings are only best-practice notes.
+
 ### The admin website (users, roles and permissions, patient accounts)
 
 The admin page is now a **website on your PC**, not part of the phone app. `dev-up.ps1` starts it in a third window, *PCa mHealth admin website*. **Leave that window open**, just like the backend one.

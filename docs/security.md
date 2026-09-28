@@ -30,6 +30,7 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 - Server: direct identifiers (name, national ID, phone) are encrypted at column level (AES-256-GCM, app-managed key from
   env/KMS); disks, object storage and backups are encrypted.
 - De-identification (Safe Harbour, 18 identifier classes) is applied before data leaves L3 for L4 or for FHIR export.
+  The FHIR export's rule for each class is in [fhir-export.md](fhir-export.md#de-identification-safe-harbor-nfr-10).
 - Data minimisation: responses are shaped per role.
 
 ## Audit
@@ -130,5 +131,11 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Explanation images from the AI service are checked (real PNG by magic bytes, at most 2 MB) before storage; invalid ones are discarded with a reason; storage references sent by the AI service are refused (they could point at another patient's file) | `AiService.prepareExplanations` | Verified (Ph.12) |
 | Explanation images are facility-scoped, audited when viewed, and kept out of the report document (only references) | `AiService.explanationContent` | Verified (Ph.12) |
 | Model performance and fairness figures only from a stored evaluation run, otherwise "Evaluation data not yet available." | `AiService.evaluation` | Verified (Ph.12) |
+| **FHIR export de-identification (Safe Harbor):** no names, contact details, national ids, record numbers, sub-national places, free text or files; dates reduced to the year and ages from 90 grouped; the database query does not read identifying fields; keyed pseudonyms (HMAC, server key only) | `services/fhir/deidentify.ts`, `fhir-export.service.ts` | Verified (Ph.14, `fhir.int-spec.ts`: one test per identifier class against a patient carrying every identifier) |
+| FHIR export only for patients with the consent that matches the purpose (research use / EHR sharing); withdrawn consent excludes the patient; admin-only (`fhir:export`); every export and send audited with counts only | `FhirExportService` | Verified (Ph.14) |
+| Development mock AI results are never exported; research-model results are `preliminary` and labelled `AIAST` | `FhirBundleBuilder.addAiReport` | Verified (Ph.14, unit and integration) |
+| SmartCare Pro send: Bearer token, timeout, redirects refused (the token cannot leak), https required in production, receiver error text kept out of API answers (audit log only, cleaned and shortened) | `services/fhir/smartcare.client.ts`, `config/app-config.ts` | Verified (Ph.14, `smartcare.client.spec.ts`) |
+| FHIR conformance: official HL7 validator, 0 errors on the sample export (codes checked on the HL7 terminology server) | `6-infrastructure/scripts/fhir-validate.sh` | Verified (Ph.14; in the gate when the validator is installed) |
+| Secret scan runs locally over the full git history (gitleaks 8.30.1 in the tools folder); reviewed false positives listed one by one in `.gitleaksignore` | `6-infrastructure/scripts/quality-gate.sh` | Verified |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |

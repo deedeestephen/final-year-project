@@ -1,0 +1,93 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "observations",
+  "url": "https://fhir.pca-mhealth.example/CodeSystem/observations",
+  "version": "0.1.0",
+  "name": "PCamHealthobservationcodes",
+  "title": "PCa mHealth observation codes",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "PCa mHealth research prototype (ZCAS University)",
+  "description": "Observations exported by PCa mHealth for which no standard (LOINC) code was verified: the rectal examination, PI-RADS, prostate volume without a recorded method, history, symptoms and AI decision-support outputs. Draft for a research prototype, not an official Ministry of Health definition.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 19,
+  "concept": [
+    {
+      "code": "dre-finding",
+      "display": "Digital rectal examination finding"
+    },
+    {
+      "code": "pirads-category",
+      "display": "PI-RADS assessment category"
+    },
+    {
+      "code": "prostate-volume",
+      "display": "Prostate volume (measurement method not recorded)"
+    },
+    {
+      "code": "family-history-prostate-cancer",
+      "display": "Family history of prostate cancer"
+    },
+    {
+      "code": "biopsy-history",
+      "display": "Previous prostate biopsy"
+    },
+    {
+      "code": "luts-symptoms",
+      "display": "Lower urinary tract and related symptoms"
+    },
+    {
+      "code": "screening-visit",
+      "display": "Prostate cancer screening visit"
+    },
+    {
+      "code": "ai-decision-support-report",
+      "display": "AI decision-support report (not a diagnosis)"
+    },
+    {
+      "code": "ai-pca-probability",
+      "display": "AI composite prostate cancer probability (decision support)"
+    },
+    {
+      "code": "ai-pca-probability-low",
+      "display": "Lower bound of the AI range"
+    },
+    {
+      "code": "ai-pca-probability-high",
+      "display": "Upper bound of the AI range"
+    },
+    {
+      "code": "ai-predicted-grade-group",
+      "display": "AI-predicted ISUP grade group (not a pathology result)"
+    },
+    {
+      "code": "symptom-nocturia",
+      "display": "Nocturia"
+    },
+    {
+      "code": "symptom-frequency",
+      "display": "Urinary frequency"
+    },
+    {
+      "code": "symptom-urgency",
+      "display": "Urinary urgency"
+    },
+    {
+      "code": "symptom-weak-stream",
+      "display": "Weak urinary stream"
+    },
+    {
+      "code": "symptom-haematuria",
+      "display": "Haematuria"
+    },
+    {
+      "code": "symptom-bone-pain",
+      "display": "Bone pain"
+    },
+    {
+      "code": "symptom-weight-loss",
+      "display": "Unexplained weight loss"
+    }
+  ]
+}

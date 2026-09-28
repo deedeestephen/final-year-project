@@ -52,6 +52,8 @@ const TEXT_PAIRS: [string, string, string][] = [
   [t['offline-ink'], t['offline-bg'], 'offline banner'],
   [t.danger, t['danger-bg'], 'error notice and Disabled badge'],
   [t.danger, t.surface, 'danger button text'],
+  [t.ink, t['surface-subtle'], 'numbers in count tiles'],
+  [t['ink-secondary'], t['surface-subtle'], 'labels in count tiles'],
 ];
 
 describe('design tokens (WCAG 2.1 AA)', () => {

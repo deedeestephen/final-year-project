@@ -124,4 +124,49 @@ export const adminApi = {
     api.post<PatientAccount>(`/admin/patient-accounts/${userId}/link`),
   unlink: (userId: string) =>
     api.post<PatientAccount>(`/admin/patient-accounts/${userId}/unlink`),
+  fhirSummary: (purpose: ExportPurpose, facilityId?: string) =>
+    api.get<FhirSummary>(`/fhir/export/summary${qs({ purpose, facilityId })}`),
+  /** The de-identified FHIR R4 Bundle itself. */
+  fhirExport: (purpose: ExportPurpose, facilityId?: string) =>
+    api.post<Record<string, unknown>>('/fhir/export', {
+      purpose,
+      ...(facilityId ? { facilityId } : {}),
+    }),
+  fhirPush: (facilityId?: string) =>
+    api.post<FhirPushResult>(
+      '/fhir/export/push',
+      facilityId ? { facilityId } : {},
+    ),
 };
+
+/** RESEARCH needs research-use consent; NATIONAL_EHR (SmartCare Pro) needs EHR-sharing consent. */
+export type ExportPurpose = 'RESEARCH' | 'NATIONAL_EHR';
+
+export interface FhirCounts {
+  patients: number;
+  screeningVisits: number;
+  observations: number;
+  pathologyReports: number;
+  aiReports: number;
+  aiReportsLeftOutMock: number;
+}
+
+export interface FhirSummary {
+  purpose: ExportPurpose;
+  patientsInScope: number;
+  patientsWithConsent: number;
+  consentRequired: 'RESEARCH_USE' | 'EHR_SHARING';
+  willExport: FhirCounts;
+  maxPatients: number;
+  smartcareConfigured: boolean;
+  smartcareHost: string | null;
+}
+
+export interface FhirPushResult {
+  status: 'SENT';
+  bundleId: string;
+  httpStatus: number;
+  receiverId: string | null;
+  target: string;
+  counts: FhirCounts;
+}

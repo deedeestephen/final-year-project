@@ -1,0 +1,29 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "region-class",
+  "url": "https://fhir.pca-mhealth.example/CodeSystem/region-class",
+  "version": "0.1.0",
+  "name": "Regionclass",
+  "title": "Region class",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "PCa mHealth research prototype (ZCAS University)",
+  "description": "Urban, peri-urban or rural setting, kept for fairness monitoring (proposal section 3.7.3). It is not a geographic subdivision. Draft for a research prototype, not an official Ministry of Health definition.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 3,
+  "concept": [
+    {
+      "code": "URBAN",
+      "display": "Urban"
+    },
+    {
+      "code": "PERI_URBAN",
+      "display": "Peri-urban"
+    },
+    {
+      "code": "RURAL",
+      "display": "Rural"
+    }
+  ]
+}

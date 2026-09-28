@@ -712,3 +712,41 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 
 **Secret scan now runs locally.** Until now the gate's gitleaks step was skipped on this PC ("runs in CI"), so earlier local summaries that called the secret scan clean were wrong for the local run. gitleaks 8.30.1 (checksum verified) now lives in `D:\Final Year Project\tools\gitleaks`, outside the repository, and the gate finds it there. Its first full-history scan reported 4 findings, all reviewed and not secrets: three made-up test passwords for the throwaway test database and synthetic users, and the NestJS starter README's public badge placeholder `abc123def456`. They are listed one exact finding per line in `.gitleaksignore`, so any new finding still fails the gate. A separate check found none of the real `.env` values in any commit.
 
+## 2026-09-28: Phase 14: FHIR R4 export (de-identified) and SmartCare Pro mock
+
+**Objective:** FR-09, UC-08, NFR-06 and NFR-10: de-identified HL7 FHIR R4 bundles for research and for SmartCare Pro, via a secure API. The chatbot (Phase 13) waits for the owner's go-ahead, so Phase 14 came first.
+
+**Built:**
+- **Backend `services/fhir/`:**
+  - `fhir-codes.ts`: every LOINC and HL7 code was checked on the HL7 terminology server first. PI-RADS, the rectal examination and prostate volume had no verifiable LOINC code, so they use local codes.
+  - `deidentify.ts`: the Safe Harbor table (18 classes), keyed pseudonyms (HMAC, UUID-shaped), year-only dates, ages from 90 grouped.
+  - `fhir-mappers.ts`: Patient, Encounter, Observations, pathology DiagnosticReports, and research-model AI reports (`preliminary`, labelled `AIAST`, models as Devices). Mock AI results are never exported. `readExport()` reads a bundle back.
+  - `fhir-export.service.ts`: consent-based selection (research use or EHR sharing), a query that never reads identifying fields, a patient limit, and audit with counts only.
+  - `smartcare.client.ts`: `POST {base}/Bundle`, Bearer token, timeout, no redirects. The receiver's error text goes to the audit log only.
+- **API:** `GET /fhir/export/summary`, `POST /fhir/export` (a download), `POST /fhir/export/push`. OpenAPI re-exported.
+- **Config:** `SMARTCARE_FHIR_URL` (https in production), `SMARTCARE_TOKEN`, `SMARTCARE_TIMEOUT_MS`, `FHIR_EXPORT_MAX_PATIENTS`.
+- **Tools:**
+  - `npm run smartcare:mock`: a SmartCare Pro stand-in that saves what it receives.
+  - `npm run fhir:sample`: a sample export from made-up values.
+  - `npm run fhir:definitions[:check]`: generates the local CodeSystems, ValueSet and extension into `2-api-gateway/fhir/definitions/`.
+- **Admin website:** a **FHIR export** page. It shows the counts and says how many mock AI results are left out, lists what is removed, downloads the file, and sends to SmartCare Pro after a confirmation. Errors are shown in plain words.
+- **Gate:** FHIR definitions check; HL7 validator (offline) when installed. `quality-gate.sh fhir` runs that step alone.
+
+**Tests:**
+- Backend unit tests: 39 FHIR tests (mapping, round trip, pseudonyms, 90+, mock exclusion, the SmartCare client's timeout, unreachable server, refused redirect and error cleaning).
+- `fhir.int-spec.ts`: 33 tests against the real databases, including one per Safe Harbor class, with a patient that carries every identifier the system can hold.
+- Admin website: 6 page tests and 2 new contrast pairs.
+- **HL7 FHIR validator 6.10.4** (SHA-256 checked, kept in `D:\Final Year Project\tools`):
+  - first run: 2 errors, both "unknown local extension"; fixed by publishing the definitions
+  - now **0 errors** with the terminology server (46 best-practice warnings: no narrative, no performer)
+
+**Found by the tests:**
+- A timed-out request to SmartCare Pro was reported as "unreachable": the check used `instanceof Error`, which a timeout's `DOMException` does not always pass. It now checks the name, like the AI broker.
+- The API's error filter hides messages of 5xx answers. The receiver's reason is therefore kept in the audit log, and the admin page explains the error code in plain words.
+
+**Limits (documented):**
+- Years only, so visits within a year lose their order.
+- De-identified is not anonymous.
+- Receiving data back from SmartCare Pro needs identified data and a data-sharing agreement.
+- The `.example` namespace must be replaced by a Ministry-agreed one.
+

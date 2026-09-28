@@ -2224,6 +2224,134 @@
         ]
       }
     },
+    "/api/v1/fhir/export/summary": {
+      "get": {
+        "operationId": "FhirController_summary_v1",
+        "parameters": [
+          {
+            "name": "purpose",
+            "required": true,
+            "in": "query",
+            "description": "RESEARCH includes patients with research-use consent; NATIONAL_EHR (SmartCare Pro) includes patients with EHR-sharing consent.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RESEARCH",
+                "NATIONAL_EHR"
+              ]
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "Only this facility (default: all facilities)",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FhirExportSummaryView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What an export would contain, without exporting anything",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
+    "/api/v1/fhir/export": {
+      "post": {
+        "description": "Safe Harbor de-identification (docs/security.md): no names, contact details, national ids or record numbers; dates reduced to the year; pseudonymous ids. Development mock AI results are never included. Audited.",
+        "operationId": "FhirController_export_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FhirExportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FHIR R4 Bundle",
+            "content": {
+              "application/fhir+json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download a de-identified FHIR R4 Bundle (type collection)",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
+    "/api/v1/fhir/export/push": {
+      "post": {
+        "description": "Patients with EHR-sharing consent only. 503 when no SmartCare Pro address is set; 502/504 when it cannot be reached or refuses. Audited.",
+        "operationId": "FhirController_push_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FhirPushDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FhirPushResultView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send the national-EHR export to SmartCare Pro",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check_v1",
@@ -4268,6 +4396,156 @@
         "required": [
           "modelId",
           "available"
+        ]
+      },
+      "FhirCountsView": {
+        "type": "object",
+        "properties": {
+          "patients": {
+            "type": "number"
+          },
+          "screeningVisits": {
+            "type": "number"
+          },
+          "observations": {
+            "type": "number"
+          },
+          "pathologyReports": {
+            "type": "number"
+          },
+          "aiReports": {
+            "type": "number"
+          },
+          "aiReportsLeftOutMock": {
+            "type": "number",
+            "description": "Development mock AI results found for these patients; they are never exported"
+          }
+        },
+        "required": [
+          "patients",
+          "screeningVisits",
+          "observations",
+          "pathologyReports",
+          "aiReports",
+          "aiReportsLeftOutMock"
+        ]
+      },
+      "FhirExportSummaryView": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "RESEARCH",
+              "NATIONAL_EHR"
+            ]
+          },
+          "patientsInScope": {
+            "type": "number",
+            "description": "Patients in scope (facility filter applied)"
+          },
+          "patientsWithConsent": {
+            "type": "number",
+            "description": "Patients with the consent this purpose needs"
+          },
+          "consentRequired": {
+            "type": "string",
+            "enum": [
+              "RESEARCH_USE",
+              "EHR_SHARING"
+            ]
+          },
+          "willExport": {
+            "$ref": "#/components/schemas/FhirCountsView"
+          },
+          "maxPatients": {
+            "type": "number",
+            "description": "Largest number of patients in one export"
+          },
+          "smartcareConfigured": {
+            "type": "boolean",
+            "description": "Whether a SmartCare Pro address is set"
+          },
+          "smartcareHost": {
+            "type": "string",
+            "nullable": true,
+            "description": "SmartCare Pro host name (never the token)"
+          }
+        },
+        "required": [
+          "purpose",
+          "patientsInScope",
+          "patientsWithConsent",
+          "consentRequired",
+          "willExport",
+          "maxPatients",
+          "smartcareConfigured"
+        ]
+      },
+      "FhirExportDto": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "RESEARCH",
+              "NATIONAL_EHR"
+            ],
+            "description": "RESEARCH includes patients with research-use consent; NATIONAL_EHR (SmartCare Pro) includes patients with EHR-sharing consent."
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Only this facility (default: all facilities)"
+          }
+        },
+        "required": [
+          "purpose"
+        ]
+      },
+      "FhirPushDto": {
+        "type": "object",
+        "properties": {
+          "facilityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Only this facility (default: all facilities)"
+          }
+        }
+      },
+      "FhirPushResultView": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SENT"
+            ]
+          },
+          "bundleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "httpStatus": {
+            "type": "number"
+          },
+          "receiverId": {
+            "type": "string",
+            "nullable": true
+          },
+          "target": {
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/FhirCountsView"
+          }
+        },
+        "required": [
+          "status",
+          "bundleId",
+          "httpStatus",
+          "target",
+          "counts"
         ]
       }
     }

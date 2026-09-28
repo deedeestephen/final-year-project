@@ -31,7 +31,7 @@ security, offline-first, AI, chatbot and interoperability requirement from the p
 │ L3 APPLICATION LOGIC   3-application-logic/backend/src/services/         │
 │   auth · users · roles/permissions · patients · clinical · consent       │
 │   imaging · histopathology · AI broker · notifications · audit · sync    │
-│   admin · (chatbot Ph.13 · FHIR Ph.14)                                   │
+│   admin · FHIR export (Ph.14) · (chatbot Ph.13)                          │
 └──────────────┬──────────────────────────────────┬────────────────────────┘
                │ HTTP contract (ai-contract.yaml) │ backend/src/persistence/
 ┌──────────────▼───────────────────────┐  ┌───────▼────────────────────────┐
@@ -89,8 +89,14 @@ The system will not machine-translate medical content and present it as verified
 
 See [security.md](security.md).
 
+**FHIR export (UC-08), built in Phase 14.**
+- Administrators use the admin website's **FHIR export** page (`fhir:export`). `FhirExportService` selects only patients with the consent the purpose needs (research use, or EHR sharing for SmartCare Pro). It reads only fields that are safe after de-identification.
+- The pure mapper `fhir-mappers.ts` builds a FHIR R4 `collection` Bundle: Patient (birth year), Encounter per screening visit, LOINC-coded Observations, pathology DiagnosticReports, and research-model AI reports labelled `AIAST`. Mock AI results are never exported.
+- The bundle is downloaded, or sent to SmartCare Pro (`POST {base}/Bundle`, Bearer token, no redirects). Every export is audited with counts only.
+- See [fhir-export.md](fhir-export.md) and ADR-007.
+
 ## 6. Deliberately out of prototype scope
 
 These are documented but not built, because they need resources the prototype doesn't have: real SmartCare Pro connectivity
-(we implement FHIR R4 export/adapters and a mock endpoint), Kubernetes auto-scaling, a WAF/CDN, federated learning,
+(the FHIR R4 export, adapters and a mock endpoint are built: Phase 14), Kubernetes auto-scaling, a WAF/CDN, federated learning,
 production model training on Zambian data (it needs NHRA approval and data agreements), and measured 99.5% uptime.

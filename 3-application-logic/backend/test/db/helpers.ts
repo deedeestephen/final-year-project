@@ -37,6 +37,11 @@ export async function createDbTestApp(
     AI_SERVICE_URL: 'http://127.0.0.1:9',
     AI_SERVICE_TOKEN: '',
     AI_TIMEOUT_MS: '30000',
+    // FHIR sending off unless a test points it at its own mock SmartCare.
+    SMARTCARE_FHIR_URL: '',
+    SMARTCARE_TOKEN: '',
+    SMARTCARE_TIMEOUT_MS: '30000',
+    FHIR_EXPORT_MAX_PATIENTS: '5000',
     ...TEST_JWT_ENV,
     ...env,
   });

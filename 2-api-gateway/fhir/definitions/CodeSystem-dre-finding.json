@@ -1,0 +1,33 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "dre-finding",
+  "url": "https://fhir.pca-mhealth.example/CodeSystem/dre-finding",
+  "version": "0.1.0",
+  "name": "Digitalrectalexaminationfinding",
+  "title": "Digital rectal examination finding",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "PCa mHealth research prototype (ZCAS University)",
+  "description": "Findings of the digital rectal examination as recorded in PCa mHealth. Draft for a research prototype, not an official Ministry of Health definition.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 4,
+  "concept": [
+    {
+      "code": "NORMAL",
+      "display": "Normal"
+    },
+    {
+      "code": "ENLARGED_SMOOTH",
+      "display": "Enlarged, smooth"
+    },
+    {
+      "code": "NODULAR",
+      "display": "Nodular"
+    },
+    {
+      "code": "INDURATED",
+      "display": "Indurated (hard)"
+    }
+  ]
+}

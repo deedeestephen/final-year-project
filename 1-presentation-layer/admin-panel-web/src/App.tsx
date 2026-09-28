@@ -5,6 +5,7 @@ import { useSession } from './auth/session-context';
 import { Layout } from './components/Layout';
 import { ConnectionBanner } from './components/ui';
 import { ChangePasswordPage, LoginPage } from './pages/AuthPages';
+import { FhirExportPage } from './pages/FhirExportPage';
 import { PatientAccountsPage } from './pages/PatientAccountsPage';
 import { RolePermissionsPage, RolesPage } from './pages/RolesPages';
 import { CreateUserPage, UserDetailPage, UsersPage } from './pages/UsersPages';
@@ -59,6 +60,7 @@ function Screens() {
         <Route path="roles" element={<RolesPage />} />
         <Route path="roles/:name" element={<RolePermissionsPage />} />
         <Route path="patient-accounts" element={<PatientAccountsPage />} />
+        <Route path="fhir-export" element={<FhirExportPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

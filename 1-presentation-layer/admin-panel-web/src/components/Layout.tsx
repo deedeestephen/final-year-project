@@ -8,6 +8,7 @@ const NAV = [
   { to: '/users', label: 'Users' },
   { to: '/roles', label: 'Roles & permissions' },
   { to: '/patient-accounts', label: 'Patient accounts' },
+  { to: '/fhir-export', label: 'FHIR export' },
 ];
 
 /** Sidebar on wide screens; a Menu button opens it on narrow screens. */

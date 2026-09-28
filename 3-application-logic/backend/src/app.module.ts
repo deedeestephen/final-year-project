@@ -28,6 +28,7 @@ import { AuthModule } from './services/auth/auth.module';
 import { ImagingModule } from './services/imaging/imaging.module';
 import { StorageModule } from './persistence/storage/storage.module';
 import { ClinicalModule } from './services/clinical/clinical.module';
+import { FhirModule } from './services/fhir/fhir.module';
 import { HealthModule } from './gateway/health/health.module';
 import { NotificationsModule } from './services/notifications/notifications.module';
 import { PatientsModule } from './services/patients/patients.module';
@@ -77,6 +78,7 @@ import { UsersModule } from './services/users/users.module';
     SyncModule,
     ImagingModule,
     AiModule,
+    FhirModule,
     HealthModule,
   ],
   providers: [

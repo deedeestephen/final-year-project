@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
-# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|secrets|all]   (default: all)
+# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|fhir|secrets|all]   (default: all)
 # The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
@@ -35,6 +35,7 @@ backend() {
   run "backend unit tests" npx jest
   run "backend e2e tests" npx jest --config test/jest-e2e.json
   run "openapi document up to date" npm run -s openapi:check
+  run "FHIR definitions up to date" npm run -s fhir:definitions:check
   run "backend build" npx nest build
   run "backend npm audit" npm audit --audit-level=high --omit=dev
 }
@@ -77,6 +78,22 @@ admin_web() {
   run "admin-web npm audit" npm audit --audit-level=high --omit=dev
 }
 
+fhir() {
+  step "FHIR conformance (HL7 validator)"
+  # Offline (structure and local definitions); the full check with the HL7
+  # terminology server is: 6-infrastructure/scripts/fhir-validate.sh
+  local status=0
+  bash "$ROOT/6-infrastructure/scripts/fhir-validate.sh" --offline >/tmp/pca-fhir-validate.log 2>&1 || status=$?
+  if [ "$status" -eq 3 ]; then
+    echo "    SKIP: HL7 validator or Java not installed (see docs/fhir-export.md)"
+  elif [ "$status" -eq 0 ]; then
+    echo "    PASS: FHIR sample export validates ($(grep -E '^(Success|\*FAILURE\*)' /tmp/pca-fhir-validate.log | head -1))"
+  else
+    grep -E '^\s+Error @|^(Success|\*FAILURE\*)' /tmp/pca-fhir-validate.log | head -20
+    echo "    FAIL: FHIR sample export validates"; FAILED+=("fhir validator")
+  fi
+}
+
 secrets() {
   step "secret scan"
   cd "$ROOT"
@@ -101,7 +118,8 @@ case "$TARGET" in
   mobile) mobile ;;
   admin-web) admin_web ;;
   secrets) secrets ;;
-  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; admin_web; secrets ;;
+  fhir) fhir ;;
+  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; admin_web; fhir; secrets ;;
   *) echo "unknown target $TARGET"; exit 2 ;;
 esac
 

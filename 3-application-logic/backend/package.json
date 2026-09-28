@@ -28,7 +28,11 @@
     "test:db": "jest --config ./test/jest-db.json --runInBand",
     "openapi:export": "ts-node --transpile-only tools/export-openapi.ts",
     "openapi:check": "ts-node --transpile-only tools/export-openapi.ts --check",
-    "fixtures": "ts-node --transpile-only tools/make-synthetic-fixtures.ts"
+    "fixtures": "ts-node --transpile-only tools/make-synthetic-fixtures.ts",
+    "smartcare:mock": "ts-node --transpile-only tools/smartcare-mock.ts",
+    "fhir:sample": "ts-node --transpile-only tools/fhir-sample.ts",
+    "fhir:definitions": "ts-node --transpile-only tools/fhir-definitions.ts",
+    "fhir:definitions:check": "ts-node --transpile-only tools/fhir-definitions.ts --check"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1138.0",
@@ -63,6 +67,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/busboy": "1.5.4",
     "@types/express": "^5.0.0",
+    "@types/fhir": "^0.0.44",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",

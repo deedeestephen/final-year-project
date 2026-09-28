@@ -1,0 +1,29 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "biopsy-history",
+  "url": "https://fhir.pca-mhealth.example/CodeSystem/biopsy-history",
+  "version": "0.1.0",
+  "name": "Previousprostatebiopsy",
+  "title": "Previous prostate biopsy",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "PCa mHealth research prototype (ZCAS University)",
+  "description": "Whether the patient had a prostate biopsy before, and its result. Draft for a research prototype, not an official Ministry of Health definition.",
+  "caseSensitive": true,
+  "content": "complete",
+  "count": 3,
+  "concept": [
+    {
+      "code": "NONE",
+      "display": "No previous biopsy"
+    },
+    {
+      "code": "PRIOR_NEGATIVE",
+      "display": "Previous biopsy, negative"
+    },
+    {
+      "code": "PRIOR_POSITIVE",
+      "display": "Previous biopsy, positive"
+    }
+  ]
+}
