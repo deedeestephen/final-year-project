@@ -750,3 +750,29 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 - Receiving data back from SmartCare Pro needs identified data and a data-sharing agreement.
 - The `.example` namespace must be replaced by a Ministry-agreed one.
 
+## 2026-09-28: Phase 15: Security and compliance review
+
+**Objective:** a full review with automated checks that keep holding after this phase. The full report, with findings F-1 to F-7 and residual risks R-1 to R-8, is in [security-review.md](security-review.md).
+
+**Built and fixed:**
+- **Access matrix:** `src/gateway/access/access-matrix.ts` reads all 66 routes and their rules from the code, and `npm run access:matrix` writes [access-matrix.md](access-matrix.md). Review rules fail the gate. The first run found no real problem.
+- **De-identified files for the AI (F-1):** `services/imaging/deidentify-files.ts` handles DICOM (in-place, same length), JPEG and PNG. New columns `imaging_studies.deid_storage_key` / `ai_excluded_reason` and `ai_jobs.input_notes`; the migration was checked with `prisma migrate diff` (no drift). The AI only receives copies. Slides are held back, and reports and scan cards say why.
+- **Separation of duties (F-2, F-3):** role locks in both directions, and no adding roles to one's own account.
+- **Audit-log viewer (F-5):** `GET /admin/audit-logs` and `/verify`, plus the admin website **Audit log** page.
+- **TLS 1.3 proven (F-6):** `6-infrastructure/scripts/tls-check.sh`. Its first version misreported TLS 1.2 as accepted, because `openssl s_client` prints the attempted protocol even when the handshake fails. It now checks the negotiated cipher.
+- **Dependency audits:** full npm audits, pip-audit, and `pub-audit.py` (OSV) for 130 Dart/Flutter packages: 0 known vulnerabilities.
+- **Gate:** access matrix check, TLS step and mobile package audit added.
+
+**Tests:**
+- De-identification unit tests: 14.
+- Access-matrix rule tests: 7.
+- `audit-log.int-spec.ts`: 7, including a tamper test that is rolled back.
+- `admin.int-spec.ts`: new separation-of-duties test.
+- `imaging.int-spec.ts` and `ai.int-spec.ts`: de-identified copies and held-back files.
+- Admin website: 3 audit-log page tests.
+- Phone widget tests: "not sent to the AI" messages.
+
+**Found by the tests:** the first upload with de-identification failed with 500. The object-key helper needs extensions with a dot (`.dcm`), and the new code passed `dcm`.
+
+**Deferred to Phase 16:** the log review. It needs the real server logging in production mode, which the end-to-end run provides.
+

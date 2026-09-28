@@ -1,9 +1,12 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import { createMongoClient } from '../../src/persistence/mongo/client';
 import {
+  SYNTHETIC_DICOM_IDENTIFIERS,
   makeNotAnImage,
   makeSyntheticDicom,
   makeSyntheticTiff,
@@ -174,6 +177,39 @@ describe('imaging and histopathology files (real database)', () => {
         expect.arrayContaining(['imaging.uploaded', 'imaging.content_read']),
       );
       expect(JSON.stringify(audit)).not.toContain('SYNTHETIC^TEST');
+    });
+
+    it('keeps a de-identified copy for the AI and leaves the original untouched (NFR-10)', async () => {
+      const file = makeSyntheticDicom('MR', { identifiers: true });
+      const res = await uploadImaging(clinician, file, {
+        modality: 'MRI',
+      }).expect(201);
+      const study = res.body as StudyBody & {
+        aiReady: boolean;
+        aiExcludedReason: string | null;
+      };
+      expect(study).toMatchObject({ aiReady: true, aiExcludedReason: null });
+
+      const row = await prisma.imagingStudy.findUniqueOrThrow({
+        where: { id: study.id },
+      });
+      const root = process.env.LOCAL_STORAGE_ROOT!;
+      const original = readFileSync(path.join(root, row.storageKey));
+      const copy = readFileSync(path.join(root, row.deidStorageKey!));
+      expect(original.equals(file)).toBe(true);
+      expect(copy.length).toBe(file.length);
+      for (const value of Object.values(SYNTHETIC_DICOM_IDENTIFIERS)) {
+        expect(original.toString('latin1')).toContain(value);
+        expect(copy.toString('latin1')).not.toContain(value);
+      }
+      // The audit says which attributes were changed, never their values.
+      const audit = await prisma.auditLog.findFirstOrThrow({
+        where: { entityId: study.id, action: 'imaging.uploaded' },
+      });
+      expect(
+        (audit.details as { deidentified: string[] }).deidentified,
+      ).toEqual(expect.arrayContaining(['Patient Name', 'Institution Name']));
+      expect(JSON.stringify(audit.details)).not.toContain('SYNTHETIC');
     });
 
     it('accepts an ultrasound photo only for TRUS', async () => {

@@ -67,6 +67,17 @@ export class ImagingStudyView {
   @ApiPropertyOptional({ nullable: true, type: String })
   seriesInstanceUid!: string | null;
   @ApiProperty({ format: 'uuid' }) uploadedById!: string;
+  @ApiProperty({
+    description:
+      'True when a de-identified copy exists, so the file can be used in an AI analysis',
+  })
+  aiReady!: boolean;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: 'Why the file is not sent to the AI, in plain words',
+  })
+  aiExcludedReason!: string | null;
   @ApiProperty() createdAt!: string;
 }
 

@@ -137,7 +137,42 @@ export const adminApi = {
       '/fhir/export/push',
       facilityId ? { facilityId } : {},
     ),
+  auditLogs: (filters: AuditFilters, page = 1) =>
+    api.get<Page<AuditEntry>>(
+      `/admin/audit-logs${qs({ ...filters, page, pageSize: 50 })}`,
+    ),
+  verifyAuditLog: () => api.get<AuditChain>('/admin/audit-logs/verify'),
 };
+
+export interface AuditFilters {
+  action?: string;
+  outcome?: 'SUCCESS' | 'DENIED' | 'FAILURE';
+  from?: string;
+  to?: string;
+}
+
+export interface AuditEntry {
+  seq: string;
+  occurredAt: string;
+  actorUserId: string | null;
+  actorEmail: string | null;
+  actorRole: string | null;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  outcome: 'SUCCESS' | 'DENIED' | 'FAILURE';
+  requestId: string | null;
+  ip: string | null;
+  details: Record<string, unknown> | null;
+}
+
+export interface AuditChain {
+  intact: boolean;
+  entries: number;
+  brokenAt: string | null;
+  reason: string | null;
+  checkedAt: string;
+}
 
 /** RESEARCH needs research-use consent; NATIONAL_EHR (SmartCare Pro) needs EHR-sharing consent. */
 export type ExportPurpose = 'RESEARCH' | 'NATIONAL_EHR';

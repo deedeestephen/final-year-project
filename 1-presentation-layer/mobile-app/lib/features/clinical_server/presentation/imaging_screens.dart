@@ -115,6 +115,17 @@ class _ImagingList extends ConsumerWidget {
                             LabelledValue('Checked', 'Ready'),
                             LabelledValue('Size', formatBytes(s.sizeBytes)),
                             LabelledValue('Added', formatDate(s.createdAt)),
+                            if (!s.aiReady)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AppSizes.xs,
+                                ),
+                                child: Text(
+                                  s.aiExcludedReason ?? 'Not sent to the AI.',
+                                  key: Key('imaging.notForAi.${s.id}'),
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
                           ],
                         ),
                       ),

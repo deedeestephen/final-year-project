@@ -44,8 +44,11 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
   is never stored (it may contain identifiers). DICOM headers are parsed and the modality must match what was chosen.
 - Storage keys are server-generated UUIDs (no user paths). A file is recorded only after every check passed; a file
   that fails is deleted and the rejection is audited (reason only). Downloads are `attachment`, `nosniff`, `no-store`.
-- **Known limit:** stored DICOM files still contain their original header tags. Only technical fields are copied to
-  MongoDB, and nothing leaves the backend, but de-identifying the files themselves before any AI use is Phase 15 work.
+- **De-identified copies for the AI (Phase 15):** the original upload is kept for clinicians; the AI only receives a
+  copy. DICOM identifying values are overwritten in place at the same length (PS3.15 Annex E attributes relevant here;
+  dates keep the year; UIDs get keyed replacements; private attributes blanked; pixels untouched); JPEG/PNG metadata is
+  removed. Scans flagged "burned-in annotation", and all slides (label images, R-1), are not sent to the AI, and the
+  clinician sees why. See [security-review.md](security-review.md).
 
 ## Secrets
 - Secrets only come from environment variables / a secret manager. `.env` is git-ignored and `.env.example` holds
@@ -111,6 +114,11 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Self-registration: a taken email gets a neutral message in the app (the API's 409 is an accepted Phase 4 trade-off, rate-limited) | `register_account_screen.dart` | Verified (Ph.8) |
 | Sign-up phone and NRC/passport stored encrypted (AES-256-GCM) with an HMAC for exact matching; one account per ID number; a duplicate gets the same neutral message as a duplicate email | `auth.service.ts`, `persistence/crypto/identity-document.ts`, migration `…_admin_and_registration_id` | Verified |
 | Role permissions editable by administrators, audited with added/removed; locks: ADMIN keeps `user:manage` and `role:manage`, PATIENT may only hold `*_self` permissions; unknown codes rejected | `services/admin` | Verified |
+| **Separation of duties (Ph.15):** administration-only permissions cannot be given to clinical or patient roles; clinical-data permissions cannot be given to the administrator role; nobody can add a role to their own account | `AdminService.setRolePermissions`, `UsersService.update` | Verified (`admin.int-spec.ts`) |
+| **Access matrix (Ph.15):** every route and its rule, generated from the code; the gate fails on an unlisted public or permission-free route, an administration route open to others, clinical data open to administrators or patients, or a patient route that is not their own | `src/gateway/access/access-matrix.ts`, [access-matrix.md](access-matrix.md) | Verified (gate) |
+| **Audit-log viewer (Ph.15):** administrators read the log with filters and check the hash chain from the admin website; reading and checking are themselves audited; a tampered entry is detected | `services/audit/audit-log.*`, admin website Audit log page | Verified (`audit-log.int-spec.ts`, `AuditLogPage.test.tsx`) |
+| **De-identified AI inputs (Ph.15):** only de-identified copies of scans reach the AI; slides are held back until slide de-identification exists | `services/imaging/deidentify-files.ts`, `AiService.request` | Verified (unit, `imaging.int-spec.ts`, `ai.int-spec.ts`) |
+| **Dependency audits (Ph.15):** npm (including development tools), pip-audit, and OSV for the Dart/Flutter packages | `quality-gate.sh`, `6-infrastructure/scripts/pub-audit.py` | Verified: 0 known vulnerabilities (2026-09-28) |
 | Linking a patient account needs an exact NRC match; the admin sees only record number and facility (data minimisation); linking notifies the patient; unlinking ends their sessions; all audited | `AdminService.link/unlink` | Verified |
 | Admin password reset issues a one-time password, forces a change and ends all sessions; admins cannot reset their own this way | `UsersService.resetPassword` | Verified |
 | No official emblems; every sign-in screen says the app is not an official government service (ADR-004) | `NationalStripe.notOfficial` | Verified |
@@ -138,4 +146,4 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | FHIR conformance: official HL7 validator, 0 errors on the sample export (codes checked on the HL7 terminology server) | `6-infrastructure/scripts/fhir-validate.sh` | Verified (Ph.14; in the gate when the validator is installed) |
 | Secret scan runs locally over the full git history (gitleaks 8.30.1 in the tools folder); reviewed false positives listed one by one in `.gitleaksignore` | `6-infrastructure/scripts/quality-gate.sh` | Verified |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
-| TLS 1.3 termination | reverse proxy config | Planned (Ph.15) |
+| TLS 1.3 termination | reverse proxy config; `6-infrastructure/scripts/tls-check.sh` (real nginx in Docker: 1.3 accepted, 1.2 and 1.1 refused, HSTS, HTTP redirect) | Verified (Ph.15, gate) |

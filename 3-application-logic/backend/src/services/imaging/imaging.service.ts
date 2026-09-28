@@ -14,11 +14,12 @@ import type {
 } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
-import type { Readable } from 'node:stream';
+import { Readable } from 'node:stream';
 import { receiveUpload } from '../../gateway/upload/streamed-upload';
 import { isPastCalendarDate } from '../../gateway/validation/calendar-date';
 import { isSafeText } from '../../gateway/validation/safe-text';
 import { APP_CONFIG, type AppConfig } from '../../config/app-config';
+import { FieldCrypto } from '../../persistence/crypto/field-crypto';
 import { MongoService } from '../../persistence/database/mongo.service';
 import { PrismaService } from '../../persistence/database/prisma.service';
 import {
@@ -32,6 +33,13 @@ import type {
 } from '../../gateway/access/access.decorators';
 import { AuditService } from '../audit/audit.service';
 import { PatientsService } from '../patients/patients.service';
+import {
+  DeidentificationError,
+  deidentifyDicomHead,
+  replaceHead,
+  stripImageMetadata,
+  uidFromHash,
+} from './deidentify-files';
 import { DICOM_MODALITY_CODES, readDicomHeader } from './dicom-header';
 import {
   IMAGING_MODALITIES,
@@ -45,6 +53,16 @@ import {
 
 /** First bytes kept in memory for reading a DICOM header (pixel data comes after it). */
 const DICOM_HEAD_BYTES = 2 * 1024 * 1024;
+
+/** Largest JPEG or PNG whose metadata is removed in memory for the AI copy. */
+const MAX_IN_MEMORY_IMAGE_BYTES = 64 * 1024 * 1024;
+
+/** Result of preparing the de-identified copy the AI may receive. */
+interface AiCopy {
+  key: string | null;
+  excludedReason: string | null;
+  changed: string[];
+}
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -92,9 +110,18 @@ export function toStudyView(s: ImagingStudy): ImagingStudyView {
     studyInstanceUid: s.studyInstanceUid,
     seriesInstanceUid: s.seriesInstanceUid,
     uploadedById: s.uploadedById,
+    aiReady: s.deidStorageKey !== null,
+    aiExcludedReason:
+      s.deidStorageKey !== null
+        ? null
+        : (s.aiExcludedReason ?? NOT_DEIDENTIFIED_YET),
     createdAt: s.createdAt.toISOString(),
   };
 }
+
+/** Files uploaded before Phase 15 have no de-identified copy yet. */
+export const NOT_DEIDENTIFIED_YET =
+  'Not sent to the AI: uploaded before files were de-identified; upload it again to use it in an analysis.';
 
 export function toSpecimenView(s: HistopathologySpecimen): SpecimenView {
   return {
@@ -138,6 +165,7 @@ export class ImagingService {
     private readonly audit: AuditService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    private readonly crypto: FieldCrypto,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -213,13 +241,24 @@ export class ImagingService {
       throw rejected(problem);
     }
 
+    let aiCopy: AiCopy | undefined;
     try {
+      aiCopy = await this.makeAiCopy(
+        key,
+        upload.file.kind,
+        upload.file.mimeType,
+        upload.head,
+        upload.sizeBytes,
+      );
+      const copy = aiCopy;
       const study = await this.prisma.$transaction(async (tx) => {
         const created = await tx.imagingStudy.create({
           data: {
             patientId: patient.id,
             modality,
             storageKey: key,
+            deidStorageKey: copy.key,
+            aiExcludedReason: copy.excludedReason,
             sha256: upload.sha256,
             sizeBytes: BigInt(upload.sizeBytes),
             mimeType: upload.file.mimeType,
@@ -243,6 +282,9 @@ export class ImagingService {
               modality,
               kind: upload.file.kind,
               sizeBytes: upload.sizeBytes,
+              // Which attributes were de-identified (names, never values).
+              deidentified: copy.changed,
+              aiExcludedReason: copy.excludedReason,
             },
             ...ctx,
           },
@@ -255,6 +297,9 @@ export class ImagingService {
     } catch (err) {
       // Two retries raced with the same clientUuid: keep the first one.
       await this.storage.delete(key).catch(() => undefined);
+      if (aiCopy?.key) {
+        await this.storage.delete(aiCopy.key).catch(() => undefined);
+      }
       if (clientUuid && isUniqueViolation(err)) {
         const first = await this.prisma.imagingStudy.findUnique({
           where: { clientUuid },
@@ -262,6 +307,65 @@ export class ImagingService {
         if (first) return { study: toStudyView(first), created: false };
       }
       throw err;
+    }
+  }
+
+  /**
+   * Makes the copy of an accepted image that the AI may receive (NFR-10):
+   * DICOM header values that identify a person are overwritten in place;
+   * JPEG and PNG metadata is removed. When that is not possible the file is
+   * kept for clinicians but never sent to the AI, with the reason recorded.
+   */
+  private async makeAiCopy(
+    key: string,
+    kind: string,
+    mimeType: string,
+    head: Buffer,
+    sizeBytes: number,
+  ): Promise<AiCopy> {
+    try {
+      if (kind === 'DICOM') {
+        const { head: clean, changed } = deidentifyDicomHead(head, (uid) =>
+          uidFromHash(this.crypto.hmac(`dicom-uid:${uid}`)),
+        );
+        const copyKey = generateObjectKey('imaging-deid', '.dcm');
+        const original = await this.storage.get(key);
+        await this.storage.put(copyKey, original.pipe(replaceHead(clean)), {
+          contentType: mimeType,
+        });
+        return { key: copyKey, excludedReason: null, changed };
+      }
+      if (kind === 'JPEG' || kind === 'PNG') {
+        if (sizeBytes > MAX_IN_MEMORY_IMAGE_BYTES) {
+          throw new DeidentificationError(
+            'The image is too large to remove its hidden details',
+          );
+        }
+        const original = await readAll(await this.storage.get(key));
+        const { file, removed } = stripImageMetadata(original, kind);
+        const copyKey = generateObjectKey(
+          'imaging-deid',
+          kind === 'JPEG' ? '.jpg' : '.png',
+        );
+        await this.storage.put(copyKey, bufferStream(file), {
+          contentType: mimeType,
+        });
+        return {
+          key: copyKey,
+          excludedReason: null,
+          changed: removed > 0 ? ['Image metadata'] : [],
+        };
+      }
+      throw new DeidentificationError(
+        'This kind of file cannot be de-identified',
+      );
+    } catch (err) {
+      if (!(err instanceof DeidentificationError)) throw err;
+      return {
+        key: null,
+        excludedReason: `Not sent to the AI: ${err.reason.charAt(0).toLowerCase()}${err.reason.slice(1)}.`,
+        changed: [],
+      };
     }
   }
 
@@ -661,4 +765,14 @@ function isUniqueViolation(err: unknown): boolean {
   return (
     err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
   );
+}
+
+async function readAll(stream: Readable): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks);
+}
+
+function bufferStream(buffer: Buffer): Readable {
+  return Readable.from([buffer]);
 }

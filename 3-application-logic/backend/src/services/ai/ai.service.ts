@@ -8,7 +8,8 @@ import {
   OnModuleInit,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import type { AiJob, AiModel, ExplanationKind, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import type { AiJob, AiModel, ExplanationKind } from '@prisma/client';
 import { createHash, randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { FieldCrypto } from '../../persistence/crypto/field-crypto';
@@ -28,6 +29,7 @@ import type {
 } from '../../gateway/access/access.decorators';
 import { AuditService } from '../audit/audit.service';
 import { ClinicalService } from '../clinical/clinical.service';
+import { NOT_DEIDENTIFIED_YET } from '../imaging/imaging.service';
 import { PatientsService } from '../patients/patients.service';
 import {
   AiBrokerService,
@@ -66,6 +68,16 @@ interface StoredReport extends Omit<InferenceResult, 'explanations'> {
   explanations: StoredExplanation[];
   patientRef: string;
   createdAt: Date;
+}
+
+/** Why no slide is sent to the AI (shown in the report). */
+export const SLIDES_NOT_SENT =
+  'whole-slide images can carry a photo of the slide label, and slide de-identification is not built yet.';
+
+function toStringList(v: Prisma.JsonValue | null): string[] {
+  return Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === 'string')
+    : [];
 }
 
 /** Largest explanation image kept (bytes). */
@@ -240,7 +252,24 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
       }),
     ]);
 
-    // Only values and storage keys: no names, national ID, phone or record ids.
+    // Files are sent only as de-identified copies (NFR-10). What is held back,
+    // and why, is kept on the job for the report; it is never sent to the AI.
+    const aiImaging = imaging.filter((s) => s.deidStorageKey !== null);
+    const inputNotes = [
+      ...imaging
+        .filter((s) => s.deidStorageKey === null)
+        .map(
+          (s) =>
+            `${s.modality} image from ${s.createdAt.toISOString().slice(0, 10)}: ${(s.aiExcludedReason ?? NOT_DEIDENTIFIED_YET).replace(/^Not sent to the AI: /, '')}`,
+        ),
+      ...(slides.length > 0
+        ? [
+            `${slides.length} slide${slides.length === 1 ? ' was' : 's were'} not sent: ${SLIDES_NOT_SENT}`,
+          ]
+        : []),
+    ];
+
+    // Only values and de-identified file keys: no names, national ID, phone or record ids.
     const payload: Omit<InferenceRequest, 'jobId'> = {
       patientRef: this.patientRef(patient.id),
       inputs: {
@@ -254,14 +283,13 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
           biopsyHistory: record.biopsyHistory,
           familyHistory: record.familyHistory ?? undefined,
         },
-        imaging: imaging.map((s) => ({
-          storageKey: s.storageKey,
+        imaging: aiImaging.map((s) => ({
+          storageKey: s.deidStorageKey!,
           modality: s.modality,
         })),
-        histopathology: slides.map((s) => ({
-          storageKey: s.storageKey,
-          ...(s.stain ? { stain: s.stain } : {}),
-        })),
+        // Whole-slide images can carry a photo of the slide label, and slide
+        // de-identification is not built yet, so no slide is sent.
+        histopathology: [],
       },
     };
 
@@ -272,6 +300,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
           requestedById: user.id,
           status: 'QUEUED',
           inputs: JSON.parse(JSON.stringify(payload)) as Prisma.InputJsonObject,
+          inputNotes: inputNotes.length > 0 ? inputNotes : Prisma.JsonNull,
         },
       });
       await this.audit.record(
@@ -343,7 +372,10 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
       details: { patientId: job.patientId },
       ...ctx,
     });
-    return toJobView(job, this.toReportView(stored));
+    return toJobView(job, {
+      ...this.toReportView(stored),
+      inputNotes: toStringList(job.inputNotes),
+    });
   }
 
   /** The registry: refreshed from ai-services when it is reachable. */
@@ -661,7 +693,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  private toReportView(r: StoredReport): AiReportView {
+  private toReportView(r: StoredReport): Omit<AiReportView, 'inputNotes'> {
     const explanations = r.explanations.map(toExplanationView);
     return {
       provenance: r.provenance,

@@ -352,6 +352,19 @@ class _ReportView extends StatelessWidget {
                     color: context.colors.textPrimary,
                   ),
                 ),
+              if (r.inputNotes.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.sm),
+                Text(
+                  'Files not sent to the AI',
+                  style: theme.textTheme.titleSmall,
+                ),
+                for (final note in r.inputNotes)
+                  Text(
+                    '• $note',
+                    key: const Key('ai.report.inputNote'),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+              ],
               if (r.modulesSkipped.isNotEmpty) ...[
                 const SizedBox(height: AppSizes.sm),
                 Text('Not used', style: theme.textTheme.titleSmall),

@@ -210,6 +210,23 @@ Then, on the **admin website** (http://localhost:5173), signed in as the adminis
 - [ ] **Only for the curious: the official FHIR check.** In Git Bash: `bash 6-infrastructure/scripts/fhir-validate.sh`
   → After a minute or two: *"Success: 0 errors"*. The warnings are only best-practice notes.
 
+### Phase 15: the security check-up
+
+- [ ] **The audit log.** On the admin website, click **Audit log** in the menu.
+  → Every sign-in, change, export and refusal, newest first. Click **Details** on a row to see more. The details never hold passwords or patient names.
+- [ ] Type `auth.login` in the action box and click **Filter**.
+  → Only sign-ins.
+- [ ] Click **Check integrity**.
+  → *"Intact: all … entries are linked and unchanged."* Each entry is chained to the one before it, so a changed or deleted entry would show here.
+- [ ] **Admins cannot give themselves patient access.** Open **Users**, open your own administrator account, tick **Clinician** and save.
+  → Refused: *"You cannot give your own account a new role. Another administrator must do it."*
+- [ ] **Locked permissions.** Open **Roles & permissions**, then **Clinician**.
+  → Administration-only permissions (for example *Read the audit log*, *Export de-identified FHIR bundles*) are locked. On **Administrator**, patient-data permissions are locked.
+- [ ] **Scans are de-identified before the AI sees them.** In the phone app, add a scan to a patient (Phase 9), then request an AI analysis.
+  → It works as before. Behind the scenes, the AI received a copy with the name, ID and dates removed. If a scan cannot be de-identified, its card says *"Not sent to the AI: …"* and the AI report lists it under *Files not sent to the AI*.
+- [ ] **Only for the curious (Git Bash):** `bash 6-infrastructure/scripts/tls-check.sh`
+  → *"TLS CHECK PASSED"*: the server settings accept only the newest, safest connections.
+
 ### The admin website (users, roles and permissions, patient accounts)
 
 The admin page is now a **website on your PC**, not part of the phone app. `dev-up.ps1` starts it in a third window, *PCa mHealth admin website*. **Leave that window open**, just like the backend one.

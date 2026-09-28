@@ -1,6 +1,141 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "operationId": "AuditLogController_list_v1",
+        "parameters": [
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "description": "Actions starting with this text, e.g. \"fhir.\" or \"auth.login\"",
+            "schema": {
+              "maxLength": 60,
+              "type": "string"
+            }
+          },
+          {
+            "name": "outcome",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUCCESS",
+                "DENIED",
+                "FAILURE"
+              ]
+            }
+          },
+          {
+            "name": "actorUserId",
+            "required": false,
+            "in": "query",
+            "description": "Who did it",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "From (inclusive)",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Until (exclusive)",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maximum": 200,
+              "default": 50,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogPage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the audit log, newest first (audited)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/audit-logs/verify": {
+      "get": {
+        "operationId": "AuditLogController_verify_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditChainView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check that the hash chain is unbroken (nothing changed or removed)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "operationId": "AuthController_register_v1",
@@ -2401,6 +2536,131 @@
       }
     },
     "schemas": {
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "AuditEntryView": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "string",
+            "description": "Position in the chain (as text: it can exceed 2^53)"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorUserId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "actorEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorRole": {
+            "type": "string",
+            "nullable": true
+          },
+          "action": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "DENIED",
+              "FAILURE"
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Never holds passwords, tokens or direct patient identifiers"
+          }
+        },
+        "required": [
+          "seq",
+          "occurredAt",
+          "action",
+          "entityType",
+          "outcome"
+        ]
+      },
+      "AuditLogPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryView"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "AuditChainView": {
+        "type": "object",
+        "properties": {
+          "intact": {
+            "type": "boolean",
+            "description": "True when every entry links to the one before and matches its hash"
+          },
+          "entries": {
+            "type": "number",
+            "description": "Entries checked"
+          },
+          "brokenAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "intact",
+          "entries",
+          "checkedAt"
+        ]
+      },
       "RegisterDto": {
         "type": "object",
         "properties": {
@@ -2700,10 +2960,6 @@
           "lastLoginAt",
           "createdAt"
         ]
-      },
-      "Object": {
-        "type": "object",
-        "properties": {}
       },
       "UserPage": {
         "type": "object",
@@ -3950,6 +4206,15 @@
             "type": "string",
             "format": "uuid"
           },
+          "aiReady": {
+            "type": "boolean",
+            "description": "True when a de-identified copy exists, so the file can be used in an AI analysis"
+          },
+          "aiExcludedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the file is not sent to the AI, in plain words"
+          },
           "createdAt": {
             "type": "string"
           }
@@ -3963,6 +4228,7 @@
           "sha256",
           "status",
           "uploadedById",
+          "aiReady",
           "createdAt"
         ]
       },
@@ -4238,6 +4504,13 @@
               "$ref": "#/components/schemas/ExplanationView"
             }
           },
+          "inputNotes": {
+            "description": "Files that were not sent to the AI and why (for example, no de-identified copy)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "createdAt": {
             "type": "string"
           }
@@ -4249,6 +4522,7 @@
           "modelVersions",
           "outputs",
           "explanations",
+          "inputNotes",
           "createdAt"
         ]
       },

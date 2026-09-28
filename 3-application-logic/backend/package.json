@@ -28,6 +28,8 @@
     "test:db": "jest --config ./test/jest-db.json --runInBand",
     "openapi:export": "ts-node --transpile-only tools/export-openapi.ts",
     "openapi:check": "ts-node --transpile-only tools/export-openapi.ts --check",
+    "access:matrix": "ts-node --transpile-only tools/access-matrix.ts",
+    "access:matrix:check": "ts-node --transpile-only tools/access-matrix.ts --check",
     "fixtures": "ts-node --transpile-only tools/make-synthetic-fixtures.ts",
     "smartcare:mock": "ts-node --transpile-only tools/smartcare-mock.ts",
     "fhir:sample": "ts-node --transpile-only tools/fhir-sample.ts",

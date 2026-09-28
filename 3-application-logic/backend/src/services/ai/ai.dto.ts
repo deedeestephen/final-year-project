@@ -70,6 +70,12 @@ export class AiReportView {
   modelVersions!: Record<string, string>;
   @ApiProperty({ type: AiOutputsView }) outputs!: AiOutputsView;
   @ApiProperty({ type: [ExplanationView] }) explanations!: ExplanationView[];
+  @ApiProperty({
+    type: [String],
+    description:
+      'Files that were not sent to the AI and why (for example, no de-identified copy)',
+  })
+  inputNotes!: string[];
   @ApiProperty() createdAt!: string;
 }
 

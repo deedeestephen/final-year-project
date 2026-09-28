@@ -261,6 +261,45 @@ describe('registration identity and administration (real database)', () => {
         .send({ permissions: [] })
         .expect(403);
     });
+
+    it('separation of duties: no admin powers for clinical roles, no clinical data for administrators', async () => {
+      const clinicianRole = await rolePerms('CLINICIAN');
+      const escalate = await http()
+        .put('/api/v1/admin/roles/CLINICIAN/permissions')
+        .set(as(admin))
+        .send({ permissions: [...clinicianRole.permissions, 'audit:read'] })
+        .expect(400);
+      expect((escalate.body as ErrorBody).error.code).toBe(
+        'NOT_ALLOWED_FOR_ROLE',
+      );
+
+      const adminRole = await rolePerms('ADMIN');
+      const peek = await http()
+        .put('/api/v1/admin/roles/ADMIN/permissions')
+        .set(as(admin))
+        .send({ permissions: [...adminRole.permissions, 'patient:read'] })
+        .expect(400);
+      expect((peek.body as ErrorBody).error.code).toBe('NOT_ALLOWED_FOR_ROLE');
+
+      // The role list tells the admin website which boxes are locked.
+      const roles = (
+        await http().get('/api/v1/admin/roles').set(as(admin)).expect(200)
+      ).body as { name: string; notAllowed: string[] }[];
+      expect(roles.find((r) => r.name === 'ADMIN')?.notAllowed).toContain(
+        'patient:read',
+      );
+      expect(roles.find((r) => r.name === 'PATHOLOGIST')?.notAllowed).toContain(
+        'fhir:export',
+      );
+
+      // Nor can an administrator give their own account a clinical role.
+      const self = await http()
+        .patch(`/api/v1/users/${adminId}`)
+        .set(as(admin))
+        .send({ roles: ['ADMIN', 'CLINICIAN'] })
+        .expect(400);
+      expect((self.body as ErrorBody).error.code).toBe('SELF_ROLE_CHANGE');
+    });
   });
 
   describe('users and facilities', () => {

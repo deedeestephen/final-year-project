@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 import {
   createServer,
@@ -337,12 +339,22 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
       dreFinding: 'NORMAL',
       piradsScore: 3,
     });
+    // Only the de-identified copy is sent, never the original upload.
     expect(sent.body.inputs.imaging).toEqual([
       {
-        storageKey: expect.stringMatching(/^imaging\//) as string,
+        storageKey: expect.stringMatching(/^imaging-deid\//) as string,
         modality: 'MRI',
       },
     ]);
+    const copy = readFileSync(
+      path.join(
+        process.env.LOCAL_STORAGE_ROOT!,
+        sent.body.inputs.imaging[0].storageKey,
+      ),
+    );
+    expect(copy.toString('latin1')).toContain('DICM');
+    expect(copy.toString('latin1')).not.toContain('SYNTHETIC^TEST');
+    expect(copy.toString('latin1')).not.toContain('SYNTHETIC-0000');
     const raw = JSON.stringify(sent.body);
     expect(raw).not.toContain(patientId);
     expect(raw).not.toContain('SYNTHETIC');
@@ -390,6 +402,54 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
         'ai_report.read:SUCCESS',
       ]),
     );
+  });
+
+  it('holds back files it cannot de-identify, and slides, and says why in the report', async () => {
+    const patientId = await newPatient({ consent: true, record: true });
+    // A scan whose pixels carry burned-in patient details.
+    const upload = await http()
+      .post(`/api/v1/patients/${patientId}/imaging`)
+      .set(as(clinician))
+      .field('modality', 'MRI')
+      .attach('file', makeSyntheticDicom('MR', { burnedIn: true }), 'b.dcm')
+      .expect(201);
+    expect(upload.body).toMatchObject({
+      aiReady: false,
+      aiExcludedReason:
+        'Not sent to the AI: the scanner says patient details are burned into the image pixels.',
+    });
+    const user = await prisma.user.findFirstOrThrow({
+      where: { roles: { some: { role: { name: 'CLINICIAN' } } } },
+    });
+    await prisma.histopathologySpecimen.create({
+      data: {
+        patientId,
+        storageKey: `histopathology/${randomUUID()}.tif`,
+        sha256: 'c'.repeat(64),
+        sizeBytes: 123,
+        format: 'TIFF',
+        status: 'VALIDATED',
+        uploadedById: user.id,
+      },
+    });
+
+    const queued = await requestJob(patientId).expect(202);
+    await idle();
+    const sent = received.at(-1)!;
+    expect(sent.body.inputs.imaging).toEqual([]);
+    expect(
+      (sent.body.inputs as unknown as { histopathology: unknown[] })
+        .histopathology,
+    ).toEqual([]);
+    const job = await getJob((queued.body as JobBody).id);
+    expect(
+      (job.report as unknown as { inputNotes: string[] }).inputNotes,
+    ).toEqual([
+      expect.stringMatching(
+        /^MRI image from \d{4}-\d{2}-\d{2}: the scanner says patient details are burned into the image pixels\.$/,
+      ) as string,
+      '1 slide was not sent: whole-slide images can carry a photo of the slide label, and slide de-identification is not built yet.',
+    ]);
   });
 
   it('refuses a second request while one is running', async () => {

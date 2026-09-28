@@ -57,15 +57,42 @@ const SOP_CLASS: Record<string, string> = {
   US: '1.2.840.10008.5.1.4.1.1.6.1',
 };
 
+/** Made-up identifying values for de-identification tests (all SYNTHETIC). */
+export const SYNTHETIC_DICOM_IDENTIFIERS = {
+  patientName: 'SYNTHETIC^TEST',
+  patientId: 'SYNTHETIC-0000',
+  birthDate: '19580302',
+  studyDate: '20260920',
+  studyTime: '143015.250',
+  accession: 'ACC-SYN-4411',
+  institution: 'SYNTHETIC General Hospital',
+  referringPhysician: 'SYNTHETIC^REFERRER',
+  deviceSerial: 'SN-SYN-778899',
+  address: 'Plot 1 Synthetic Road',
+  privateValue: 'SYNTHETIC-PRIVATE-NOTE',
+  nestedName: 'SYNTHETIC^NESTED',
+};
+
+export interface SyntheticDicomOptions {
+  /** Adds the identifying attributes of SYNTHETIC_DICOM_IDENTIFIERS. */
+  identifiers?: boolean;
+  /** Says patient details are burned into the pixels. */
+  burnedIn?: boolean;
+  sopInstanceUid?: string;
+  studyInstanceUid?: string;
+}
+
 /**
- * A valid DICOM Part-10 file with an 8x8 blank image.
+ * A valid DICOM Part-10 file with an 8x8 image (a simple pattern).
  * @param modality DICOM modality code: MR, CT or US.
  */
 export function makeSyntheticDicom(
   modality: 'MR' | 'CT' | 'US' = 'MR',
+  options: SyntheticDicomOptions = {},
 ): Buffer {
   const sopClass = SOP_CLASS[modality];
-  const sopInstance = uid();
+  const sopInstance = options.sopInstanceUid ?? uid();
+  const id = SYNTHETIC_DICOM_IDENTIFIERS;
   const explicitLittleEndian = '1.2.840.10008.1.2.1';
 
   const metaBody = Buffer.concat([
@@ -81,13 +108,46 @@ export function makeSyntheticDicom(
 
   const rows = 8;
   const columns = 8;
+  const pixels = Buffer.alloc(rows * columns * 2);
+  if (options.identifiers) {
+    for (let i = 0; i < pixels.length; i += 2) pixels.writeUInt16LE(i * 7, i);
+  }
+  // A sequence item holding a nested name and a referenced UID.
+  const nestedItem = Buffer.concat([
+    element(0x0008, 0x1155, 'UI', text(sopInstance)),
+    element(0x0010, 0x0010, 'PN', text(id.nestedName)),
+  ]);
+  const itemHeader = Buffer.alloc(8);
+  itemHeader.writeUInt16LE(0xfffe, 0);
+  itemHeader.writeUInt16LE(0xe000, 2);
+  itemHeader.writeUInt32LE(nestedItem.length, 4);
+  const withIds = (...parts: Buffer[]) => (options.identifiers ? parts : []);
   const dataset = Buffer.concat([
     element(0x0008, 0x0016, 'UI', text(sopClass)),
     element(0x0008, 0x0018, 'UI', text(sopInstance)),
+    ...withIds(
+      element(0x0008, 0x0020, 'DA', text(id.studyDate)),
+      element(0x0008, 0x0030, 'TM', text(id.studyTime)),
+      element(0x0008, 0x0050, 'SH', text(id.accession)),
+    ),
     element(0x0008, 0x0060, 'CS', text(modality)),
-    element(0x0010, 0x0010, 'PN', text('SYNTHETIC^TEST')),
-    element(0x0010, 0x0020, 'LO', text('SYNTHETIC-0000')),
-    element(0x0020, 0x000d, 'UI', text(uid())),
+    ...withIds(
+      element(0x0008, 0x0080, 'LO', text(id.institution)),
+      element(0x0008, 0x0090, 'PN', text(id.referringPhysician)),
+      element(0x0008, 0x1110, 'SQ', Buffer.concat([itemHeader, nestedItem])),
+      // A private creator and a private value (group 0x0009 is odd).
+      element(0x0009, 0x0010, 'LO', text('SYNTHETIC VENDOR')),
+      element(0x0009, 0x1001, 'LO', text(id.privateValue)),
+    ),
+    element(0x0010, 0x0010, 'PN', text(id.patientName)),
+    element(0x0010, 0x0020, 'LO', text(id.patientId)),
+    ...withIds(
+      element(0x0010, 0x0030, 'DA', text(id.birthDate)),
+      element(0x0010, 0x0040, 'CS', text('M')),
+      element(0x0010, 0x1040, 'LO', text(id.address)),
+      element(0x0018, 0x1000, 'LO', text(id.deviceSerial)),
+    ),
+    element(0x0020, 0x000d, 'UI', text(options.studyInstanceUid ?? uid())),
     element(0x0020, 0x000e, 'UI', text(uid())),
     element(0x0028, 0x0002, 'US', u16(1)),
     element(0x0028, 0x0004, 'CS', text('MONOCHROME2')),
@@ -97,7 +157,8 @@ export function makeSyntheticDicom(
     element(0x0028, 0x0101, 'US', u16(12)),
     element(0x0028, 0x0102, 'US', u16(11)),
     element(0x0028, 0x0103, 'US', u16(0)),
-    element(0x7fe0, 0x0010, 'OW', Buffer.alloc(rows * columns * 2)),
+    ...(options.burnedIn ? [element(0x0028, 0x0301, 'CS', text('YES'))] : []),
+    element(0x7fe0, 0x0010, 'OW', pixels),
   ]);
 
   return Buffer.concat([Buffer.alloc(128), text('DICM'), meta, dataset]);

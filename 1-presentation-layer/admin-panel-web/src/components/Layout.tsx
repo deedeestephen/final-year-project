@@ -9,6 +9,7 @@ const NAV = [
   { to: '/roles', label: 'Roles & permissions' },
   { to: '/patient-accounts', label: 'Patient accounts' },
   { to: '/fhir-export', label: 'FHIR export' },
+  { to: '/audit-log', label: 'Audit log' },
 ];
 
 /** Sidebar on wide screens; a Menu button opens it on narrow screens. */

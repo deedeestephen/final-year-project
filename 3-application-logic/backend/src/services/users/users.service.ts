@@ -235,12 +235,29 @@ export class UsersService {
           'You cannot disable your own account or remove your own administrator role',
       });
     }
-    const existing = await this.prisma.user.findUnique({ where: { id } });
+    const existing = await this.prisma.user.findUnique({
+      where: { id },
+      include: { roles: { include: { role: true } } },
+    });
     if (!existing)
       throw new NotFoundException({
         code: 'NOT_FOUND',
         message: 'User not found',
       });
+    // Separation of duties (Phase 15): an administrator cannot give their own
+    // account a new role (for example Clinician, which reads patient data).
+    if (actor.id === id && dto.roles) {
+      const held = new Set<string>(existing.roles.map((r) => r.role.name));
+      const added = dto.roles.filter((r) => !held.has(r));
+      if (added.length > 0) {
+        throw new BadRequestException({
+          code: 'SELF_ROLE_CHANGE',
+          message:
+            'You cannot give your own account a new role. Another administrator must do it.',
+          details: { roles: added },
+        });
+      }
+    }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       if (dto.roles) {

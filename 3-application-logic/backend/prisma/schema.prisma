@@ -326,6 +326,10 @@ model ImagingStudy {
   uploadedById      String          @map("uploaded_by_id") @db.Uuid
   /// Client-generated id so a retried upload never creates a duplicate.
   clientUuid        String?         @unique @map("client_uuid") @db.Uuid
+  /// De-identified copy that the AI receives (Phase 15); the original is never sent.
+  deidStorageKey    String?         @unique @map("deid_storage_key")
+  /// Why this file is not sent to the AI, when no de-identified copy could be made.
+  aiExcludedReason  String?         @map("ai_excluded_reason")
   createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -420,6 +424,8 @@ model AiJob {
   inputs        Json // references only (record ids, storage keys), never raw identifiers
   modelVersions Json?       @map("model_versions")
   reportId      String?     @map("report_id") // MongoDB ai_reports _id
+  /// Plain-language notes on files that were not sent to the AI (never sent to it).
+  inputNotes    Json?       @map("input_notes")
   error         String?
   startedAt     DateTime?   @map("started_at") @db.Timestamptz(3)
   finishedAt    DateTime?   @map("finished_at") @db.Timestamptz(3)

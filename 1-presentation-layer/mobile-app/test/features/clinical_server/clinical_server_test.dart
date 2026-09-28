@@ -66,6 +66,10 @@ void main() {
                 'values': null,
               },
             ],
+            'inputNotes': [
+              '1 slide was not sent: whole-slide images can carry a photo '
+                  'of the slide label.',
+            ],
           },
   };
 
@@ -254,6 +258,10 @@ void main() {
             'mimeType': 'application/dicom',
             'sizeBytes': 2048,
             'createdAt': '2026-09-24T09:00:00Z',
+            'aiReady': false,
+            'aiExcludedReason':
+                'Not sent to the AI: the scanner says patient details are '
+                'burned into the image pixels.',
           },
         ]),
       );
@@ -273,6 +281,8 @@ void main() {
     expect(received, 1);
     expect(find.text(waiting), findsNothing);
     expect(find.byKey(const Key('imaging.study.img-1')), findsOneWidget);
+    // The server could not de-identify it, so the clinician is told why.
+    expect(find.textContaining('burned into the image pixels'), findsOneWidget);
     expect(
       await tester.runAsync(() => db.select(db.pendingUploads).get()),
       isEmpty,
@@ -333,6 +343,8 @@ void main() {
       find.textContaining('No MRI study for this patient.'),
       findsOneWidget,
     );
+    expect(find.text('Files not sent to the AI'), findsOneWidget);
+    expect(find.textContaining('1 slide was not sent'), findsOneWidget);
     await tester.reveal('ai.report.evaluation');
     expect(
       find.text('No heatmap: the MRI model did not run for this patient.'),

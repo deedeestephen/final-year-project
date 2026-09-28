@@ -4,6 +4,7 @@ import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { useSession } from './auth/session-context';
 import { Layout } from './components/Layout';
 import { ConnectionBanner } from './components/ui';
+import { AuditLogPage } from './pages/AuditLogPage';
 import { ChangePasswordPage, LoginPage } from './pages/AuthPages';
 import { FhirExportPage } from './pages/FhirExportPage';
 import { PatientAccountsPage } from './pages/PatientAccountsPage';
@@ -61,6 +62,7 @@ function Screens() {
         <Route path="roles/:name" element={<RolePermissionsPage />} />
         <Route path="patient-accounts" element={<PatientAccountsPage />} />
         <Route path="fhir-export" element={<FhirExportPage />} />
+        <Route path="audit-log" element={<AuditLogPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

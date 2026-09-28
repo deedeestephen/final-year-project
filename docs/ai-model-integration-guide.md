@@ -64,6 +64,11 @@ The `byGroup` figures feed the fairness endpoint (FR-11). If a group has very fe
 
 The disclaimer changes automatically: a result made only by research models carries the research disclaimer instead of "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT." Any remaining mock module keeps the whole result labelled MOCK.
 
+## 4a. Files the models receive (Phase 15)
+
+- **Scans:** the AI receives only **de-identified copies** of scans. They are the same DICOM files with identifying header values blanked, dates reduced to the year and UIDs replaced; the pixels are unchanged. Models must not rely on patient names, IDs or full dates in the header.
+- **Slides:** slides are **not sent** to the AI yet. Whole-slide images can contain a photo of the slide label, and slide de-identification is not built. Before the Patch-CNN + MIL model is switched on, build slide de-identification: remove the label and macro images, and scrub TIFF text tags such as ImageDescription (see [security-review.md](security-review.md) R-1). Then include slides in `AiService.request` again.
+
 ## 5. Before switching off a mock (checklist)
 - [ ] Evaluated on a held-out test set; `evaluation.json` stored.
 - [ ] The input spec was checked against how the backend sends values: run the same synthetic case through Kaggle and through the service and compare the outputs.

@@ -42,6 +42,8 @@ class ImagingStudy {
     required this.mimeType,
     required this.sizeBytes,
     required this.createdAt,
+    this.aiReady = true,
+    this.aiExcludedReason,
   });
 
   factory ImagingStudy.fromJson(Map<String, dynamic> j) => ImagingStudy(
@@ -50,6 +52,8 @@ class ImagingStudy {
     mimeType: j['mimeType'] as String,
     sizeBytes: (j['sizeBytes'] as num).toInt(),
     createdAt: DateTime.parse(j['createdAt'] as String),
+    aiReady: j['aiReady'] as bool? ?? true,
+    aiExcludedReason: j['aiExcludedReason'] as String?,
   );
 
   final String id;
@@ -57,6 +61,10 @@ class ImagingStudy {
   final String mimeType;
   final int sizeBytes;
   final DateTime createdAt;
+
+  /// False when no de-identified copy could be made: the AI never gets it.
+  final bool aiReady;
+  final String? aiExcludedReason;
 }
 
 class Specimen {
@@ -147,6 +155,7 @@ class AiReport {
     required this.modulesUsed,
     required this.modulesSkipped,
     required this.explanations,
+    this.inputNotes = const [],
     this.pcaProbability,
     this.probabilityInterval,
     this.gleasonGradeGroup,
@@ -180,6 +189,8 @@ class AiReport {
                 .cast<Map<String, dynamic>>())
           AiExplanation.fromJson(e),
       ],
+      inputNotes: ((j['inputNotes'] as List<dynamic>?) ?? const [])
+          .cast<String>(),
     );
   }
 
@@ -191,6 +202,9 @@ class AiReport {
   final (double, double)? probabilityInterval;
   final int? gleasonGradeGroup;
   final List<String> modulesUsed;
+
+  /// Files that were not sent to the AI, and why (for example not de-identified).
+  final List<String> inputNotes;
   final List<SkippedModule> modulesSkipped;
   final List<AiExplanation> explanations;
 }

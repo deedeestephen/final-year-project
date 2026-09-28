@@ -36,8 +36,10 @@ import type {
 
 /**
  * Safety locks on role editing. Administrators can change what each role may
- * do, but not in ways that lock everyone out or open other people's data to
- * patient accounts.
+ * do, but not in ways that lock everyone out, open other people's data to
+ * patient accounts, or break separation of duties (Phase 15 review):
+ * clinical roles never get administration powers, and the administrator role
+ * never gets routine access to clinical data.
  */
 const REQUIRED: Partial<Record<RoleName, PermissionCode[]>> = {
   ADMIN: ['user:manage', 'role:manage'],
@@ -51,12 +53,44 @@ const PATIENT_ALLOWED: ReadonlySet<PermissionCode> = new Set<PermissionCode>([
   'chatbot:use',
   'notification:read',
 ]);
+/** Administration powers: only the administrator role may hold them. */
+export const ADMIN_ONLY: readonly PermissionCode[] = [
+  'user:manage',
+  'role:manage',
+  'patient_account:link',
+  'facility:manage',
+  'audit:read',
+  'fhir:export',
+  'ai:models:manage',
+];
+/** Routine access to clinical data: never for the administrator role. */
+export const CLINICAL_DATA: readonly PermissionCode[] = [
+  'patient:create',
+  'patient:read',
+  'patient:update',
+  'clinical:create',
+  'clinical:read',
+  'consent:manage',
+  'imaging:upload',
+  'imaging:read',
+  'histopathology:submit',
+  'histopathology:read',
+  'histopathology:review',
+  'ai:request',
+  'ai:read',
+  'sync:write',
+];
 
-function notAllowedFor(role: RoleName): PermissionCode[] {
-  if (role !== 'PATIENT') return [];
-  return (Object.keys(PERMISSIONS) as PermissionCode[]).filter(
-    (p) => !PATIENT_ALLOWED.has(p),
-  );
+export function notAllowedFor(role: RoleName): PermissionCode[] {
+  const all = Object.keys(PERMISSIONS) as PermissionCode[];
+  switch (role) {
+    case 'PATIENT':
+      return all.filter((p) => !PATIENT_ALLOWED.has(p));
+    case 'ADMIN':
+      return [...CLINICAL_DATA];
+    default:
+      return [...ADMIN_ONLY];
+  }
 }
 
 /** Shown instead of a value that cannot be decrypted. */

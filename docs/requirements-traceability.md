@@ -32,7 +32,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | UC-06 | Diagnostic report delivery | FR-08 | **Partial (Ph.9):** clinicians read the report in the app and see recent facility results; release to the patient app waits for trained models and clinician sign-off |
 | UC-07 | Chatbot interaction | FR-07 | Planned |
 | UC-08 | National EHR export | FR-09 | **Verified (Ph.14)** for export and send (mock endpoint); receiving data back needs identified data and an agreement (future work) |
-| UC-09 | Administration & RBAC | FR-01, FR-10, `services/users` | **Partial:** user lifecycle, role assignment, unlock and audit Verified; audit-log viewer Ph.15 |
+| UC-09 | Administration & RBAC | FR-01, FR-10, `services/users`, `services/audit` | **Verified (Ph.15):** user lifecycle, role assignment with separation-of-duties locks, unlock, audit, and the audit-log viewer with hash-chain check |
 | UC-10 | Infrastructure monitoring | Prometheus `/metrics` endpoint; Grafana documented | Planned (partial) |
 | UC-11 | Population analytics | de-identified aggregate report endpoint | Planned (stretch) |
 | UC-12 | Model retraining & deployment | FR-12 | Planned (partial) |
@@ -41,7 +41,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 
 | ID | Target | How it is addressed / verified | Status |
 |---|---|---|---|
-| NFR-01 | AES-256 at rest, TLS 1.3, RBAC at gateway | **Partial (Ph.2):** AES-256-GCM column encryption `src/persistence/crypto/field-crypto.ts` (unit-tested; tamper/wrong-key rejected); RBAC catalogue `src/gateway/access/permissions.ts` (tested). Ph.6: SQLCipher (AES-256) database on the device, key in Android Keystore (on-device test checks `cipher_version`). Remaining: pgcrypto field encryption for identifiers + encrypted volumes/object storage SSE; TLS 1.3 at reverse proxy (config tested); RBAC guard | Planned |
+| NFR-01 | AES-256 at rest, TLS 1.3, RBAC at gateway | **Partial (Ph.2):** AES-256-GCM column encryption `src/persistence/crypto/field-crypto.ts` (unit-tested; tamper/wrong-key rejected); RBAC catalogue `src/gateway/access/permissions.ts` (tested). Ph.6: SQLCipher (AES-256) database on the device, key in Android Keystore (on-device test checks `cipher_version`). Ph.4: RBAC guard. Ph.15: TLS 1.3 only at the reverse proxy, proven with the real nginx configuration (`tls-check.sh`); access matrix checks every route. Remaining (deployment): KMS-held keys, object-storage encryption at rest, database TLS | **Verified for the prototype (Ph.15)**; deployment items in security-review.md R-4 |
 | NFR-02 | ≤3 s P95 inference | Measured in Ph.17 with real/mock providers; reported honestly | Research target |
 | NFR-03 | ≥99.5% uptime | Not measurable in prototype; health checks + restart policies only | Research target |
 | NFR-04 | SUS ≥75 | Requires UAT with participants (out of dev scope) | Research target |
@@ -50,7 +50,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | NFR-07 | ≥80% test coverage | Coverage reports per package in CI | Planned |
 | NFR-08 | Complete offline data entry | FR-03 | **Verified for patient registration and screening records (Ph.6)**; offline start with the cached profile; later clinical features reuse the same outbox |
 | NFR-09 | 100% explainability coverage | Every module that ran gets an explanation or an explicit reason; enforced by the contract on both sides and a database CHECK | **Verified (Ph.12)** |
-| NFR-10 | Safe Harbour de-identification | Ph.2: identifiers encrypted + HMAC lookup. Ph.11: AI gets a keyed pseudonym and clinical values only. Ph.14: FHIR export de-identified, one test per identifier class (18) | **Verified for the FHIR export and the AI requests (Ph.14)**; DICOM header de-identification is Ph.15 |
+| NFR-10 | Safe Harbour de-identification | Ph.2: identifiers encrypted + HMAC lookup. Ph.11: AI gets a keyed pseudonym and clinical values only. Ph.14: FHIR export de-identified, one test per identifier class (18) | **Verified (Ph.14–15):** FHIR export; AI requests; de-identified DICOM/JPEG/PNG copies for the AI (Ph.15). Slides held back until slide de-identification exists (security-review.md R-1) |
 | NFR-11 | WCAG 2.1 AA | contrast-checked tokens, semantics labels, text scaling, 48dp targets; Flutter accessibility guideline tests | **Partial (Ph.7; dark mode added):** every token text pair ≥ 4.5:1 in light and dark mode, body ≥ 15 px, 48 dp targets, 52 px inputs (`theme_test.dart`); states in words, not colour alone; live regions for errors. Remaining: guideline tests per screen, text-scaling checks |
 
 ## Ethics / compliance (§3.7)

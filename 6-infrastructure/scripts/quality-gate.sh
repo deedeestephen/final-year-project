@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
-# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|fhir|secrets|all]   (default: all)
+# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|fhir|tls|secrets|all]   (default: all)
 # The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
@@ -36,6 +36,7 @@ backend() {
   run "backend e2e tests" npx jest --config test/jest-e2e.json
   run "openapi document up to date" npm run -s openapi:check
   run "FHIR definitions up to date" npm run -s fhir:definitions:check
+  run "access matrix up to date and within the review rules" npm run -s access:matrix:check
   run "backend build" npx nest build
   run "backend npm audit" npm audit --audit-level=high --omit=dev
 }
@@ -65,6 +66,12 @@ mobile() {
   run "mobile analyze" flutter analyze
   run "mobile tests" flutter test --coverage
   if [ "${SKIP_APK:-0}" != "1" ]; then run "mobile build apk" flutter build apk --debug; fi
+  # Known vulnerabilities in the Dart/Flutter packages (OSV); skipped when offline.
+  local status=0
+  py "$ROOT/6-infrastructure/scripts/pub-audit.py" >/tmp/pca-pub-audit.log 2>&1 || status=$?
+  if [ "$status" -eq 3 ]; then echo "    SKIP: mobile package audit (OSV not reachable)"
+  elif [ "$status" -eq 0 ]; then echo "    PASS: mobile package audit (OSV)"
+  else cat /tmp/pca-pub-audit.log; echo "    FAIL: mobile package audit (OSV)"; FAILED+=("mobile package audit"); fi
 }
 
 admin_web() {
@@ -94,6 +101,15 @@ fhir() {
   fi
 }
 
+tls() {
+  step "TLS 1.3 at the reverse proxy (nginx in Docker)"
+  if docker info >/dev/null 2>&1 || "/c/Program Files/Docker/Docker/resources/bin/docker.exe" info >/dev/null 2>&1; then
+    run "reverse proxy: TLS 1.3 only, HSTS, HTTP redirect" bash "$ROOT/6-infrastructure/scripts/tls-check.sh"
+  else
+    echo "    SKIP: Docker is not running"
+  fi
+}
+
 secrets() {
   step "secret scan"
   cd "$ROOT"
@@ -119,7 +135,8 @@ case "$TARGET" in
   admin-web) admin_web ;;
   secrets) secrets ;;
   fhir) fhir ;;
-  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; admin_web; fhir; secrets ;;
+  tls) tls ;;
+  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; admin_web; fhir; tls; secrets ;;
   *) echo "unknown target $TARGET"; exit 2 ;;
 esac
 
