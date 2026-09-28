@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
-# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|fhir|tls|secrets|all]   (default: all)
+# Usage: scripts/quality-gate.sh [backend|db|workflows|ai|mobile|admin-web|fhir|tls|secrets|all]   (default: all)
 # The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
@@ -47,6 +47,16 @@ db() {
   run "prisma validate" npx prisma validate
   run "db migrate deploy" npx prisma migrate deploy
   run "all tests incl. database (coverage >= 80%)" npx jest --config test/jest-all.json --runInBand --coverage
+}
+
+# Phase 16: the six main workflows against the real system (built backend in
+# production mode as its own process, the Python AI service, the databases, a
+# SmartCare Pro stand-in over HTTPS), then a review of that run's logs.
+workflows() {
+  step "end-to-end workflows (live system)"
+  cd "$BACKEND"
+  run "backend build" npx nest build
+  run "six workflows and the log review" npx jest --config test/jest-workflows.json --runInBand
 }
 
 ai() {
@@ -130,13 +140,14 @@ secrets() {
 case "$TARGET" in
   backend) backend ;;
   db) db ;;
+  workflows) workflows ;;
   ai) ai ;;
   mobile) mobile ;;
   admin-web) admin_web ;;
   secrets) secrets ;;
   fhir) fhir ;;
   tls) tls ;;
-  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; admin_web; fhir; tls; secrets ;;
+  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; workflows; fi; ai; mobile; admin_web; fhir; tls; secrets ;;
   *) echo "unknown target $TARGET"; exit 2 ;;
 esac
 

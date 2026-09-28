@@ -26,6 +26,7 @@
     "db:mongo:migrate": "ts-node --transpile-only src/persistence/mongo/migrate.ts",
     "db:validate": "prisma validate",
     "test:db": "jest --config ./test/jest-db.json --runInBand",
+    "test:workflows": "nest build && jest --config ./test/jest-workflows.json --runInBand",
     "openapi:export": "ts-node --transpile-only tools/export-openapi.ts",
     "openapi:check": "ts-node --transpile-only tools/export-openapi.ts --check",
     "access:matrix": "ts-node --transpile-only tools/access-matrix.ts",

@@ -379,7 +379,7 @@ void main() {
   );
 
   testWidgets(
-    'admin sees users and roles, and links a new patient account by NRC',
+    'admin is sent to the website; a patient linked there sees their record',
     (tester) async {
       // Arrange through the API: a patient signs up with an NRC, and the
       // clinic registers a record with the same NRC.
@@ -388,7 +388,7 @@ void main() {
       final nrc =
           '${(100000 + tag).toString().substring(0, 6)}/${10 + tag % 80}/1';
       final newEmail = 'e2e-signup-$tag@example.test';
-      await api.post<Map<String, dynamic>>(
+      final registered = await api.post<Map<String, dynamic>>(
         '/auth/register',
         data: {
           'email': newEmail,
@@ -438,51 +438,43 @@ void main() {
       await tester.pageBack();
       await tester.pump(const Duration(seconds: 1));
 
+      // Administration is on the website (ADR-005): the phone says so.
       await enter(tester, 'login.email', _adminEmail);
       await enter(tester, 'login.password', _adminPassword);
       await tapKey(tester, 'login.submit');
-      await waitFor(tester, find.text('Roles & permissions'));
+      await waitFor(tester, find.text('Administration is on the web'));
+      expect(find.text('Patients'), findsNothing);
       await tester.pump(const Duration(seconds: 2)); // screenshot: admin home
 
-      await tester.tap(find.text('Users'));
-      await waitFor(
-        tester,
-        find.byKey(const Key('user.admin@demo.pca-mhealth.test')),
-      );
-      await tester.pump(const Duration(seconds: 2)); // screenshot: users
-      await tester.pageBack();
-      await tester.pump(const Duration(seconds: 1));
-
-      await tester.tap(find.text('Roles & permissions'));
-      await waitFor(tester, find.byKey(const Key('role.PATHOLOGIST')));
-      await tapKey(tester, 'role.PATHOLOGIST');
-      await waitFor(tester, find.byKey(const Key('perm.patient:read')));
-      await tester.pump(const Duration(seconds: 2)); // screenshot: permissions
-      await tester.pageBack();
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pageBack();
-      await tester.pump(const Duration(seconds: 1));
-
-      await tester.tap(find.text('Patient accounts'));
-      await waitFor(tester, find.byKey(Key('account.$newEmail')));
-      await tapKey(tester, 'account.link.$newEmail');
-      await waitFor(tester, find.byKey(const Key('account.confirmLink')));
-      await tester.pump(const Duration(seconds: 2)); // screenshot: match
-      await tapKey(tester, 'account.confirmLink');
-      await waitFor(tester, find.text('Account linked.'));
-
-      // The patient can now see their clinic record.
-      final patient = await api.post<Map<String, dynamic>>(
+      // The website links the account by NRC (same API calls).
+      final admin = await api.post<Map<String, dynamic>>(
         '/auth/login',
-        data: {'email': newEmail, 'password': 'e2e-signup-password-$tag'},
+        data: {'email': _adminEmail, 'password': _adminPassword},
       );
-      final me = await api.get<Map<String, dynamic>>(
-        '/patients/me',
-        options: Options(
-          headers: {'Authorization': 'Bearer ${patient.data!['accessToken']}'},
-        ),
+      final asAdmin = Options(
+        headers: {'Authorization': 'Bearer ${admin.data!['accessToken']}'},
       );
-      expect(me.data!['familyName'], 'Signup $tag');
+      final userId = registered.data!['id'] as String;
+      await api.post<Map<String, dynamic>>(
+        '/admin/patient-accounts/$userId/match',
+        options: asAdmin,
+      );
+      await api.post<Map<String, dynamic>>(
+        '/admin/patient-accounts/$userId/link',
+        options: asAdmin,
+      );
+
+      // The patient signs in on the phone and sees their clinic record.
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pump(const Duration(seconds: 1));
+      await tapKey(tester, 'home.signOut');
+      await waitFor(tester, find.byKey(const Key('login.email')));
+      await enter(tester, 'login.email', newEmail);
+      await enter(tester, 'login.password', 'e2e-signup-password-$tag');
+      await tapKey(tester, 'login.submit');
+      await waitFor(tester, find.text('Hello, SYNTHETIC Signup $tag'));
+      await waitFor(tester, find.text('My results'));
+      await tester.pump(const Duration(seconds: 2)); // screenshot: linked
 
       await store.wipe();
       await db.close();
@@ -542,8 +534,10 @@ void main() {
       await waitFor(tester, find.byKey(const Key('patients.search')));
       await waitForServerId(db, 'Slide $tag');
       await enter(tester, 'patients.search', 'Slide $tag');
-      await waitFor(tester, find.text('SYNTHETIC Slide $tag'));
-      await tester.tap(find.text('SYNTHETIC Slide $tag'));
+      // The list writes "surname, given name".
+      // (not textContaining: the search box holds the same words).
+      await waitFor(tester, find.text('Slide $tag, SYNTHETIC'));
+      await tester.tap(find.text('Slide $tag, SYNTHETIC'));
       await waitFor(tester, find.byKey(const Key('patient.imaging')));
       await tapKey(tester, 'patient.imaging');
       await waitFor(tester, find.byKey(const Key('imaging.add')));

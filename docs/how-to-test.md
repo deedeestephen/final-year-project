@@ -365,6 +365,22 @@ The AI service now runs in its own window, *PCa mHealth AI service (mock models)
   ```
   → The browser opens tables like `patients` and `users`. Names show as scrambled bytes, because patient names are **encrypted** in the database. That is on purpose.
 
+### Phase 16: the whole system tested end to end (the robot does it)
+
+These checks start the real system and use it the way people would. They use made-up data only.
+
+- [ ] **Server workflows.** With `dev-up.ps1` running, open Git Bash in the project folder and type:
+  `bash 6-infrastructure/scripts/quality-gate.sh workflows`
+  → After about half a minute: **13 passed** and *QUALITY GATE PASSED (workflows)*.
+  - This starts its own copy of the server in production mode, the AI helper, and a pretend SmartCare Pro over HTTPS.
+  - It checks six workflows: sign-up and linking, offline sync (exactly once, and conflicts), scans and AI with consent, slide review, withdrawing consent, and sending to SmartCare.
+  - At the end it reads the server's own log and checks that no password, token, name, NRC, phone number or note appears in it.
+- [ ] **Phone workflows (optional, about 3 minutes).** With the pretend phone running and the app closed:
+  1. In the `3-application-logic\backend` folder, run `npm run e2e:user` four times: plain, then with `-- --role patient`, `-- --role admin` and `-- --role pathologist`. Each prints a throwaway test email and password.
+  2. Run the command at the top of `1-presentation-layer\mobile-app\integration_test\app_flow_test.dart` with those values.
+  → The phone signs in by itself four times (clinician, patient, administrator, pathologist), then shows **All tests passed!**
+  - This signs out whoever was signed in on the pretend phone. Sign in again afterwards.
+
 ### Phases 0 and 1, plus every phase at once: the robot tests
 
 This runs **all** the automated checks (hundreds of tests) for the backend, the AI service, the app and the admin website.

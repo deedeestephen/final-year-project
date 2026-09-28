@@ -14,7 +14,7 @@ Automated checks were added where a rule could be checked every time, so the rev
 | Dependencies | `npm audit` (backend and admin website, **including development tools**), `pip-audit` (AI service), OSV database for the 130 Dart/Flutter packages (`pub-audit.py`) | **0 known vulnerabilities** at any severity (after F-7) |
 | De-identification | Tests with synthetic data that carry every identifier: FHIR export (one test per Safe Harbor class), DICOM copies for the AI, JPEG/PNG metadata | Pass (see F-1) |
 | Audit log | Tamper test: an entry is changed inside a rolled-back transaction and the chain check must catch it | Caught; the real log is untouched |
-| Logs | The end-to-end run (Phase 16) captures the real server's log and searches it for every password, token and patient value used | See [development log](development-log.md), Phase 16 |
+| Logs | The end-to-end run (Phase 16) captures the real server's log (production mode, debug level) and the AI service's log, and searches them for every password, token and patient value used | **Clean (Phase 16):** no password, access or refresh token, AI or SmartCare token, name, NRC, phone number or clinical note appears. Random record ids do appear in request paths. That is by design: they are needed to trace a request and mean nothing without database access. See the [development log](development-log.md), Phase 16 |
 
 ## Findings
 

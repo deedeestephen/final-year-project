@@ -151,4 +151,5 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Secret scan runs locally over the full git history (gitleaks 8.30.1 in the tools folder); reviewed false positives listed one by one in `.gitleaksignore` | `6-infrastructure/scripts/quality-gate.sh` | Verified |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | Admin activity dashboard: administrators only (`audit:read`), counts only, every view audited; the `X-Client` label is never used for access | `services/audit/activity.*`, `permissions.guard.ts` | Verified (`activity.int-spec.ts`, access matrix) |
+| Log review: no passwords, tokens or patient details in the server or AI logs (production mode, debug level) | `test/workflows/system.workflow-spec.ts` (last test), gate target `workflows` | Verified (Ph.16) |
 | TLS 1.3 termination | reverse proxy config; `6-infrastructure/scripts/tls-check.sh` (real nginx in Docker: 1.3 accepted, 1.2 and 1.1 refused, HSTS, HTTP redirect) | Verified (Ph.15, gate) |

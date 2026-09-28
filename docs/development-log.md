@@ -840,3 +840,47 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
   - The sync badge squeezed patient names; it moved under the details.
   - Orange avatars next to the amber sync badge looked like a warning; orange was dropped from avatars.
 - The render scripts stay local (`tool/render/`), because pixel comparisons differ between machines.
+
+## 2026-09-28: Phase 16: End-to-end workflows on the live system
+
+**Objective:** test the main workflows of the use cases on the whole running system, including failure paths, and do the log review deferred from Phase 15.
+
+**Built:**
+- **`test/workflows/live-stack.ts`** starts the real system for one run:
+  - the built backend as its own process in **production mode** with debug logging
+  - the Python AI service (mock models)
+  - a SmartCare Pro stand-in over **HTTPS** with a throwaway self-signed certificate that only this process trusts
+  It uses the run's own PostgreSQL database, the MongoDB collections with their validators, and a temporary folder for files and logs. The folder is removed afterwards.
+- **`test/workflows/system.workflow-spec.ts`** (13 tests), six workflows:
+  1. **Sign-up and linking (UC-01, UC-09):**
+     - A patient signs up, the clinic registers a record with the same NRC, and the administrator matches and links it.
+     - The patient then sees only their own record and a message.
+     - Also covered: a taken email is refused, clinical and admin areas are refused, and 5 wrong passwords lock the account.
+  2. **Offline sync (UC-02, NFR-08):**
+     - A repeated batch changes nothing: exactly one patient and one record in the database.
+     - A stale edit comes back as a conflict with the server's version.
+     - In a part-invalid batch the valid part is kept.
+     - Changes stay within the facility.
+  3. **Imaging and AI (UC-03, UC-05, UC-06):**
+     - Consent is required. A non-image file and a wrong modality are refused.
+     - The de-identified copy on disk holds none of the DICOM identifiers.
+     - The real AI service returns a report labelled as mock, with no invented explanations or metrics.
+     - Another facility cannot see the job or the patient.
+  4. **Slide review (UC-04):** a clinician cannot review, the ISUP grade group comes from the server, a second review is refused, and the slide is held back from the AI with the reason.
+  5. **Consent withdrawal (proposal §3.7.1):** after the patient withdraws in the app, AI requests are refused and the research export no longer contains them.
+  6. **SmartCare export (UC-08):**
+     - Only consented, de-identified data is sent over HTTPS with the token; no name, NRC or record id reaches the receiver.
+     - The export and the send are in the audit log, and the hash chain is intact.
+- **Log review:** the last test stops the stack and searches both logs for every value collected during the run: passwords, access and refresh tokens, the AI and SmartCare tokens, names, NRCs, phone numbers and notes. **None appear.** Random record ids appear in request paths by design (see [security-review.md](security-review.md)).
+- **Wiring:** `npm run test:workflows`, gate target `workflows` (part of `all` when the databases run), and a CI job `workflows` with the same services plus the AI service.
+
+**Found by the run:**
+- The first draft searched patients by name. The API has no name search on purpose (lookups go by exact NRC or MRN), so the test now counts rows by the phone's id in the database.
+- The first log review flagged a patient record id. On review, it is an opaque random id in a request path, so it was taken off the list of values that must never appear. The reason is written in the test.
+- Jest did not exit after the run, because of a 5-second fallback timer. The timer is now `unref`'d.
+
+**On the phone (Galaxy S9+ emulator, Android 10, live backend and AI service):** the device test passes with 4 flows: clinician, patient, administrator and pathologist. Two fixes:
+- The administrator flow still expected the old in-app admin screens. It now checks "Administration is on the web", links the account through the admin API (as the website does), and signs in as that patient on the phone.
+- The pathologist flow searched for "SYNTHETIC Slide …", but the list writes "Slide …, SYNTHETIC". A `textContaining` finder also matched the search box, so the exact list text is used.
+
+The device run signs out whoever was signed in on the emulator.
