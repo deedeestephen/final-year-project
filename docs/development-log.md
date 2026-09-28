@@ -701,3 +701,14 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 
 **Tests:** mobile 181 pass (new: 4 settings tests, 1 patient-profile test, 1 route test, and the dark-mode contrast checks).
 
+## 2026-09-28: Project moved to drive D (owner request)
+
+- The project now lives at `D:\Final Year Project\pca-mhealth`, out of OneDrive (C: was nearly full, and OneDrive sync caused file-lock errors).
+- Copied with robocopy and checked: all 50,826 files present with matching sizes; the 2,242 files outside `node_modules` (including `.env` and the database backups in `var/backups`) byte-identical; `git fsck` clean at the same commit.
+- Rebuilt what stores absolute paths: the AI service's Python environment (`.venv`) and the Flutter build files. Docker's databases are named volumes, so they were not affected.
+- Not copied: the leftover old `mobile` folder (only Android Studio settings for a path that no longer exists).
+- `how-to-test.md` now uses the new path.
+- The first quality gate on D passed except `pip-audit`: the new `.venv` came with pip 26.1.1 (PYSEC-2026-196, PYSEC-2026-3721). pip was upgraded to 26.2.1; no known vulnerabilities remain.
+
+**Secret scan now runs locally.** Until now the gate's gitleaks step was skipped on this PC ("runs in CI"), so earlier local summaries that called the secret scan clean were wrong for the local run. gitleaks 8.30.1 (checksum verified) now lives in `D:\Final Year Project\tools\gitleaks`, outside the repository, and the gate finds it there. Its first full-history scan reported 4 findings, all reviewed and not secrets: three made-up test passwords for the throwaway test database and synthetic users, and the NestJS starter README's public badge placeholder `abc123def456`. They are listed one exact finding per line in `.gitleaksignore`, so any new finding still fails the gate. A separate check found none of the real `.env` values in any commit.
+

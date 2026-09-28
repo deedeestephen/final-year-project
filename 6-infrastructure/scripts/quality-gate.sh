@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
-# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|all]   (default: all)
+# Usage: scripts/quality-gate.sh [backend|db|ai|mobile|admin-web|secrets|all]   (default: all)
 # The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
@@ -80,8 +80,15 @@ admin_web() {
 secrets() {
   step "secret scan"
   cd "$ROOT"
-  if command -v gitleaks >/dev/null 2>&1; then
-    run "gitleaks" gitleaks detect --no-banner --redact
+  # On PATH, or in the tools folder next to the project (D:\Final Year Project\tools).
+  local gl=""
+  if command -v gitleaks >/dev/null 2>&1; then gl="gitleaks"
+  elif [ -x "$ROOT/../tools/gitleaks/gitleaks.exe" ]; then gl="$ROOT/../tools/gitleaks/gitleaks.exe"
+  fi
+  if [ -n "$gl" ]; then
+    # Scans the whole git history. Reviewed false positives are listed,
+    # one exact finding per line, in .gitleaksignore.
+    run "gitleaks (full history)" "$gl" git --no-banner --redact .
   else
     echo "    SKIP: gitleaks not installed (runs in CI)"
   fi
@@ -93,6 +100,7 @@ case "$TARGET" in
   ai) ai ;;
   mobile) mobile ;;
   admin-web) admin_web ;;
+  secrets) secrets ;;
   all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; fi; ai; mobile; admin_web; secrets ;;
   *) echo "unknown target $TARGET"; exit 2 ;;
 esac

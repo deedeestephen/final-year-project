@@ -1,0 +1,11 @@
+# Reviewed gitleaks findings that are not secrets (2026-09-28). Each line is
+# one exact finding (commit:file:rule:line), so a new finding is never hidden.
+#
+# Password made up for the throwaway integration-test database (synthetic users only):
+d3bf0be32aa3dc0391e1d9723134f08509e681ed:backend/test/db/helpers.ts:generic-api-key:15
+# New password typed in a password-change integration test (synthetic user):
+af0dbbbb907c5d4947cab2bfbc6683c19c03e030:backend/test/db/auth.int-spec.ts:generic-api-key:89
+# Fake server answer in a (since removed) Flutter admin widget test:
+c03e70d9a5f1dadbe536cd843d8e5ce0b4f636cc:mobile/test/features/admin/admin_test.dart:generic-api-key:92
+# Public CircleCI badge placeholder ("abc123def456") from the NestJS starter README:
+6520784f2fc9dc5e1f97bf6aba7f8ce0d510a991:backend/README.md:generic-api-key:5
