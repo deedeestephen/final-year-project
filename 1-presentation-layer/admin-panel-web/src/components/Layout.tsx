@@ -1,23 +1,74 @@
+import {
+  FileOutput,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ScrollText,
+  ShieldCheck,
+  UserRoundCheck,
+  Users,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from '../auth/session-context';
 import { Brand, NationalStripe } from './ui';
 import { NOT_OFFICIAL } from './messages';
 
-const NAV = [
-  { to: '/users', label: 'Users' },
-  { to: '/roles', label: 'Roles & permissions' },
-  { to: '/patient-accounts', label: 'Patient accounts' },
-  { to: '/fhir-export', label: 'FHIR export' },
-  { to: '/audit-log', label: 'Audit log' },
+interface NavItem {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  /** Only an exact match marks it current (the dashboard at "/"). */
+  end?: boolean;
+}
+
+const SECTIONS: { title: string; items: NavItem[] }[] = [
+  {
+    title: 'Overview',
+    items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true }],
+  },
+  {
+    title: 'People',
+    items: [
+      { to: '/users', label: 'Users', icon: Users },
+      { to: '/roles', label: 'Roles & permissions', icon: ShieldCheck },
+      {
+        to: '/patient-accounts',
+        label: 'Patient accounts',
+        icon: UserRoundCheck,
+      },
+    ],
+  },
+  {
+    title: 'Records & data',
+    items: [
+      { to: '/fhir-export', label: 'FHIR export', icon: FileOutput },
+      { to: '/audit-log', label: 'Audit log', icon: ScrollText },
+    ],
+  },
 ];
 
-/** Sidebar on wide screens; a Menu button opens it on narrow screens. */
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('');
+
+/** Dark sidebar on wide screens; a Menu button opens it on narrow screens. */
 export function Layout() {
   const { session, signOut } = useSession();
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const user = session.status === 'signedIn' ? session.user : null;
+  const current = (item: NavItem) =>
+    item.end
+      ? location.pathname === item.to
+      : location.pathname === item.to ||
+        location.pathname.startsWith(`${item.to}/`);
 
   return (
     <div className="app">
@@ -30,18 +81,32 @@ export function Layout() {
             className="menu-button"
             aria-expanded={open}
             aria-controls="sidebar"
+            aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
           >
-            Menu
+            {open ? (
+              <X size={20} aria-hidden="true" />
+            ) : (
+              <Menu size={20} aria-hidden="true" />
+            )}
+            <span className="menu-text">Menu</span>
           </button>
           <Brand subtitle="Administration" />
           {user && (
             <span className="who">
-              <strong>{user.displayName}</strong>
-              <span>{user.email}</span>
+              <span className="avatar" aria-hidden="true">
+                {initials(user.displayName)}
+              </span>
+              <span className="who-text">
+                <strong>{user.displayName}</strong>
+                <span>{user.email}</span>
+              </span>
             </span>
           )}
-          <button onClick={() => void signOut()}>Sign out</button>
+          <button className="signout" onClick={() => void signOut()}>
+            <LogOut size={18} aria-hidden="true" />
+            Sign out
+          </button>
         </div>
         <NationalStripe />
       </header>
@@ -50,24 +115,33 @@ export function Layout() {
         className={`sidebar${open ? ' open' : ''}`}
         aria-label="Main"
       >
-        <span className="nav-label" aria-hidden="true">
-          Manage
-        </span>
-        {NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              isActive || location.pathname.startsWith(`${item.to}/`)
-                ? 'active'
-                : ''
-            }
-          >
-            {item.label}
-          </NavLink>
+        {SECTIONS.map((section) => (
+          <div className="nav-section" key={section.title}>
+            <span className="nav-label" aria-hidden="true">
+              {section.title}
+            </span>
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  onClick={() => setOpen(false)}
+                  className={current(item) ? 'active' : ''}
+                  aria-current={current(item) ? 'page' : undefined}
+                >
+                  <Icon size={20} aria-hidden="true" className="nav-icon" />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </div>
         ))}
-        <p className="muted footer-note">{NOT_OFFICIAL}</p>
+        <div className="nav-footer">
+          <span className="env-chip">Synthetic data only</span>
+          <p className="footer-note">{NOT_OFFICIAL}</p>
+        </div>
       </nav>
       <main id="main" className="content">
         <div className="page">

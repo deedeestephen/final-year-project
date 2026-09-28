@@ -227,6 +227,25 @@ Then, on the **admin website** (http://localhost:5173), signed in as the adminis
 - [ ] **Only for the curious (Git Bash):** `bash 6-infrastructure/scripts/tls-check.sh`
   → *"TLS CHECK PASSED"*: the server settings accept only the newest, safest connections.
 
+### The admin dashboard (what is happening in the phone app)
+
+Sign in on the admin website (see the next section). The first page is now the **Dashboard**.
+
+- [ ] **The menu.** A dark menu on the left, in three groups: **Overview** (Dashboard), **People** (Users, Roles & permissions, Patient accounts) and **Records & data** (FHIR export, Audit log). Each item has a small picture. The page you are on is a **green pill**. At the bottom: *Synthetic data only*.
+- [ ] **Your name.** Top right: your name, your email and a round badge with your initials, then **Sign out**.
+- [ ] **The big number.** A green card: **Active in the phone app**, the number of people who used the phone app in the chosen period, and how many phones synced.
+- [ ] **Six tiles.** Sign-ins (and how many failed), Patients registered, Screening records, AI analyses (and how many finished), Scans and slides, Consents recorded (and how many were withdrawn).
+- [ ] **Make the numbers move.** On the pretend phone, sign in as the clinician and add a screening record. Back on the website, click **Update**.
+  → *Sign-ins* and *Screening records* go up by one, and *Latest from the phone app* shows **Added a screening record** at the top, with the clinician's email and "just now".
+- [ ] **Period.** Click **24 hours**, **7 days**, **30 days** or **90 days**. The numbers change. The old numbers stay (a little faded) until the new ones arrive.
+- [ ] **Activity per day.** A chart with three lines: sign-ins, changes synced from phones, screening records. Move the mouse over it: a thin line and a box show every number for that day. Or click the chart and press the **left and right arrow keys**. **Show as table** gives the same numbers as a table.
+- [ ] **Where activity comes from.** One bar split into **Phone app**, **Admin website** and **Other**, with the numbers and percentages written next to the colours.
+- [ ] **Offline sync health.** Changes the phones sent after working offline: **Saved** (green tick), **Conflicts** (amber triangle; kept for a person to choose) and **Refused as invalid** (red cross). The pictures and words tell them apart, not only the colour.
+- [ ] **No patient details.** Nothing on the dashboard shows a patient name, NRC or result. It shows counts and staff email addresses only.
+- [ ] **It is recorded.** Open **Audit log** and type `activity.` in *Action starts with*.
+  → An `activity.read` line for each time you opened or updated the dashboard.
+- [ ] **Small screens.** Make the window narrow. The tiles go two per row, the period buttons stay on one row, and the menu hides behind **Menu**.
+
 ### The admin website (users, roles and permissions, patient accounts)
 
 The admin page is now a **website on your PC**, not part of the phone app. `dev-up.ps1` starts it in a third window, *PCa mHealth admin website*. **Leave that window open**, just like the backend one.
@@ -243,7 +262,7 @@ The admin page is now a **website on your PC**, not part of the phone app. `dev-
   → *"This portal is for administrators. Clinicians and patients use the mobile app."*
 - [ ] **Phone app.** Sign in on the pretend phone as the admin.
   → One card: *"Administration is on the web"*, with the website address.
-- [ ] **Menu.** On the left: **Users**, **Roles & permissions**, **Patient accounts**.
+- [ ] **Menu.** On the left: **Dashboard**, then **Users**, **Roles & permissions**, **Patient accounts**, **FHIR export** and **Audit log** (the dashboard is described in the section above).
 - [ ] **Users.**
   → Every account, with a green *Active*, orange *Locked* or red *Disabled* label. Search by name or email, or filter by role.
   - Click a person to change their **roles**, their **facility** (a clinician only sees the patients of their own facility), or switch the **account off**.

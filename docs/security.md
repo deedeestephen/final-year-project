@@ -37,6 +37,10 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 - `audit_logs`: append-only (DB trigger rejects UPDATE/DELETE; the app DB role has no UPDATE/DELETE grant). Each row stores
   the previous row's hash (a hash chain) so tampering is detectable. Logins, reads of patient records, modifications,
   AI requests, exports and admin actions are all logged.
+- Each entry notes which app sent the request (`details.client`: `mobile` or `web`, from the `X-Client` header).
+  This is for statistics only: a caller can set any header, so it never takes part in access decisions.
+- The admin **activity dashboard** (`GET /admin/activity`, `audit:read`) shows counts and staff emails only, never
+  patient names, NRCs or clinical values. Each view is itself audited (`activity.read`).
 
 ## Files
 - Streaming upload (busboy) straight to object storage, with a size cap per kind (`MAX_IMAGING_MB`, `MAX_SLIDE_MB`).
@@ -146,4 +150,5 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | FHIR conformance: official HL7 validator, 0 errors on the sample export (codes checked on the HL7 terminology server) | `6-infrastructure/scripts/fhir-validate.sh` | Verified (Ph.14; in the gate when the validator is installed) |
 | Secret scan runs locally over the full git history (gitleaks 8.30.1 in the tools folder); reviewed false positives listed one by one in `.gitleaksignore` | `6-infrastructure/scripts/quality-gate.sh` | Verified |
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
+| Admin activity dashboard: administrators only (`audit:read`), counts only, every view audited; the `X-Client` label is never used for access | `services/audit/activity.*`, `permissions.guard.ts` | Verified (`activity.int-spec.ts`, access matrix) |
 | TLS 1.3 termination | reverse proxy config; `6-infrastructure/scripts/tls-check.sh` (real nginx in Docker: 1.3 accepted, 1.2 and 1.1 refused, HSTS, HTTP redirect) | Verified (Ph.15, gate) |

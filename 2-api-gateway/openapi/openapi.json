@@ -136,6 +136,50 @@
         ]
       }
     },
+    "/api/v1/admin/activity": {
+      "get": {
+        "operationId": "ActivityController_get_v1",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Days back from now (1 = the last 24 hours)",
+            "schema": {
+              "default": 7,
+              "type": "number",
+              "enum": [
+                1,
+                7,
+                30,
+                90
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Activity in the phone app and the admin website: counts, days, sync health, recent phone actions",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "operationId": "AuthController_register_v1",
@@ -2659,6 +2703,238 @@
           "intact",
           "entries",
           "checkedAt"
+        ]
+      },
+      "ActivityTotalsView": {
+        "type": "object",
+        "properties": {
+          "activeUsers": {
+            "type": "number",
+            "description": "Accounts that did anything successfully"
+          },
+          "activePhoneUsers": {
+            "type": "number",
+            "description": "Accounts active from the phone app"
+          },
+          "activePhones": {
+            "type": "number",
+            "description": "Phones that synced (distinct device ids)"
+          },
+          "signIns": {
+            "type": "number"
+          },
+          "failedSignIns": {
+            "type": "number"
+          },
+          "patientsRegistered": {
+            "type": "number"
+          },
+          "screeningRecords": {
+            "type": "number"
+          },
+          "uploads": {
+            "type": "number",
+            "description": "Images and slides accepted"
+          },
+          "aiRequested": {
+            "type": "number"
+          },
+          "aiCompleted": {
+            "type": "number"
+          },
+          "consentsGranted": {
+            "type": "number"
+          },
+          "consentsWithdrawn": {
+            "type": "number"
+          },
+          "accessDenied": {
+            "type": "number",
+            "description": "Requests refused for lack of permission"
+          }
+        },
+        "required": [
+          "activeUsers",
+          "activePhoneUsers",
+          "activePhones",
+          "signIns",
+          "failedSignIns",
+          "patientsRegistered",
+          "screeningRecords",
+          "uploads",
+          "aiRequested",
+          "aiCompleted",
+          "consentsGranted",
+          "consentsWithdrawn",
+          "accessDenied"
+        ]
+      },
+      "ActivityDayView": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-28",
+            "description": "Day in Zambia time"
+          },
+          "signIns": {
+            "type": "number"
+          },
+          "screeningRecords": {
+            "type": "number"
+          },
+          "syncedChanges": {
+            "type": "number",
+            "description": "Offline changes received from phones"
+          },
+          "aiRequested": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "signIns",
+          "screeningRecords",
+          "syncedChanges",
+          "aiRequested"
+        ]
+      },
+      "ActivityCountView": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "count"
+        ]
+      },
+      "SyncHealthView": {
+        "type": "object",
+        "properties": {
+          "applied": {
+            "type": "number"
+          },
+          "conflicts": {
+            "type": "number",
+            "description": "Edits that met a newer version (not overwritten)"
+          },
+          "rejected": {
+            "type": "number",
+            "description": "Changes the server refused as invalid"
+          }
+        },
+        "required": [
+          "applied",
+          "conflicts",
+          "rejected"
+        ]
+      },
+      "ActivityEventView": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "DENIED",
+              "FAILURE"
+            ]
+          },
+          "actorEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorRole": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "seq",
+          "occurredAt",
+          "action",
+          "outcome"
+        ]
+      },
+      "ActivityView": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "number",
+            "enum": [
+              1,
+              7,
+              30,
+              90
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ActivityTotalsView"
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityDayView"
+            }
+          },
+          "byClient": {
+            "description": "Recorded actions by app: mobile, web, other",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityCountView"
+            }
+          },
+          "signInsByRole": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityCountView"
+            }
+          },
+          "sync": {
+            "$ref": "#/components/schemas/SyncHealthView"
+          },
+          "recentPhone": {
+            "description": "Latest actions from the phone app (newest first)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityEventView"
+            }
+          }
+        },
+        "required": [
+          "days",
+          "from",
+          "to",
+          "totals",
+          "daily",
+          "byClient",
+          "signInsByRole",
+          "sync",
+          "recentPhone"
         ]
       },
       "RegisterDto": {

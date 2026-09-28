@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { Link, Route, Routes } from 'react-router-dom';
 import { useSession } from './auth/session-context';
 import { Layout } from './components/Layout';
 import { ConnectionBanner } from './components/ui';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { ChangePasswordPage, LoginPage } from './pages/AuthPages';
+import { DashboardPage } from './pages/DashboardPage';
 import { FhirExportPage } from './pages/FhirExportPage';
 import { PatientAccountsPage } from './pages/PatientAccountsPage';
 import { RolePermissionsPage, RolesPage } from './pages/RolesPages';
@@ -16,7 +17,7 @@ function NotFound() {
     <>
       <h1>Page not found</h1>
       <p>
-        <Link to="/users">Go to Users</Link>
+        <Link to="/">Go to the dashboard</Link>
       </p>
     </>
   );
@@ -54,7 +55,7 @@ function Screens() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Navigate to="/users" replace />} />
+        <Route index element={<DashboardPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="users/new" element={<CreateUserPage />} />
         <Route path="users/:id" element={<UserDetailPage />} />

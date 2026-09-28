@@ -54,6 +54,12 @@ const TEXT_PAIRS: [string, string, string][] = [
   [t.danger, t.surface, 'danger button text'],
   [t.ink, t['surface-subtle'], 'numbers in count tiles'],
   [t['ink-secondary'], t['surface-subtle'], 'labels in count tiles'],
+  [t['nav-ink'], t['nav-bg'], 'menu items in the sidebar'],
+  [t['nav-ink'], t['nav-hover'], 'menu item under the pointer'],
+  [t['nav-muted'], t['nav-bg'], 'section labels in the sidebar'],
+  [t['on-primary'], t['nav-active'], 'current page in the sidebar'],
+  [t['hero-soft'], t.primary, 'small text on the dashboard hero card'],
+  [t['hero-soft'], t['primary-pressed'], 'hero card text, darker end'],
 ];
 
 describe('design tokens (WCAG 2.1 AA)', () => {
@@ -72,5 +78,13 @@ describe('design tokens (WCAG 2.1 AA)', () => {
     // These fail AA as text on white, which is why text uses the deeper tones.
     expect(contrast(t['primary-accent'], WHITE)).toBeLessThan(4.5);
     expect(contrast(t['warning-accent'], WHITE)).toBeLessThan(4.5);
+  });
+
+  it('keeps chart lines visible on white cards (3:1 for graphics)', () => {
+    // Series 3 (aqua) is below 3:1, so the charts also show legends,
+    // direct labels and a table view: colour is never the only cue.
+    expect(contrast(t['series-1'], WHITE)).toBeGreaterThanOrEqual(3);
+    expect(contrast(t['series-2'], WHITE)).toBeGreaterThanOrEqual(3);
+    expect(contrast(t['chart-axis'], WHITE)).toBeGreaterThan(1.3);
   });
 });

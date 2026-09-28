@@ -30,6 +30,9 @@ class ApiClient {
       sendTimeout: const Duration(seconds: 20),
       contentType: Headers.jsonContentType,
       responseType: ResponseType.json,
+      // Tells the server this is the phone app (the admin activity dashboard
+      // counts phone and website activity apart). No device or user details.
+      headers: {'X-Client': 'mobile'},
     );
     dio = Dio(options);
     // A client with no interceptors: token refresh and the single retry after

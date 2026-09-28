@@ -37,6 +37,17 @@ void main() {
     expect(body['auth'], 'Bearer access-1');
   });
 
+  test('tells the server it is the phone app (and nothing more)', () async {
+    await client.get<Map<String, dynamic>>('/users/me');
+    await client.post<Map<String, dynamic>>(
+      '/auth/login',
+      data: {'email': 'a', 'password': 'b'},
+    );
+    for (final r in server.requests) {
+      expect(r.headers['X-Client'], 'mobile');
+    }
+  });
+
   test('does not attach the token to public auth routes', () async {
     await client.post<Map<String, dynamic>>(
       '/auth/login',

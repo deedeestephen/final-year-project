@@ -53,14 +53,30 @@ export const CurrentUser = createParamDecorator(
   },
 );
 
+/** Which app sent the request (the `X-Client` header), for activity reports. */
+export type ClientApp = 'mobile' | 'web';
+
 export interface RequestContext {
   requestId: string | null;
   ip: string | null;
+  /** From the `X-Client` header; only known values, never free text. */
+  client?: ClientApp | null;
+}
+
+/** Reads `X-Client`, accepting only the two known app names. */
+export function clientOf(header: unknown): ClientApp | null {
+  if (typeof header !== 'string') return null;
+  const value = header.trim().toLowerCase();
+  return value === 'mobile' || value === 'web' ? value : null;
 }
 
 export const Ctx = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): RequestContext => {
     const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
-    return { requestId: req.id ?? null, ip: req.ip ?? null };
+    return {
+      requestId: req.id ?? null,
+      ip: req.ip ?? null,
+      client: clientOf(req.headers['x-client']),
+    };
   },
 );

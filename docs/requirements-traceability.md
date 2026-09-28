@@ -33,7 +33,7 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | UC-07 | Chatbot interaction | FR-07 | Planned |
 | UC-08 | National EHR export | FR-09 | **Verified (Ph.14)** for export and send (mock endpoint); receiving data back needs identified data and an agreement (future work) |
 | UC-09 | Administration & RBAC | FR-01, FR-10, `services/users`, `services/audit` | **Verified (Ph.15):** user lifecycle, role assignment with separation-of-duties locks, unlock, audit, and the audit-log viewer with hash-chain check |
-| UC-10 | Infrastructure monitoring | Prometheus `/metrics` endpoint; Grafana documented | Planned (partial) |
+| UC-10 | Infrastructure monitoring | Prometheus `/metrics` endpoint; Grafana documented; admin **activity dashboard** (`GET /admin/activity`, admin website Dashboard) | **Partial:** app activity dashboard verified (`activity.int-spec.ts`, `DashboardPage.test.tsx`); Prometheus/Grafana planned |
 | UC-11 | Population analytics | de-identified aggregate report endpoint | Planned (stretch) |
 | UC-12 | Model retraining & deployment | FR-12 | Planned (partial) |
 
@@ -168,4 +168,5 @@ Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.
 | Limits shared across API instances (horizontal scaling) | `RedisThrottlerStorage` (atomic Lua counter), fail-open if Redis is down | `rate-limit.int-spec.ts` (two instances, one Redis; unreachable Redis) | Verified |
 | Clients back off under load | App `SyncEngine` waits `max(backoff, Retry-After)`; portal shows the wait time and never auto-retries 4xx | `sync_test.dart` (Retry-After), `App.test.tsx` (rate-limit message) | Verified |
 | Fast search with many accounts | `pg_trgm` GIN indexes on user email and name (migration `20260924150000_user_search_trgm`) | migration applied in the DB test run | Verified |
-| Admin website follows the owner's "Clinical Field Health" design (owner request) | ADR-006; tokens in `1-presentation-layer/admin-panel-web/src/index.css`; connection banner | `contrast.test.ts` (16 text pairs at least 4.5:1), `online.test.tsx`; Edge screenshots at 1440, 820 and 375 px | Verified |
+| Admin website follows the owner's "Clinical Field Health" design (owner request) | ADR-006; tokens in `1-presentation-layer/admin-panel-web/src/index.css`; connection banner | `contrast.test.ts` (24 text pairs at least 4.5:1, chart lines at least 3:1), `online.test.tsx`; Edge screenshots at 1440, 820 and 375 px | Verified |
+| Dashboard of phone app activity and a clearer navigation bar (owner request) | `X-Client: mobile` header from the app; `details.client` in audit entries; `GET /admin/activity` (counts from `audit_logs` and `sync_operations`, days in Africa/Lusaka time); `DashboardPage.tsx`, `charts.tsx`, grouped dark sidebar in `Layout.tsx` | `activity.int-spec.ts` (5), `api_client_test.dart`, `DashboardPage.test.tsx` (11); headless Chrome screenshots at 1440 and 390 px | Verified |

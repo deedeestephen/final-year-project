@@ -9,6 +9,7 @@ import { AuditService } from '../../services/audit/audit.service';
 import {
   IS_PUBLIC,
   REQUIRED_PERMISSIONS,
+  clientOf,
   type AuthenticatedRequest,
 } from './access.decorators';
 import type { PermissionCode } from './permissions';
@@ -51,6 +52,7 @@ export class PermissionsGuard implements CanActivate {
       actorRole: user?.roles.join(',') ?? null,
       requestId: req.id ?? null,
       ip: req.ip ?? null,
+      client: clientOf(req.headers['x-client']),
       details: { missing },
     });
     throw new ForbiddenException({

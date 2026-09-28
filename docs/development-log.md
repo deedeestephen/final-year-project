@@ -776,3 +776,23 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 
 **Deferred to Phase 16:** the log review. It needs the real server logging in production mode, which the end-to-end run provides.
 
+## 2026-09-28: Admin dashboard for app activity, and a new navigation bar (owner request)
+
+**Request:** "on the admin page can you add dashboard that track down the activities on the mobile application and make sure it has a beautiful navigation bar."
+
+**Built:**
+- **Which app did it:** the phone app now sends `X-Client: mobile` on every request (the admin website already sent `X-Client: web`). The audit service stores it in `details.client` of each audit entry, including refused requests. It is a label for statistics only. Anyone can set a header, so it never decides access.
+- **`GET /api/v1/admin/activity?days=1|7|30|90`** (`audit:read`, so administrators only): counts from the audit log and the phones' sync log. It returns totals (active people and phones, sign-ins and failed sign-ins, patients, screening records, uploads, AI requests and results, consents granted and withdrawn, refusals), one row per day in Zambian time (Africa/Lusaka), actions per app, sign-ins per role, sync results (saved, conflicts, refused) and the 15 latest phone-app actions. It returns counts and staff emails only: no patient names, NRCs or clinical values. Opening it is itself audited (`activity.read`). The route list in [access-matrix.md](access-matrix.md) now has 67 routes.
+- **Admin website:**
+  - The **Dashboard** is the new first page. It has a green hero card (people active in the phone app), six count tiles, a daily line chart, a stacked bar by app, sync health with icons and words, sign-ins by role and a plain-words feed.
+  - The charts are small hand-written SVG components (`components/charts.tsx`), with no chart library. They follow the data-visualisation rules: a colour-blind-checked series order (blue, orange, aqua), 2 px lines, one axis, a legend, and value labels at the line ends only when they do not collide. A crosshair tooltip lists every series. The arrow keys move through the days, and every chart has a table view. The previous numbers stay, faded, while new ones load.
+  - **Navigation:** a dark slate sidebar grouped into Overview, People and Records & data, with lucide icons (`lucide-react`, ISC licence), an emerald pill for the current page, and a *Synthetic data only* chip. The top bar shows the signed-in person's initials. Below 900 px the sidebar sits behind a **Menu** button.
+
+**Tests:**
+- `activity.int-spec.ts` (5, real database): only administrators may read it; unknown periods are refused; the counts; phone vs website; days in Zambian time; no patient names in the answer.
+- `activity.service.spec.ts` (5, unit): Zambian calendar days, the `X-Client` values accepted, an empty period and rows that do not belong. These tests also brought database-run branch coverage back above 80% (80.36%).
+- The phone's `api_client_test.dart` checks the header.
+- `DashboardPage.test.tsx` (11): counts in words, period change, table view, arrow keys, empty period, server error, grouped menu with the current page, the Menu button, initials, axis rounding and dates.
+- `contrast.test.ts` gains 6 pairs for the sidebar and hero card (all at least 4.5:1), plus a 3:1 check for the blue and orange chart lines.
+
+**Checked by eye:** screenshots in headless Chrome at 1440 px and 390 px, with synthetic answers served to the page (no real accounts). Two fixes came out of this: the end label "5" sat on the blue line (labels now go to the right of the line ends), and the date labels overlapped on a phone (now about one label every 64 px). Node's date formatter writes "Sept" where browsers write "Sep", so the charts now use fixed month names.

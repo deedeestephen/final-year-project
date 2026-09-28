@@ -5,10 +5,11 @@ Generated from the code (`npm run access:matrix`); the quality gate fails if it 
 role's permissions, within the locks described in [security.md](security.md). Every route not marked public needs a
 valid access token, and the account must be active.
 
-66 routes.
+67 routes.
 
 | Method | Path | Rule | Default roles | Notes |
 |---|---|---|---|---|
+| GET | `/api/v1/admin/activity` | `audit:read` | ADMIN |  |
 | GET | `/api/v1/admin/audit-logs` | `audit:read` | ADMIN |  |
 | GET | `/api/v1/admin/audit-logs/verify` | `audit:read` | ADMIN |  |
 | GET | `/api/v1/admin/facilities` | `user:manage` | ADMIN |  |

@@ -7,7 +7,14 @@ import App from './App';
 import { resetClientForTests } from './api/client';
 import { NOT_ADMIN } from './auth/session';
 import { SessionProvider } from './auth/session';
-import { adminUser, apiError, fakeApi, json, type Call } from './test/fake-api';
+import {
+  adminUser,
+  apiError,
+  fakeApi,
+  json,
+  sampleActivity,
+  type Call,
+} from './test/fake-api';
 
 type Routes = Parameters<typeof fakeApi>[0];
 
@@ -55,7 +62,7 @@ describe('sign in', () => {
       },
       'GET /users/me': () =>
         signedInYet ? json(200, adminUser) : apiError(401, 'INVALID_TOKEN'),
-      'GET /users': () => json(200, page([adminUser])),
+      'GET /admin/activity': () => json(200, sampleActivity),
     });
     renderApp();
     const user = userEvent.setup();
@@ -66,8 +73,9 @@ describe('sign in', () => {
     await user.type(screen.getByLabelText('Password'), 'a-good-password');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
+    // Administrators land on the dashboard.
     expect(
-      await screen.findByRole('heading', { name: 'Users' }),
+      await screen.findByRole('heading', { name: 'Dashboard' }),
     ).toBeInTheDocument();
     expect(await screen.findByText('Test Admin')).toBeInTheDocument();
     const login = calls.find((c) => c.path === '/auth/login')!;

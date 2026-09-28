@@ -11,6 +11,8 @@ export interface AuditEvent {
   actorRole?: string | null;
   requestId?: string | null;
   ip?: string | null;
+  /** Which app sent the request ('mobile' or 'web'); kept in the details. */
+  client?: 'mobile' | 'web' | null;
   /** Must not contain passwords, tokens or direct patient identifiers. */
   details?: Record<string, unknown>;
 }
@@ -28,6 +30,11 @@ export class AuditService {
     event: AuditEvent,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
+    // The app is part of the hashed details, so the activity report can tell
+    // phone activity from the admin website without a schema change.
+    const details = event.client
+      ? { ...(event.details ?? {}), client: event.client }
+      : event.details;
     await tx.auditLog.create({
       data: {
         action: event.action,
@@ -38,8 +45,7 @@ export class AuditService {
         actorRole: event.actorRole ?? null,
         requestId: event.requestId ?? null,
         ip: event.ip ?? null,
-        details: (event.details ?? undefined) as
-          Prisma.InputJsonValue | undefined,
+        details: (details ?? undefined) as Prisma.InputJsonValue | undefined,
       },
     });
   }

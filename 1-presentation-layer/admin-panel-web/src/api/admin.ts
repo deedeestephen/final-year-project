@@ -142,7 +142,52 @@ export const adminApi = {
       `/admin/audit-logs${qs({ ...filters, page, pageSize: 50 })}`,
     ),
   verifyAuditLog: () => api.get<AuditChain>('/admin/audit-logs/verify'),
+  activity: (days: ActivityDays) =>
+    api.get<Activity>(`/admin/activity${qs({ days })}`),
 };
+
+export type ActivityDays = 1 | 7 | 30 | 90;
+
+export interface ActivityDay {
+  date: string;
+  signIns: number;
+  screeningRecords: number;
+  syncedChanges: number;
+  aiRequested: number;
+}
+
+export interface Activity {
+  days: ActivityDays;
+  from: string;
+  to: string;
+  totals: {
+    activeUsers: number;
+    activePhoneUsers: number;
+    activePhones: number;
+    signIns: number;
+    failedSignIns: number;
+    patientsRegistered: number;
+    screeningRecords: number;
+    uploads: number;
+    aiRequested: number;
+    aiCompleted: number;
+    consentsGranted: number;
+    consentsWithdrawn: number;
+    accessDenied: number;
+  };
+  daily: ActivityDay[];
+  byClient: { name: 'mobile' | 'web' | 'other'; count: number }[];
+  signInsByRole: { name: string; count: number }[];
+  sync: { applied: number; conflicts: number; rejected: number };
+  recentPhone: {
+    seq: string;
+    occurredAt: string;
+    action: string;
+    outcome: 'SUCCESS' | 'DENIED' | 'FAILURE';
+    actorEmail: string | null;
+    actorRole: string | null;
+  }[];
+}
 
 export interface AuditFilters {
   action?: string;
