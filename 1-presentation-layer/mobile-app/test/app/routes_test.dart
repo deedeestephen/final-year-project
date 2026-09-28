@@ -166,4 +166,22 @@ void main() {
       '/home/admin',
     );
   });
+
+  test('every signed-in account can open Settings', () {
+    for (final role in ['PATIENT', 'CLINICIAN', 'PATHOLOGIST', 'ADMIN']) {
+      expect(
+        resolveRedirect(signedIn([role]), Routes.settings),
+        isNull,
+        reason: role,
+      );
+    }
+    expect(resolveRedirect(const SignedOut(), Routes.settings), Routes.login);
+    expect(
+      resolveRedirect(
+        signedIn(['CLINICIAN'], mustChange: true),
+        Routes.settings,
+      ),
+      Routes.changePassword,
+    );
+  });
 }

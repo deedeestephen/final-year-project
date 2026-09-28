@@ -150,7 +150,7 @@ void main() {
     );
     final accent = tester
         .widgetList<Container>(find.byType(Container))
-        .where((c) => c.color == AppColors.amber);
+        .where((c) => c.color == AppPalette.light.amber);
     expect(accent, hasLength(1));
     expect(find.text('PSA raised'), findsOneWidget);
   });

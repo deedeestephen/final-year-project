@@ -43,20 +43,24 @@ class SyncStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (dot, fg, bg) = switch (status) {
       Synced() => (
-        AppColors.syncedDot,
-        AppColors.successText,
-        AppColors.successBg,
+        context.colors.syncedDot,
+        context.colors.successText,
+        context.colors.successBg,
       ),
       SavedOffline() => (
-        AppColors.amber,
-        AppColors.warningText,
-        AppColors.warningBg,
+        context.colors.amber,
+        context.colors.warningText,
+        context.colors.warningBg,
       ),
-      Syncing() => (AppColors.sky, AppColors.infoText, AppColors.infoBg),
+      Syncing() => (
+        context.colors.sky,
+        context.colors.infoText,
+        context.colors.infoBg,
+      ),
       NeedsAttention() => (
-        AppColors.danger,
-        AppColors.danger,
-        AppColors.dangerBg,
+        context.colors.danger,
+        context.colors.danger,
+        context.colors.dangerBg,
       ),
     };
     return Container(

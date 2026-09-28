@@ -137,6 +137,27 @@ These screens talk to the server directly. They need the patient's **server id**
 - **Routes.** `/patients/:id/consents` is clinician-only. `/review` and `/review/:slideId` are pathologist-only. `/patients/:id/imaging`, `/patients/:id/ai`, `/ai-jobs` and `/ai-jobs/:jobId` are for both clinical roles. Patients and administrators are redirected home.
 - **The model screens are ready for the real models.** When the trained models replace the mocks, only the AI service changes ([ai-model-integration-guide.md](ai-model-integration-guide.md)); the banner switches to the research-model wording from the report's `provenance`.
 
+## Appearance: light and dark mode
+
+- **Settings** (staff: the ☰ menu; patients: Profile › Settings) offers **Same as the phone** (default), **Light** and **Dark**.
+- The choice is a phone setting, saved with `shared_preferences` (it holds nothing else) and loaded before the first frame, so the app never flashes the wrong theme. It stays after sign-out because it belongs to the phone, not to an account.
+- Colours live in `AppPalette` (`app/theme/tokens.dart`), a `ThemeExtension` with a light and a dark set. Widgets read `context.colors`, never fixed colours. The Zambian flag colours (`AppColors.flag*`) stay the same in both modes.
+- **Readable in both modes:** `theme_test.dart` checks every text/background pair (20 of them, including the warning banner, the error colour and the snackbar) against WCAG AA 4.5:1 for light **and** dark. The app bar stays flag green with white text; clinical values keep the monospaced font; the AI disclaimer keeps its amber warning look.
+
+## Phone permissions
+
+The app asks the phone for as little as possible (checked in the built APK's merged manifest):
+
+| Permission | Why | Asked on screen? |
+|---|---|---|
+| `INTERNET` | talk to the PCa mHealth server | No (Android grants it) |
+| `ACCESS_NETWORK_STATE` | know when the phone is offline, to save work locally and sync later | No (Android grants it) |
+
+- **Not used:** camera, location, microphone, contacts, phone storage, notifications.
+- **Files** are chosen with Android's own file chooser (Storage Access Framework). The app receives only the one file the user picks, so no storage permission is needed. Picked files are copied into the app's private storage and deleted after upload and at sign-out.
+- **iPhone:** no privacy usage descriptions are declared, because nothing that needs one is used.
+- **Rule for later features:** a permission is added only with the feature that needs it, asked for at the moment it is needed (not at start-up), with a plain explanation, and the app keeps working if the user says no. Likely later: notifications (push messages), and the camera only if photographing documents is ever wanted.
+
 ## Administration (moved to the web)
 
 - Administration is a **separate web app** in `1-presentation-layer/admin-panel-web/` (ADR-005). The Flutter admin screens were removed.
@@ -188,6 +209,7 @@ These screens talk to the server directly. They need the patient's **server id**
 | `test/core/upload_queue_test.dart` | upload queue: private copy, fields and file sent, backoff and `Retry-After`, refusal not retried, missing file, discard, sign-out deletes copies |
 | `test/core/migration_test.dart` | database v1 → v2 gives exactly the v2 schema and keeps saved patients |
 | `test/features/clinical_server/clinical_server_test.dart` | consent record and withdraw, a file saved offline then uploaded once, AI disabled reasons, mock report (banner, skipped modules, unavailable explanations, no metrics), pathologist review |
+| `test/features/settings/settings_test.dart` | switching to dark from the menu, kept after sign-out, "Same as the phone" follows the phone, the choice saved and read back |
 | `test/live/` | **opt-in** check against a running backend: `LIVE_API_URL=http://localhost:3000 LIVE_API_PASSWORD=… flutter test test/live`. It never changes the demo password. |
 
 Quality gate: `6-infrastructure/scripts/quality-gate.sh mobile` (format, analyze, tests with coverage, debug APK).

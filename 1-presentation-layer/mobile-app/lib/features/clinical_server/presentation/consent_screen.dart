@@ -259,7 +259,7 @@ class _ConsentFormState extends ConsumerState<_ConsentForm> {
             ),
             if (_error != null) ...[
               const SizedBox(height: AppSizes.sm),
-              Text(_error!, style: const TextStyle(color: AppColors.danger)),
+              Text(_error!, style: TextStyle(color: context.colors.danger)),
             ],
             const SizedBox(height: AppSizes.md),
             FilledButton(

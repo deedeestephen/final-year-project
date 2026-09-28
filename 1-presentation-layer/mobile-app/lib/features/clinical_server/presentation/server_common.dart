@@ -68,7 +68,7 @@ class LabelledValue extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: clinicalValueStyle(color: AppColors.textPrimary),
+              style: clinicalValueStyle(color: context.colors.textPrimary),
             ),
           ),
         ],

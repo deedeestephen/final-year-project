@@ -24,6 +24,7 @@ import '../features/patients/presentation/edit_patient_screen.dart';
 import '../features/patients/presentation/patient_detail_screen.dart';
 import '../features/patients/presentation/patients_screen.dart';
 import '../features/patients/presentation/register_patient_screen.dart';
+import '../features/settings/settings_screen.dart';
 import '../features/sync/sync_screen.dart';
 import 'routes.dart';
 
@@ -54,6 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const ChangePasswordScreen(),
       ),
       GoRoute(path: Routes.sync, builder: (_, _) => const SyncScreen()),
+      GoRoute(path: Routes.settings, builder: (_, _) => const SettingsScreen()),
       GoRoute(
         path: Routes.patients,
         builder: (_, _) => const PatientsScreen(),

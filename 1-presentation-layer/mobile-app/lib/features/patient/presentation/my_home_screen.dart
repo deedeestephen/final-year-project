@@ -131,7 +131,7 @@ class MyHomeScreen extends ConsumerWidget {
                     ClinicalCard(
                       child: Row(
                         children: [
-                          Icon(icon, color: AppColors.textSecondary),
+                          Icon(icon, color: context.colors.textSecondary),
                           const SizedBox(width: AppSizes.md),
                           Expanded(
                             child: Column(
@@ -176,7 +176,7 @@ class _LinkedCards extends ConsumerWidget {
           onTap: () => context.go(Routes.myResults),
           child: Row(
             children: [
-              const Icon(Icons.assignment_outlined, color: AppColors.primary),
+              Icon(Icons.assignment_outlined, color: context.colors.linkText),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(
@@ -193,7 +193,7 @@ class _LinkedCards extends ConsumerWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: context.colors.textSecondary),
             ],
           ),
         ),
@@ -202,7 +202,7 @@ class _LinkedCards extends ConsumerWidget {
           onTap: () => context.go(Routes.messages),
           child: Row(
             children: [
-              const Icon(Icons.mail_outline, color: AppColors.primary),
+              Icon(Icons.mail_outline, color: context.colors.linkText),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(
@@ -221,7 +221,7 @@ class _LinkedCards extends ConsumerWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: context.colors.textSecondary),
             ],
           ),
         ),

@@ -5,17 +5,23 @@ import '../../app/theme/tokens.dart';
 /// Severity shown as a 4 px left accent. Colour is never the only signal:
 /// callers also put the severity in words.
 enum Severity {
-  none(AppColors.border),
-  info(AppColors.sky),
-  positive(AppColors.positive),
-  warning(AppColors.amber),
-  danger(AppColors.danger);
+  none,
+  info,
+  positive,
+  warning,
+  danger;
 
-  const Severity(this.accent);
-  final Color accent;
+  /// The accent colour in the current light or dark palette.
+  Color accentIn(AppPalette p) => switch (this) {
+    Severity.none => p.border,
+    Severity.info => p.sky,
+    Severity.positive => p.positive,
+    Severity.warning => p.amber,
+    Severity.danger => p.danger,
+  };
 }
 
-/// White card with a hairline border and optional severity accent.
+/// Card (white in light mode) with a hairline border and optional severity accent.
 class ClinicalCard extends StatelessWidget {
   const ClinicalCard({
     super.key,
@@ -43,7 +49,7 @@ class ClinicalCard extends StatelessWidget {
               if (severity != Severity.none)
                 Container(
                   width: AppSizes.severityAccentWidth,
-                  color: severity.accent,
+                  color: severity.accentIn(context.colors),
                 ),
               Expanded(
                 child: Padding(padding: padding, child: child),

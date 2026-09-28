@@ -22,7 +22,7 @@ class OfflineStamp extends StatelessWidget {
         '${DateFormat('d MMM yyyy, HH:mm').format(cached.fetchedAt)}',
         style: Theme.of(
           context,
-        ).textTheme.bodyMedium?.copyWith(color: AppColors.offlineText),
+        ).textTheme.bodyMedium?.copyWith(color: context.colors.offlineText),
       ),
     );
   }
@@ -40,21 +40,21 @@ class InfoNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        color: AppColors.infoBg,
+        color: context.colors.infoBg,
         borderRadius: const BorderRadius.all(AppRadii.control),
-        border: Border.all(color: AppColors.sky),
+        border: Border.all(color: context.colors.sky),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.infoText),
+          Icon(icon, color: context.colors.infoText),
           const SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(
               text,
               style: Theme.of(
                 context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.infoText),
+              ).textTheme.bodyLarge?.copyWith(color: context.colors.infoText),
             ),
           ),
         ],
@@ -108,7 +108,7 @@ class _Failed extends StatelessWidget {
           Icon(
             offline ? Icons.cloud_off_outlined : Icons.error_outline,
             size: 40,
-            color: AppColors.textSecondary,
+            color: context.colors.textSecondary,
           ),
           const SizedBox(height: AppSizes.sm),
           Text(

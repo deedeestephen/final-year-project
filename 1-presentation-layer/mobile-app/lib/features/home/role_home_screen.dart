@@ -142,7 +142,7 @@ class RoleHomeScreen extends ConsumerWidget {
                         : () => context.push(d.route!),
                     child: Row(
                       children: [
-                        Icon(d.icon, color: AppColors.primary),
+                        Icon(d.icon, color: context.colors.linkText),
                         const SizedBox(width: AppSizes.md),
                         Expanded(
                           child: Column(
@@ -167,9 +167,9 @@ class RoleHomeScreen extends ConsumerWidget {
                           ),
                         ),
                         if (d.route != null)
-                          const Icon(
+                          Icon(
                             Icons.chevron_right,
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                           ),
                       ],
                     ),
@@ -262,6 +262,15 @@ class _HomeDrawer extends ConsumerWidget {
                   context.push(Routes.sync);
                 },
               ),
+            ListTile(
+              key: const Key('home.settings'),
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push(Routes.settings);
+              },
+            ),
             const Spacer(),
             const Divider(),
             ListTile(

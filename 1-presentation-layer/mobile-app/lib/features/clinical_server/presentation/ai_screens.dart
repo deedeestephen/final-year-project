@@ -207,7 +207,7 @@ class AnalysisCard extends StatelessWidget {
               ),
             ),
             if (done)
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: context.colors.textSecondary),
           ],
         ),
       ),
@@ -349,7 +349,7 @@ class _ReportView extends StatelessWidget {
                   '• ${aiModuleLabels[m] ?? m}  (${r.modelVersions[m] ?? '?'})',
                   style: clinicalValueStyle(
                     size: 13,
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                 ),
               if (r.modulesSkipped.isNotEmpty) ...[
@@ -433,7 +433,7 @@ class _ExplanationTile extends ConsumerWidget {
                 '${entry.key}: ${entry.value >= 0 ? '+' : ''}${entry.value.toStringAsFixed(2)}',
                 style: clinicalValueStyle(
                   size: 13,
-                  color: AppColors.textPrimary,
+                  color: context.colors.textPrimary,
                 ),
               ),
         ],

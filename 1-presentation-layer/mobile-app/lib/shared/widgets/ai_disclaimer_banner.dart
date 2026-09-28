@@ -33,14 +33,14 @@ class AiDisclaimerBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(AppSizes.md),
         decoration: BoxDecoration(
-          color: AppColors.warningBg,
+          color: context.colors.warningBg,
           borderRadius: const BorderRadius.all(AppRadii.control),
-          border: Border.all(color: AppColors.amber),
+          border: Border.all(color: context.colors.amber),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline, color: AppColors.warningText),
+            Icon(Icons.info_outline, color: context.colors.warningText),
             const SizedBox(width: AppSizes.sm),
             Expanded(
               child: Column(
@@ -50,7 +50,7 @@ class AiDisclaimerBanner extends StatelessWidget {
                     Text(
                       mockLabel,
                       style: text?.copyWith(
-                        color: AppColors.warningText,
+                        color: context.colors.warningText,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -58,7 +58,7 @@ class AiDisclaimerBanner extends StatelessWidget {
                   ],
                   Text(
                     disclaimer,
-                    style: text?.copyWith(color: AppColors.warningText),
+                    style: text?.copyWith(color: context.colors.warningText),
                   ),
                 ],
               ),

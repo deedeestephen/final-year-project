@@ -61,9 +61,9 @@ class LearnScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
-                      color: AppColors.textSecondary,
+                      color: context.colors.textSecondary,
                     ),
                   ],
                 ),

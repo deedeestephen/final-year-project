@@ -18,25 +18,25 @@ class OfflineBanner extends ConsumerWidget {
       liveRegion: true,
       child: Container(
         width: double.infinity,
-        color: AppColors.offlineBg,
+        color: context.colors.offlineBg,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSizes.md,
           vertical: AppSizes.sm,
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_outlined,
               size: 18,
-              color: AppColors.offlineText,
+              color: context.colors.offlineText,
             ),
             const SizedBox(width: AppSizes.sm),
             Expanded(
               child: Text(
                 message,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.offlineText),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: context.colors.offlineText,
+                ),
               ),
             ),
           ],

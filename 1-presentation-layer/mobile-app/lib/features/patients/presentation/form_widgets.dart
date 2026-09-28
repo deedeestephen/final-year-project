@@ -17,21 +17,21 @@ class SyntheticDataNotice extends StatelessWidget {
       padding: const EdgeInsets.all(AppSizes.md),
       margin: const EdgeInsets.only(bottom: AppSizes.md),
       decoration: BoxDecoration(
-        color: AppColors.infoBg,
+        color: context.colors.infoBg,
         borderRadius: const BorderRadius.all(AppRadii.control),
-        border: Border.all(color: AppColors.sky),
+        border: Border.all(color: context.colors.sky),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.science_outlined, color: AppColors.infoText),
+          Icon(Icons.science_outlined, color: context.colors.infoText),
           const SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(
               text,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.infoText),
+              ).textTheme.bodyMedium?.copyWith(color: context.colors.infoText),
             ),
           ),
         ],

@@ -11,6 +11,7 @@ abstract final class Routes {
   static const patients = '/patients';
   static const newPatient = '/patients/new';
   static const sync = '/sync';
+  static const settings = '/settings';
 
   // Clinician and pathologist server features (Phase 9).
   static const aiResults = '/ai-jobs';
@@ -77,6 +78,8 @@ String? resolveRedirect(SessionState session, String location) {
         return location == Routes.changePassword ? null : Routes.changePassword;
       }
       final home = Routes.home(user.primaryRole);
+      // Phone settings (appearance) are for every signed-in account.
+      if (location == Routes.settings) return null;
       if (_isClinicalRoute(location)) {
         if (!user.canSync) return home;
         if (_isEditRoute(location) && !user.canEditPatients) return home;

@@ -79,21 +79,21 @@ class FormErrorBox extends StatelessWidget {
         padding: const EdgeInsets.all(AppSizes.md),
         margin: const EdgeInsets.only(bottom: AppSizes.md),
         decoration: BoxDecoration(
-          color: AppColors.dangerBg,
-          border: Border.all(color: AppColors.dangerBorder),
+          color: context.colors.dangerBg,
+          border: Border.all(color: context.colors.dangerBorder),
           borderRadius: const BorderRadius.all(AppRadii.control),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.danger),
+            Icon(Icons.error_outline, color: context.colors.danger),
             const SizedBox(width: AppSizes.sm),
             Expanded(
               child: Text(
                 message,
                 style: Theme.of(
                   context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.danger),
+                ).textTheme.bodyMedium?.copyWith(color: context.colors.danger),
               ),
             ),
           ],

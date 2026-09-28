@@ -99,6 +99,14 @@ class ProfileScreen extends ConsumerWidget {
                   onTap: () => context.go(Routes.myPassword),
                 ),
                 ListTile(
+                  key: const Key('profile.settings'),
+                  leading: const Icon(Icons.settings_outlined),
+                  title: const Text('Settings'),
+                  subtitle: const Text('Light or dark appearance'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(Routes.settings),
+                ),
+                ListTile(
                   key: const Key('profile.signOut'),
                   leading: const Icon(Icons.logout),
                   title: const Text('Sign out'),
@@ -269,10 +277,10 @@ class MyReportsScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.description_outlined,
                 size: 40,
-                color: AppColors.textSecondary,
+                color: context.colors.textSecondary,
               ),
               const SizedBox(height: AppSizes.sm),
               Text(

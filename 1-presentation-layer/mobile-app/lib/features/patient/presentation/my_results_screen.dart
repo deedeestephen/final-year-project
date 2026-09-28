@@ -23,7 +23,10 @@ class MyResultsScreen extends ConsumerWidget {
     final profile = ref.watch(myProfileProvider).value;
     final notLinked = profile != null && profile.value == null;
     final theme = Theme.of(context);
-    final value = clinicalValueStyle(size: 16, color: AppColors.textPrimary);
+    final value = clinicalValueStyle(
+      size: 16,
+      color: context.colors.textPrimary,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('My results')),

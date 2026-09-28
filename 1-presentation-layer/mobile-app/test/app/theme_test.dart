@@ -26,21 +26,30 @@ void main() {
       expect(contrastRatio(Colors.white, Colors.white), closeTo(1, 0.01));
     });
 
-    for (final (name, fg, bg) in textColourPairs) {
-      test('$name reaches 4.5:1', () {
-        expect(contrastRatio(fg, bg), greaterThanOrEqualTo(4.5), reason: name);
-      });
+    for (final (mode, palette) in [
+      ('light', AppPalette.light),
+      ('dark', AppPalette.dark),
+    ]) {
+      for (final (name, fg, bg) in textColourPairs(palette)) {
+        test('$mode mode: $name reaches 4.5:1', () {
+          expect(
+            contrastRatio(fg, bg),
+            greaterThanOrEqualTo(4.5),
+            reason: '$mode: $name',
+          );
+        });
+      }
     }
 
     test(
       'bright accents are genuinely unsafe for body text, which is why they are icon-only',
       () {
         expect(
-          contrastRatio(AppColors.positive, AppColors.surface),
+          contrastRatio(AppPalette.light.positive, AppPalette.light.surface),
           lessThan(4.5),
         );
         expect(
-          contrastRatio(AppColors.amber, AppColors.surface),
+          contrastRatio(AppPalette.light.amber, AppPalette.light.surface),
           lessThan(4.5),
         );
       },

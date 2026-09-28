@@ -62,9 +62,9 @@ class ReviewQueueScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            const Icon(
+                            Icon(
                               Icons.chevron_right,
-                              color: AppColors.textSecondary,
+                              color: context.colors.textSecondary,
                             ),
                           ],
                         ),
@@ -209,7 +209,7 @@ class _ReviewSlideScreenState extends ConsumerState<ReviewSlideScreen> {
                       const SizedBox(height: AppSizes.sm),
                       Text(
                         _error!,
-                        style: const TextStyle(color: AppColors.danger),
+                        style: TextStyle(color: context.colors.danger),
                       ),
                     ],
                     const SizedBox(height: AppSizes.md),

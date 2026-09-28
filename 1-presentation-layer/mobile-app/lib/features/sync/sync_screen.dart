@@ -82,7 +82,7 @@ class SyncScreen extends ConsumerWidget {
                                     'Sync failed. It will try again.',
                           key: const Key('sync.error'),
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.amberText,
+                            color: context.colors.amberText,
                           ),
                         ),
                       ],
@@ -266,7 +266,7 @@ class _RejectedCard extends ConsumerWidget {
             Text(
               op.lastErrorMessage ?? 'The server did not accept this change.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.danger,
+                color: context.colors.danger,
               ),
             ),
             const SizedBox(height: AppSizes.sm),

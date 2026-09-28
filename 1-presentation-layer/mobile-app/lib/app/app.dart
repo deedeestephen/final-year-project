@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/sync/sync_providers.dart';
+import '../features/settings/appearance.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
+import 'theme/tokens.dart';
 
 class PcaApp extends ConsumerWidget {
   const PcaApp({super.key});
@@ -15,6 +17,8 @@ class PcaApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'PCa mHealth',
       theme: buildAppTheme(),
+      darkTheme: buildAppTheme(AppPalette.dark),
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
       debugShowCheckedModeBanner: false,
     );

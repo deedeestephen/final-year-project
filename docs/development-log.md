@@ -689,3 +689,15 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 
 **Not done in this session:** the device test was not run. The PC had 1.35 GB free and the emulator refused to start ("not enough disk space"); nothing was deleted to make room. It is ready to run once there is space (see [mobile.md](mobile.md)).
 
+## 2026-09-25: Dark mode, Settings, and a phone-permission review (owner request)
+
+**Built:**
+- **Palette:** `AppPalette`, a light and a dark colour set (`ThemeExtension`). The light values are unchanged.
+- **Screens:** every screen now reads `context.colors`, and no fixed colours remain outside the theme. The flag colours are the same in both modes.
+- **Settings screen:** Same as the phone / Light / Dark. Staff open it from the ☰ menu, patients from Profile. The choice is saved on the phone (`shared_preferences`) and kept after sign-out.
+- **Contrast:** the theme test now checks 20 text pairs in both modes (40 checks), all at WCAG AA 4.5:1 or better.
+- **Checked by eye:** light and dark renders of sign-in, home, patient, analyses, AI report and consent. They showed the home icons were too dim on dark; icons now use the lighter "link" green (the same colour as before in light mode).
+- **Permission review:** the built app requests only internet and network-state access (both granted automatically, no prompt). There is no camera, location, microphone, contacts or storage access, and files come from the system chooser. Documented in [mobile.md](mobile.md#phone-permissions).
+
+**Tests:** mobile 181 pass (new: 4 settings tests, 1 patient-profile test, 1 route test, and the dark-mode contrast checks).
+

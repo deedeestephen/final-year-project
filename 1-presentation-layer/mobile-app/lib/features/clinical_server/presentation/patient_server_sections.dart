@@ -54,7 +54,7 @@ class PatientServerSections extends ConsumerWidget {
             onTap: () => context.push(route),
             child: Row(
               children: [
-                Icon(icon, color: AppColors.primary),
+                Icon(icon, color: context.colors.linkText),
                 const SizedBox(width: AppSizes.md),
                 Expanded(
                   child: Column(
@@ -66,7 +66,7 @@ class PatientServerSections extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                Icon(Icons.chevron_right, color: context.colors.textSecondary),
               ],
             ),
           ),

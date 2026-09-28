@@ -49,7 +49,9 @@ class MessagesScreen extends ConsumerWidget {
           if (unread > 0)
             TextButton(
               key: const Key('messages.readAll'),
-              style: TextButton.styleFrom(foregroundColor: AppColors.onPrimary),
+              style: TextButton.styleFrom(
+                foregroundColor: context.colors.onPrimary,
+              ),
               onPressed: () => _run(context, ref, repo.markAllRead),
               child: const Text('Mark all read'),
             ),
@@ -129,7 +131,7 @@ class _MessageTile extends StatelessWidget {
           child: Icon(
             unread ? Icons.circle : Icons.circle_outlined,
             size: 12,
-            color: unread ? AppColors.sky : AppColors.borderStrong,
+            color: unread ? context.colors.sky : context.colors.borderStrong,
           ),
         ),
         title: Text(

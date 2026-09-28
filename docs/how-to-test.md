@@ -166,6 +166,21 @@ Sign in as the **clinician** and open **Patients**, then a synced patient. Below
   → *Reviewed*: **Gleason 4 + 3 = 7**, **ISUP grade group 3**. The server works out the grade group itself, and a slide can only be reviewed once.
 - [ ] **Who sees what.** The pathologist has no **Consent** card (only clinicians record consent), and the clinician has no **Review queue**.
 
+### Dark mode (Settings)
+
+- [ ] As the clinician, tap **☰**, then **Settings**.
+  → *Appearance* with three choices. **Same as the phone** is ticked.
+- [ ] Tap **Dark**.
+  → The whole app turns dark straight away. The top bar stays green, and the text is easy to read.
+- [ ] Open a patient and an AI report.
+  → The orange **DEVELOPMENT MOCK DATA** banner is still clearly visible.
+- [ ] Sign out.
+  → The Sign in page is still dark: the choice belongs to the phone, not the account.
+- [ ] Sign in as the **patient**, tap **Profile**, then **Settings**, and choose **Light**.
+  → Back to the light look.
+- [ ] **Same as the phone:** choose it, then pull down the phone's quick settings and turn on **Dark theme**.
+  → The app follows the phone.
+
 ### The admin website (users, roles and permissions, patient accounts)
 
 The admin page is now a **website on your PC**, not part of the phone app. `dev-up.ps1` starts it in a third window, *PCa mHealth admin website*. **Leave that window open**, just like the backend one.

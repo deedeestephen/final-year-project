@@ -20,11 +20,11 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = busy
-        ? const SizedBox.square(
+        ? SizedBox.square(
             dimension: 22,
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
-              color: AppColors.onPrimary,
+              color: context.colors.onPrimary,
               semanticsLabel: 'Working',
             ),
           )

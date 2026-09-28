@@ -477,4 +477,24 @@ void main() {
       await expectLater(repo.consents(), throwsA(isA<ApiException>()));
     });
   });
+
+  testWidgets('a patient opens Settings from Profile and chooses dark mode', (
+    tester,
+  ) async {
+    await signInAsPatient(tester);
+    await openTab(tester, 'Profile');
+    await tester.tapKey('profile.settings');
+    expect(find.text('Appearance'), findsOneWidget);
+    await tester.tapKey('settings.theme.dark');
+    final context = tester.element(find.text('Appearance'));
+    expect(Theme.of(context).brightness, Brightness.dark);
+    // Back to the patient app, still dark.
+    await tester.pageBack();
+    await settle(tester);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(
+      Theme.of(tester.element(find.byType(NavigationBar))).brightness,
+      Brightness.dark,
+    );
+  });
 }
