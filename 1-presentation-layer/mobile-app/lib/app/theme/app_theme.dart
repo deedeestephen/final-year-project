@@ -121,6 +121,10 @@ ThemeData buildAppTheme([AppPalette p = AppPalette.light]) {
       outlineVariant: p.border,
     ),
     scaffoldBackgroundColor: p.canvas,
+    // Soft, tinted shadows (not the default black) for every raised surface.
+    shadowColor: p.brightness == Brightness.dark
+        ? const Color(0x66000000)
+        : p.shadow,
     textTheme: text,
     fontFamily: AppFonts.body,
     materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -129,15 +133,27 @@ ThemeData buildAppTheme([AppPalette p = AppPalette.light]) {
       backgroundColor: p.primary,
       foregroundColor: p.onPrimary,
       elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
       titleTextStyle: text.titleLarge?.copyWith(color: p.onPrimary),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: AppRadii.card),
+      ),
     ),
+    // Soft shadow in light mode; in dark mode the border carries the edge.
     cardTheme: CardThemeData(
       color: p.surface,
-      elevation: 0,
+      elevation: p.brightness == Brightness.dark ? 0 : 3,
+      shadowColor: p.shadow,
+      surfaceTintColor: Colors.transparent,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(AppRadii.card),
-        side: BorderSide(color: p.border),
+        borderRadius: const BorderRadius.all(AppRadii.card),
+        side: BorderSide(
+          color: p.brightness == Brightness.dark
+              ? p.border
+              : p.border.withAlpha(0x99),
+        ),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -191,13 +207,59 @@ ThemeData buildAppTheme([AppPalette p = AppPalette.light]) {
       backgroundColor: p.primary,
       foregroundColor: p.onPrimary,
       elevation: p.brightness == Brightness.dark ? 1 : 3,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(18)),
+      ),
     ),
-    drawerTheme: DrawerThemeData(backgroundColor: p.surface),
-    dialogTheme: DialogThemeData(backgroundColor: p.surface),
-    bottomSheetTheme: BottomSheetThemeData(backgroundColor: p.surface),
+    drawerTheme: DrawerThemeData(
+      backgroundColor: p.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: AppRadii.card),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: p.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(AppRadii.card),
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: p.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: AppRadii.card),
+      ),
+    ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: p.surface,
-      indicatorColor: p.surfaceMuted,
+      surfaceTintColor: Colors.transparent,
+      elevation: 3,
+      shadowColor: p.shadow,
+      height: 72,
+      indicatorColor: AccentTone.green.background(p),
+      indicatorShape: const StadiumBorder(),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected)
+              ? AccentTone.green.foreground(p)
+              : p.textSecondary,
+        ),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => text.labelMedium?.copyWith(
+          color: states.contains(WidgetState.selected)
+              ? p.textPrimary
+              : p.textSecondary,
+        ),
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: p.surfaceMuted,
+      side: BorderSide(color: p.border),
+      shape: const StadiumBorder(),
+      labelStyle: text.labelMedium?.copyWith(color: p.textPrimary),
     ),
     listTileTheme: ListTileThemeData(
       iconColor: p.textSecondary,
@@ -210,6 +272,9 @@ ThemeData buildAppTheme([AppPalette p = AppPalette.light]) {
       contentTextStyle: text.bodyMedium?.copyWith(color: p.canvas),
       actionTextColor: p.canvas,
       behavior: SnackBarBehavior.floating,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(AppRadii.control),
+      ),
     ),
   );
 }

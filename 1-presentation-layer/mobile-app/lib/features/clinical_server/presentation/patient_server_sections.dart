@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../core/db/app_database.dart';
-import '../../../shared/widgets/clinical_card.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../auth/application/session_controller.dart';
 import 'server_common.dart';
 
@@ -21,11 +21,12 @@ class PatientServerSections extends ConsumerWidget {
     if (patient.serverId == null) return const NotSyncedYetCard();
     final session = ref.watch(sessionControllerProvider);
     final isClinician = session is SignedIn && session.user.canEditPatients;
-    final items = <(Key, IconData, String, String, String)>[
+    final items = <(Key, IconData, AccentTone, String, String, String)>[
       if (isClinician)
         (
           const Key('patient.consents'),
           Icons.verified_user_outlined,
+          AccentTone.green,
           'Consent',
           'Record or withdraw the patient\'s consent, including for AI analysis',
           Routes.consents(patient.id),
@@ -33,6 +34,7 @@ class PatientServerSections extends ConsumerWidget {
       (
         const Key('patient.imaging'),
         Icons.image_outlined,
+        AccentTone.blue,
         'Images and slides',
         'MRI, ultrasound and CT images; histopathology slides',
         Routes.imaging(patient.id),
@@ -40,37 +42,24 @@ class PatientServerSections extends ConsumerWidget {
       (
         const Key('patient.ai'),
         Icons.analytics_outlined,
+        AccentTone.purple,
         'AI analysis',
         'Ask for an analysis and read the report',
         Routes.analyses(patient.id),
       ),
     ];
-    final theme = Theme.of(context);
     return Column(
       children: [
-        for (final (key, icon, title, description, route) in items) ...[
-          ClinicalCard(
+        for (final (key, icon, tone, title, description, route) in items) ...[
+          ActionTile(
             key: key,
+            icon: icon,
+            tone: tone,
+            title: title,
+            description: description,
             onTap: () => context.push(route),
-            child: Row(
-              children: [
-                Icon(icon, color: context.colors.linkText),
-                const SizedBox(width: AppSizes.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 2),
-                      Text(description, style: theme.textTheme.bodyMedium),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: context.colors.textSecondary),
-              ],
-            ),
           ),
-          const SizedBox(height: AppSizes.sm),
+          const SizedBox(height: AppSizes.sm + 4),
         ],
       ],
     );

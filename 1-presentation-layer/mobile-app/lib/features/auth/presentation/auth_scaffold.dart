@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../shared/widgets/national_stripe.dart';
 import '../../../shared/widgets/offline_banner.dart';
 
-/// Layout shared by the signed-out screens: offline strip, centred column
-/// with a readable maximum width, and a research-prototype footer.
+/// Layout shared by the signed-out screens: a green gradient header with the
+/// app's name and the screen title, the offline strip, then the form in a
+/// readable column and a research-prototype footer.
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
     super.key,
@@ -24,40 +26,168 @@ class AuthScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: showBack ? AppBar() : null,
-      body: SafeArea(
+      body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const NationalStripe(),
+            _AuthHeader(title: title, subtitle: subtitle, showBack: showBack),
             const OfflineBanner(),
-            Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSizes.lg),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(title, style: theme.textTheme.headlineSmall),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: AppSizes.sm),
-                          Text(subtitle!, style: theme.textTheme.bodyLarge),
-                        ],
-                        const SizedBox(height: AppSizes.lg),
-                        child,
-                        const SizedBox(height: AppSizes.xl),
-                        Text(
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizes.lg,
+                    AppSizes.lg,
+                    AppSizes.lg,
+                    AppSizes.lg,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      child,
+                      const SizedBox(height: AppSizes.xl),
+                      SafeArea(
+                        top: false,
+                        child: Text(
                           NationalStripe.notOfficial,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall,
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "PCa" in a white rounded square: the app's mark (not an emblem).
+class AppMark extends StatelessWidget {
+  const AppMark({super.key, this.size = 44});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(AppRadii.tile),
+        ),
+        child: Text(
+          'PCa',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            // Fixed brand green: the mark is always on white.
+            color: AppPalette.light.primary,
+            fontSize: size * 0.34,
+            fontWeight: FontWeight.w800,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthHeader extends StatelessWidget {
+  const _AuthHeader({
+    required this.title,
+    required this.subtitle,
+    required this.showBack,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool showBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.colors;
+    final text = Theme.of(context).textTheme;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(bottom: AppRadii.hero),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [p.heroStart, p.heroEnd],
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 488),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSizes.lg,
+                        showBack ? AppSizes.xs : AppSizes.xl,
+                        AppSizes.lg,
+                        AppSizes.xl,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (showBack)
+                            Transform.translate(
+                              offset: const Offset(-12, 0),
+                              child: BackButton(color: p.onPrimary),
+                            ),
+                          Row(
+                            children: [
+                              const AppMark(),
+                              const SizedBox(width: AppSizes.md - 4),
+                              Text(
+                                'PCa mHealth',
+                                style: text.titleLarge?.copyWith(
+                                  color: p.onPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSizes.lg),
+                          Semantics(
+                            header: true,
+                            child: Text(
+                              title,
+                              style: text.headlineMedium?.copyWith(
+                                color: p.onPrimary,
+                              ),
+                            ),
+                          ),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: AppSizes.sm),
+                            Text(
+                              subtitle!,
+                              style: text.bodyLarge?.copyWith(
+                                color: p.onHeroMuted,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+            const NationalStripe(height: 4),
           ],
         ),
       ),

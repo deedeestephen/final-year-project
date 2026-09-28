@@ -796,3 +796,47 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 - `contrast.test.ts` gains 6 pairs for the sidebar and hero card (all at least 4.5:1), plus a 3:1 check for the blue and orange chart lines.
 
 **Checked by eye:** screenshots in headless Chrome at 1440 px and 390 px, with synthetic answers served to the page (no real accounts). Two fixes came out of this: the end label "5" sat on the blue line (labels now go to the right of the line ends), and the date labels overlapped on a phone (now about one label every 64 px). Node's date formatter writes "Sept" where browsers write "Sep", so the charts now use fixed month names.
+
+## 2026-09-28: Phone app redesign: "modern health app" (owner request)
+
+**Request:** "my mobile application design … looks too plain i want a redesign to make it more attractive and better". The owner chose **Modern health app** for **everything** (all screens, light and dark). The decision is recorded in [ADR-008](decisions/ADR-008-modern-health-app-look.md).
+
+**Built:**
+- **Tokens:**
+  - Gradient colours `heroStart` / `heroEnd`, `onHeroMuted` and a soft `shadow` in both palettes.
+  - `AccentTone` (green, blue, orange, purple, teal, grey), with separate light and dark colours.
+  - Radii: cards 20 px, controls 12 px, the header 28 px.
+- **Theme:**
+  - Soft tinted shadows in light mode, borders in dark mode.
+  - Rounded app bars, dialogs, sheets and drawer.
+  - A pill indicator in the tab bar, a rounded FAB, and a tinted shadow colour for every raised surface (no black halos).
+- **Shared pieces (`shared/widgets/hero_header.dart`):**
+  - `HeroHeader`, `InitialsAvatar`, `ActionTile`, `TintedIcon`, `SectionTitle`, `SoftChip`
+  - the helpers `initialsOf`, `longDate` (no locale data needed) and `toneFor` (a stable avatar colour, never orange)
+- **Screens:**
+  - The staff homes: gradient header, then "Your work" and "Coming later".
+  - The patient home. The sign-in, sign-up and password screens (gradient header with the app mark).
+  - The drawer (avatar). The patient list (avatars, badge under the details).
+  - The patient page: avatar header, and coloured tiles for consent, images and AI.
+  - Profile (avatar, and coloured icons in a grouped card). Learn (book icons).
+  - Every other screen picks up the new theme.
+
+**Kept:**
+- Every widget key, and the "Welcome, …" and "Hello, …" texts that the tests and the device test look for.
+- The AI banner first, with the mock label, and neutral colours for clinical values.
+- Body text of 15 px or more and 48 dp targets.
+
+**Tests:**
+- `theme_test.dart` now checks 30 pairs per mode (60 in all): the gradient text and every tile tone.
+- `widgets_test.dart` has 6 new tests: initials, long date, stable avatar colour without orange, tone colours per mode, the header's content and decoration, and tile tap and badge.
+- Mobile total: 208 tests pass.
+
+**Checked by eye:**
+- Renders at Galaxy S9+ size (1080 × 2220), with the real fonts and synthetic data only, in light and dark mode:
+  - sign-in, the clinician, pathologist and patient homes, the drawer, settings, sync, the registration form, the patient list and page
+  - consent, the AI report, and the four patient tabs
+- Fixes from this review:
+  - The Register button had a heavy black shadow; shadows are now tinted.
+  - The sync badge squeezed patient names; it moved under the details.
+  - Orange avatars next to the amber sync badge looked like a warning; orange was dropped from avatars.
+- The render scripts stay local (`tool/render/`), because pixel comparisons differ between machines.

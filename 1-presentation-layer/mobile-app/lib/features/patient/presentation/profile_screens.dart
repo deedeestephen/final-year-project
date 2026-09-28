@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/clinical_card.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../auth/application/session_controller.dart';
@@ -47,10 +48,23 @@ class ProfileScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           OfflineStamp(cached: cached),
-                          Text(
-                            '${p.givenName} ${p.familyName}',
-                            style: theme.textTheme.titleLarge,
+                          Row(
+                            children: [
+                              InitialsAvatar(
+                                name: '${p.givenName} ${p.familyName}',
+                                size: 56,
+                              ),
+                              const SizedBox(width: AppSizes.md - 4),
+                              Expanded(
+                                child: Text(
+                                  '${p.givenName} ${p.familyName}',
+                                  style: theme.textTheme.titleLarge,
+                                ),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: AppSizes.md - 4),
+                          Divider(color: context.colors.border),
                           const SizedBox(height: AppSizes.sm),
                           ValueRow('Record number', p.mrn),
                           ValueRow('Date of birth', p.dateOfBirth),
@@ -75,43 +89,70 @@ class ProfileScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
                     child: ValueRow('Account email', user.email),
                   ),
-                const Divider(),
-                ListTile(
-                  key: const Key('profile.consents'),
-                  leading: const Icon(Icons.verified_user_outlined),
-                  title: const Text('My consents'),
-                  subtitle: const Text('See or withdraw what you agreed to'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go(Routes.myConsents),
-                ),
-                ListTile(
-                  key: const Key('profile.reports'),
-                  leading: const Icon(Icons.description_outlined),
-                  title: const Text('My reports'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go(Routes.myReports),
-                ),
-                ListTile(
-                  key: const Key('profile.password'),
-                  leading: const Icon(Icons.password_outlined),
-                  title: const Text('Change password'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go(Routes.myPassword),
-                ),
-                ListTile(
-                  key: const Key('profile.settings'),
-                  leading: const Icon(Icons.settings_outlined),
-                  title: const Text('Settings'),
-                  subtitle: const Text('Light or dark appearance'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push(Routes.settings),
-                ),
-                ListTile(
-                  key: const Key('profile.signOut'),
-                  leading: const Icon(Icons.logout),
-                  title: const Text('Sign out'),
-                  onTap: () =>
-                      ref.read(sessionControllerProvider.notifier).signOut(),
+                Card(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        key: const Key('profile.consents'),
+                        leading: const TintedIcon(
+                          Icons.verified_user_outlined,
+                          size: 40,
+                        ),
+                        title: const Text('My consents'),
+                        subtitle: const Text(
+                          'See or withdraw what you agreed to',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go(Routes.myConsents),
+                      ),
+                      ListTile(
+                        key: const Key('profile.reports'),
+                        leading: const TintedIcon(
+                          Icons.description_outlined,
+                          tone: AccentTone.blue,
+                          size: 40,
+                        ),
+                        title: const Text('My reports'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go(Routes.myReports),
+                      ),
+                      ListTile(
+                        key: const Key('profile.password'),
+                        leading: const TintedIcon(
+                          Icons.password_outlined,
+                          tone: AccentTone.purple,
+                          size: 40,
+                        ),
+                        title: const Text('Change password'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go(Routes.myPassword),
+                      ),
+                      ListTile(
+                        key: const Key('profile.settings'),
+                        leading: const TintedIcon(
+                          Icons.settings_outlined,
+                          tone: AccentTone.teal,
+                          size: 40,
+                        ),
+                        title: const Text('Settings'),
+                        subtitle: const Text('Light or dark appearance'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(Routes.settings),
+                      ),
+                      ListTile(
+                        key: const Key('profile.signOut'),
+                        leading: const TintedIcon(
+                          Icons.logout,
+                          tone: AccentTone.grey,
+                          size: 40,
+                        ),
+                        title: const Text('Sign out'),
+                        onTap: () => ref
+                            .read(sessionControllerProvider.notifier)
+                            .signOut(),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

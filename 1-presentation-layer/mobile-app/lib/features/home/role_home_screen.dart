@@ -6,8 +6,7 @@ import '../../app/routes.dart';
 import '../../core/config/app_env.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/providers.dart';
-import '../../shared/widgets/clinical_card.dart';
-import '../../shared/widgets/national_stripe.dart';
+import '../../shared/widgets/hero_header.dart';
 import '../../shared/widgets/offline_banner.dart';
 import '../auth/application/session_controller.dart';
 import '../auth/domain/current_user.dart';
@@ -23,10 +22,14 @@ class HomeDestination {
     this.phase,
     this.route,
     this.later = false,
+    this.tone = AccentTone.green,
   });
   final String title;
   final String description;
   final IconData icon;
+
+  /// Tells the tiles apart; it has no clinical meaning.
+  final AccentTone tone;
 
   /// The build phase that delivers it; null when it is available now.
   final int? phase;
@@ -34,6 +37,14 @@ class HomeDestination {
 
   /// Planned, but not scheduled in a build phase yet.
   final bool later;
+
+  bool get available => phase == null && !later;
+
+  String? get badge => phase != null
+      ? 'Coming in build phase $phase'
+      : later
+      ? 'Planned for a later version'
+      : null;
 }
 
 /// Staff homes. Patients have their own tabbed app (features/patient).
@@ -50,12 +61,14 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'Choose a patient, then add PSA, DRE and PI-RADS',
       Icons.add_task_outlined,
       route: Routes.patients,
+      tone: AccentTone.blue,
     ),
     HomeDestination(
       'AI results to review',
       'Recent AI analyses in your facility (decision support only)',
       Icons.fact_check_outlined,
       route: Routes.aiResults,
+      tone: AccentTone.purple,
     ),
     // The assistant is planned in docs/chatbot-plan.md.
     HomeDestination(
@@ -63,12 +76,14 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'Guidelines and references for clinicians',
       Icons.chat_outlined,
       phase: 13,
+      tone: AccentTone.teal,
     ),
     HomeDestination(
       'Referrals',
       'Referrals and follow-up',
       Icons.send_outlined,
       later: true,
+      tone: AccentTone.orange,
     ),
   ],
   UserRole.pathologist: [
@@ -77,6 +92,7 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'Slides waiting for your Gleason review',
       Icons.inbox_outlined,
       route: Routes.review,
+      tone: AccentTone.purple,
     ),
     HomeDestination(
       'Patients',
@@ -89,6 +105,7 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'Recent AI analyses in your facility (decision support only)',
       Icons.description_outlined,
       route: Routes.aiResults,
+      tone: AccentTone.blue,
     ),
   ],
   UserRole.admin: [
@@ -97,6 +114,7 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'Manage users, roles and permissions, and patient accounts in the '
           'PCa mHealth admin portal on a computer (${AppEnv.adminPortalUrl}).',
       Icons.computer_outlined,
+      tone: AccentTone.blue,
     ),
   ],
 };
@@ -111,71 +129,52 @@ class RoleHomeScreen extends ConsumerWidget {
     final session = ref.watch(sessionControllerProvider);
     if (session is! SignedIn) return const SizedBox.shrink();
     final user = session.user;
-    final theme = Theme.of(context);
     final destinations = roleDestinations[role]!;
+    final now = destinations.where((d) => d.available).toList();
+    final upcoming = destinations.where((d) => !d.available).toList();
+
+    Widget tile(HomeDestination d) => Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.sm + 4),
+      child: ActionTile(
+        icon: d.icon,
+        title: d.title,
+        description: d.description,
+        tone: d.available ? d.tone : AccentTone.grey,
+        badge: d.badge,
+        onTap: d.route == null ? null : () => context.push(d.route!),
+      ),
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(role.label),
-        actions: [if (user.canSync) const DeviceSyncButton()],
-      ),
       drawer: _HomeDrawer(user: user, current: role),
       body: Column(
         children: [
-          const NationalStripe(height: 4),
+          HeroHeader(
+            title: role.label,
+            greeting: 'Welcome, ${user.displayName}',
+            subtitle: user.email,
+            name: user.displayName,
+            leading: DrawerButton(
+              style: IconButton.styleFrom(
+                foregroundColor: context.colors.onPrimary,
+              ),
+            ),
+            actions: [if (user.canSync) const DeviceSyncButton()],
+          ),
           const OfflineBanner(),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(AppSizes.md),
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.md,
+                AppSizes.sm,
+                AppSizes.md,
+                AppSizes.lg,
+              ),
               children: [
-                Text(
-                  'Welcome, ${user.displayName}',
-                  style: theme.textTheme.titleLarge,
-                ),
-                const SizedBox(height: AppSizes.xs),
-                Text(user.email, style: theme.textTheme.bodyMedium),
-                const SizedBox(height: AppSizes.lg),
-                for (final d in destinations) ...[
-                  ClinicalCard(
-                    onTap: d.route == null
-                        ? null
-                        : () => context.push(d.route!),
-                    child: Row(
-                      children: [
-                        Icon(d.icon, color: context.colors.linkText),
-                        const SizedBox(width: AppSizes.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(d.title, style: theme.textTheme.titleMedium),
-                              const SizedBox(height: 2),
-                              Text(
-                                d.description,
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                              if (d.phase != null || d.later) ...[
-                                const SizedBox(height: AppSizes.xs),
-                                Text(
-                                  d.phase != null
-                                      ? 'Coming in build phase ${d.phase}'
-                                      : 'Planned for a later version',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        if (d.route != null)
-                          Icon(
-                            Icons.chevron_right,
-                            color: context.colors.textSecondary,
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.sm),
-                ],
+                if (now.isNotEmpty) const SectionTitle('Your work'),
+                for (final d in now) tile(d),
+                if (upcoming.isNotEmpty) const SectionTitle('Coming later'),
+                for (final d in upcoming) tile(d),
               ],
             ),
           ),
@@ -233,11 +232,22 @@ class _HomeDrawer extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(AppSizes.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(user.displayName, style: theme.textTheme.titleMedium),
-                  Text(user.email, style: theme.textTheme.bodySmall),
+                  InitialsAvatar(name: user.displayName),
+                  const SizedBox(width: AppSizes.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.displayName,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        Text(user.email, style: theme.textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

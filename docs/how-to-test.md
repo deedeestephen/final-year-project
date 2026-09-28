@@ -166,6 +166,19 @@ Sign in as the **clinician** and open **Patients**, then a synced patient. Below
   → *Reviewed*: **Gleason 4 + 3 = 7**, **ISUP grade group 3**. The server works out the grade group itself, and a slide can only be reviewed once.
 - [ ] **Who sees what.** The pathologist has no **Consent** card (only clinicians record consent), and the clinician has no **Review queue**.
 
+### The new look of the phone app
+
+- [ ] **Sign-in page.** A green header with a white **PCa** square and **PCa mHealth**, then **Sign in**. A thin flag-coloured band follows its rounded bottom edge.
+- [ ] **Clinician home.** Sign in as the clinician.
+  → A green gradient header with **☰**, **Clinician** and the sync badge, then today's date, **Welcome, Demo Clinician** and a round **DC** badge.
+  → Under **Your work**: **Patients** (green), **New screening** (blue), **AI results to review** (purple), each with a coloured icon square. Under **Coming later**: grey tiles with a *Coming in build phase 13* label.
+- [ ] **Colours never mean good or bad.** Open a patient's AI report.
+  → The orange **DEVELOPMENT MOCK DATA** banner comes first, and the numbers are plain dark text: no green or red on results.
+- [ ] **Patients.** The list shows a coloured round badge with each patient's initials, and the sync label under the details.
+- [ ] **Patient app.** Sign in as the patient.
+  → **Hello, …** in the green header. **My results** and **Messages** are coloured tiles. The bottom tabs show the current tab as a pale-green pill.
+- [ ] **Dark mode.** Settings → **Dark**. Everything above keeps its shape, and the text stays easy to read.
+
 ### Dark mode (Settings)
 
 - [ ] As the clinician, tap **☰**, then **Settings**.

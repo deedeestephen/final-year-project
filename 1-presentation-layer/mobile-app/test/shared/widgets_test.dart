@@ -6,6 +6,7 @@ import 'package:pca_mhealth/core/network/api_exception.dart';
 import 'package:pca_mhealth/shared/widgets/ai_disclaimer_banner.dart';
 import 'package:pca_mhealth/shared/widgets/async_state_view.dart';
 import 'package:pca_mhealth/shared/widgets/clinical_card.dart';
+import 'package:pca_mhealth/shared/widgets/hero_header.dart';
 import 'package:pca_mhealth/shared/widgets/national_stripe.dart';
 import 'package:pca_mhealth/shared/widgets/primary_button.dart';
 import 'package:pca_mhealth/shared/widgets/sync_status_badge.dart';
@@ -169,5 +170,96 @@ void main() {
     for (final box in find.byType(ColoredBox).evaluate()) {
       expect(tester.getSize(find.byWidget(box.widget)).height, 6);
     }
+  });
+
+  group('modern look', () {
+    test('initials take the first letters of up to two words', () {
+      expect(initialsOf('Demo Clinician'), 'DC');
+      expect(initialsOf('  SYNTHETIC  Patient 001 '), 'SP');
+      expect(initialsOf('Admin'), 'A');
+      expect(initialsOf(''), '');
+    });
+
+    test('the long date needs no locale data', () {
+      expect(longDate(DateTime(2026, 9, 28)), 'Monday 28 September');
+      expect(longDate(DateTime(2027, 1, 3)), 'Sunday 3 January');
+    });
+
+    test('a name always gets the same avatar colour, never orange', () {
+      expect(toneFor('p-123'), toneFor('p-123'));
+      final seen = {for (var i = 0; i < 50; i++) toneFor('patient-$i')};
+      expect(seen, isNot(contains(AccentTone.orange)));
+      expect(seen.length, greaterThan(1));
+    });
+
+    test('tile colours differ between light and dark mode', () {
+      for (final t in AccentTone.values) {
+        expect(
+          t.background(AppPalette.light),
+          isNot(t.background(AppPalette.dark)),
+        );
+      }
+    });
+
+    testWidgets('the hero header shows the date, greeting and initials', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        HeroHeader(
+          title: 'Clinician',
+          greeting: 'Welcome, Demo Clinician',
+          subtitle: 'clinician@demo.pca-mhealth.test',
+          name: 'Demo Clinician',
+          date: DateTime(2026, 9, 28),
+          actions: const [Text('Synced')],
+        ),
+      );
+      expect(find.text('Clinician'), findsOneWidget);
+      expect(find.text('Monday 28 September'), findsOneWidget);
+      expect(find.text('Welcome, Demo Clinician'), findsOneWidget);
+      expect(find.text('DC'), findsOneWidget);
+      expect(find.text('Synced'), findsOneWidget);
+      // The flag band follows the header.
+      expect(find.byType(NationalStripe), findsOneWidget);
+      // Initials are decoration: the name is written next to them.
+      expect(
+        find.ancestor(
+          of: find.text('DC'),
+          matching: find.byType(ExcludeSemantics),
+        ),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('an action tile opens on tap and shows its badge', (
+      tester,
+    ) async {
+      var opened = 0;
+      await pump(
+        tester,
+        ActionTile(
+          icon: Icons.people_outline,
+          title: 'Patients',
+          description: 'Register and find patients',
+          onTap: () => opened++,
+        ),
+      );
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(find.text('Patients'));
+      expect(opened, 1);
+
+      await pump(
+        tester,
+        const ActionTile(
+          icon: Icons.chat_outlined,
+          title: 'Ask the assistant',
+          badge: 'Coming in build phase 13',
+        ),
+      );
+      expect(find.text('Coming in build phase 13'), findsOneWidget);
+      // Nothing to open yet, so no arrow.
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+    });
   });
 }

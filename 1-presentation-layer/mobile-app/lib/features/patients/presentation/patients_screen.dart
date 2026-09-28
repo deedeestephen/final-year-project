@@ -7,6 +7,7 @@ import '../../../app/theme/tokens.dart';
 import '../../../core/db/app_database.dart';
 import '../../../shared/widgets/async_state_view.dart';
 import '../../../shared/widgets/clinical_card.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../../shared/widgets/sync_status_badge.dart';
 import '../../auth/application/session_controller.dart';
@@ -110,6 +111,12 @@ class _PatientTile extends StatelessWidget {
       onTap: () => context.push(Routes.patient(p.id)),
       child: Row(
         children: [
+          InitialsAvatar(
+            name: '${p.givenName} ${p.familyName}',
+            size: 44,
+            tone: toneFor(p.id),
+          ),
+          const SizedBox(width: AppSizes.md - 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,13 +130,17 @@ class _PatientTile extends StatelessWidget {
                   '${p.mrn ?? 'MRN after sync'} · '
                   '${ageInYears(p.dateOfBirth, DateTime.now())} yrs · '
                   '${regionLabels[p.regionClass] ?? p.regionClass}',
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
                 ),
+                const SizedBox(height: AppSizes.sm),
+                SyncStatusBadge(status: rowSyncStatus(p.syncState)),
               ],
             ),
           ),
           const SizedBox(width: AppSizes.sm),
-          SyncStatusBadge(status: rowSyncStatus(p.syncState)),
+          Icon(Icons.chevron_right, color: context.colors.textSecondary),
         ],
       ),
     );

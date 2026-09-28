@@ -49,6 +49,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.infoBg,
     required this.offlineText,
     required this.offlineBg,
+    required this.heroStart,
+    required this.heroEnd,
+    required this.onHeroMuted,
+    required this.shadow,
   });
 
   final Brightness brightness;
@@ -82,6 +86,17 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color offlineText;
   final Color offlineBg;
 
+  /// The green gradient behind the home greeting and the sign-in header
+  /// (white text on both ends).
+  final Color heroStart;
+  final Color heroEnd;
+
+  /// Smaller text on the hero gradient.
+  final Color onHeroMuted;
+
+  /// Soft card shadow (transparent in dark mode, where borders carry depth).
+  final Color shadow;
+
   static const light = AppPalette(
     brightness: Brightness.light,
     primary: Color(0xFF146E00),
@@ -113,6 +128,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     infoBg: Color(0xFFEEF7FC),
     offlineText: Color(0xFF3A4336),
     offlineBg: Color(0xFFEEF1EC),
+    heroStart: Color(0xFF146E00),
+    heroEnd: Color(0xFF0A4F3A),
+    onHeroMuted: Color(0xFFE2F5DC),
+    shadow: Color(0x1A1B3A12),
   );
 
   static const dark = AppPalette(
@@ -146,6 +165,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     infoBg: Color(0xFF0F2A3A),
     offlineText: Color(0xFFD0D8CC),
     offlineBg: Color(0xFF252C24),
+    heroStart: Color(0xFF1C6E0D),
+    heroEnd: Color(0xFF0C3A2B),
+    onHeroMuted: Color(0xFFE2F5DC),
+    shadow: Color(0x00000000),
   );
 
   @override
@@ -186,8 +209,65 @@ class AppPalette extends ThemeExtension<AppPalette> {
       infoBg: l(infoBg, other.infoBg),
       offlineText: l(offlineText, other.offlineText),
       offlineBg: l(offlineBg, other.offlineBg),
+      heroStart: l(heroStart, other.heroStart),
+      heroEnd: l(heroEnd, other.heroEnd),
+      onHeroMuted: l(onHeroMuted, other.onHeroMuted),
+      shadow: l(shadow, other.shadow),
     );
   }
+}
+
+/// Colourful icon backgrounds for navigation tiles. They only tell tiles
+/// apart; they never mean good or bad, and are not used on clinical results.
+enum AccentTone {
+  green(
+    Color(0xFFE5F4E0),
+    Color(0xFF146E00),
+    Color(0xFF1D3A18),
+    Color(0xFF8EDB7C),
+  ),
+  blue(
+    Color(0xFFE2EFFA),
+    Color(0xFF0B5E9E),
+    Color(0xFF132F47),
+    Color(0xFF8CCBF5),
+  ),
+  orange(
+    Color(0xFFFFEEDC),
+    Color(0xFF9A4500),
+    Color(0xFF3B2912),
+    Color(0xFFFFB870),
+  ),
+  purple(
+    Color(0xFFEFE8FA),
+    Color(0xFF5F37A3),
+    Color(0xFF2C2345),
+    Color(0xFFC9B2F5),
+  ),
+  teal(
+    Color(0xFFDDF3EF),
+    Color(0xFF0A665E),
+    Color(0xFF10352F),
+    Color(0xFF72D8C9),
+  ),
+  grey(
+    Color(0xFFEEF1EC),
+    Color(0xFF45503F),
+    Color(0xFF252C24),
+    Color(0xFFC3CCBF),
+  );
+
+  const AccentTone(this._lightBg, this._lightFg, this._darkBg, this._darkFg);
+
+  final Color _lightBg;
+  final Color _lightFg;
+  final Color _darkBg;
+  final Color _darkFg;
+
+  Color background(AppPalette p) =>
+      p.brightness == Brightness.dark ? _darkBg : _lightBg;
+  Color foreground(AppPalette p) =>
+      p.brightness == Brightness.dark ? _darkFg : _lightFg;
 }
 
 abstract final class AppFonts {
@@ -214,8 +294,10 @@ abstract final class AppSizes {
 
 abstract final class AppRadii {
   static const chip = Radius.circular(999);
-  static const control = Radius.circular(8); // inputs, buttons
-  static const card = Radius.circular(16); // clinical cards, dialogs
+  static const control = Radius.circular(12); // inputs, buttons
+  static const card = Radius.circular(20); // cards, dialogs
+  static const tile = Radius.circular(14); // icon squares on tiles
+  static const hero = Radius.circular(28); // bottom of the home header
   static const data = Radius.circular(4); // tables, lab values
 }
 
@@ -242,6 +324,12 @@ List<(String, Color, Color)> textColourPairs(AppPalette p) => [
   ('info on info background', p.infoText, p.infoBg),
   ('offline on offline background', p.offlineText, p.offlineBg),
   ('snackbar text', p.canvas, p.textPrimary),
+  ('greeting on hero, light end', p.onPrimary, p.heroStart),
+  ('greeting on hero, dark end', p.onPrimary, p.heroEnd),
+  ('small text on hero, light end', p.onHeroMuted, p.heroStart),
+  ('small text on hero, dark end', p.onHeroMuted, p.heroEnd),
+  for (final t in AccentTone.values)
+    ('${t.name} tile icon and label', t.foreground(p), t.background(p)),
 ];
 
 extension AppPaletteContext on BuildContext {

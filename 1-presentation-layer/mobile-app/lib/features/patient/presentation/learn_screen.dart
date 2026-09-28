@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/clinical_card.dart';
 import '../domain/education.dart';
 
@@ -46,6 +47,12 @@ class LearnScreen extends ConsumerWidget {
                 onTap: () => context.go(Routes.article(a.id)),
                 child: Row(
                   children: [
+                    const TintedIcon(
+                      Icons.menu_book_outlined,
+                      tone: AccentTone.teal,
+                      size: 44,
+                    ),
+                    const SizedBox(width: AppSizes.md - 4),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

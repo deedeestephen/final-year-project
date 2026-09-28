@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../shared/widgets/clinical_card.dart';
-import '../../../shared/widgets/national_stripe.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../auth/application/session_controller.dart';
 import '../application/patient_providers.dart';
@@ -63,22 +63,26 @@ class MyHomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
       body: Column(
         children: [
-          const NationalStripe(height: 4),
+          HeroHeader(
+            title: 'Home',
+            greeting: 'Hello, ${user?.displayName ?? ''}',
+            subtitle: 'Your screening, your messages',
+            name: user?.displayName,
+          ),
           const OfflineBanner(),
           Expanded(
             child: RefreshIndicator(
               onRefresh: refresh,
               child: ListView(
-                padding: const EdgeInsets.all(AppSizes.md),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSizes.md,
+                  AppSizes.md,
+                  AppSizes.md,
+                  AppSizes.lg,
+                ),
                 children: [
-                  Text(
-                    'Hello, ${user?.displayName ?? ''}',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: AppSizes.md),
                   PatientLoad<Cached<PatientProfile?>>(
                     value: profile,
                     onRetry: () => ref.invalidate(myProfileProvider),
@@ -93,62 +97,61 @@ class MyHomeScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSizes.sm),
-                  ClinicalCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Looking after yourself',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSizes.xs),
-                        Text(
-                          'Keep your follow-up appointments. If you notice new '
-                          'symptoms, contact your clinic.',
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                        const SizedBox(height: AppSizes.sm),
-                        OutlinedButton.icon(
-                          key: const Key('home.getHelp'),
-                          onPressed: () =>
-                              context.go(Routes.article('get-help')),
-                          icon: const Icon(Icons.health_and_safety_outlined),
-                          label: const Text('When to get help quickly'),
-                        ),
-                      ],
+                  const SizedBox(height: AppSizes.sm + 4),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const TintedIcon(
+                                Icons.favorite_outline,
+                                tone: AccentTone.teal,
+                                size: 40,
+                              ),
+                              const SizedBox(width: AppSizes.sm + 4),
+                              Expanded(
+                                child: Text(
+                                  'Looking after yourself',
+                                  style: theme.textTheme.titleMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSizes.sm),
+                          Text(
+                            'Keep your follow-up appointments. If you notice new '
+                            'symptoms, contact your clinic.',
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: AppSizes.md - 4),
+                          OutlinedButton.icon(
+                            key: const Key('home.getHelp'),
+                            onPressed: () =>
+                                context.go(Routes.article('get-help')),
+                            icon: const Icon(Icons.health_and_safety_outlined),
+                            label: const Text('When to get help quickly'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: AppSizes.lg),
                   // The assistant is planned in docs/chatbot-plan.md (Phase 13).
-                  Text('Coming later', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: AppSizes.sm),
+                  const SectionTitle('Coming later'),
                   for (final (title, icon) in const [
                     ('Symptom check', Icons.checklist_outlined),
                     ('Appointments and reminders', Icons.event_outlined),
                     ('Ask a question (assistant)', Icons.chat_outlined),
                   ]) ...[
-                    ClinicalCard(
-                      child: Row(
-                        children: [
-                          Icon(icon, color: context.colors.textSecondary),
-                          const SizedBox(width: AppSizes.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(title, style: theme.textTheme.titleSmall),
-                                Text(
-                                  'Coming in build phase 13',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    ActionTile(
+                      icon: icon,
+                      title: title,
+                      tone: AccentTone.grey,
+                      badge: 'Coming in build phase 13',
                     ),
-                    const SizedBox(height: AppSizes.sm),
+                    const SizedBox(height: AppSizes.sm + 4),
                   ],
                 ],
               ),
@@ -165,65 +168,33 @@ class _LinkedCards extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final records = ref.watch(myRecordsProvider).value?.value;
     final unread = ref.watch(inboxProvider).value?.value.unreadCount;
     final latest = records == null || records.isEmpty ? null : records.first;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ClinicalCard(
+        ActionTile(
+          icon: Icons.assignment_outlined,
+          title: 'My results',
+          description: latest == null
+              ? 'No screening results yet.'
+              : 'Latest screening: ${latest.encounterDate}',
+          descriptionKey: const Key('home.latest'),
           onTap: () => context.go(Routes.myResults),
-          child: Row(
-            children: [
-              Icon(Icons.assignment_outlined, color: context.colors.linkText),
-              const SizedBox(width: AppSizes.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('My results', style: theme.textTheme.titleMedium),
-                    Text(
-                      latest == null
-                          ? 'No screening results yet.'
-                          : 'Latest screening: ${latest.encounterDate}',
-                      key: const Key('home.latest'),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: context.colors.textSecondary),
-            ],
-          ),
         ),
-        const SizedBox(height: AppSizes.sm),
-        ClinicalCard(
+        const SizedBox(height: AppSizes.sm + 4),
+        ActionTile(
+          icon: Icons.mail_outline,
+          title: 'Messages',
+          tone: AccentTone.blue,
+          description: unread == null
+              ? 'Messages from your clinic'
+              : unread == 0
+              ? 'No unread messages'
+              : '$unread unread message${unread == 1 ? '' : 's'}',
+          descriptionKey: const Key('home.unread'),
           onTap: () => context.go(Routes.messages),
-          child: Row(
-            children: [
-              Icon(Icons.mail_outline, color: context.colors.linkText),
-              const SizedBox(width: AppSizes.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Messages', style: theme.textTheme.titleMedium),
-                    Text(
-                      unread == null
-                          ? 'Messages from your clinic'
-                          : unread == 0
-                          ? 'No unread messages'
-                          : '$unread unread message${unread == 1 ? '' : 's'}',
-                      key: const Key('home.unread'),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: context.colors.textSecondary),
-            ],
-          ),
         ),
       ],
     );

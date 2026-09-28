@@ -8,6 +8,7 @@ import '../../../app/theme/tokens.dart';
 import '../../../core/db/app_database.dart';
 import '../../../shared/widgets/async_state_view.dart';
 import '../../../shared/widgets/clinical_card.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../../shared/widgets/sync_status_badge.dart';
 import '../../auth/application/session_controller.dart';
@@ -78,12 +79,7 @@ class PatientDetailScreen extends ConsumerWidget {
                         ],
                         const SizedBox(height: AppSizes.lg),
                         PatientServerSections(patient: p),
-                        const SizedBox(height: AppSizes.md),
-                        Text(
-                          'Screening records',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSizes.sm),
+                        const SectionTitle('Screening records'),
                         ..._records(context, records.value ?? const []),
                       ],
                     ),
@@ -111,6 +107,12 @@ class PatientDetailScreen extends ConsumerWidget {
             children: [
               Row(
                 children: [
+                  Icon(
+                    Icons.event_note_outlined,
+                    size: 20,
+                    color: context.colors.textSecondary,
+                  ),
+                  const SizedBox(width: AppSizes.sm),
                   Expanded(
                     child: Text(
                       r.encounterDate,
@@ -120,7 +122,7 @@ class PatientDetailScreen extends ConsumerWidget {
                   SyncStatusBadge(status: rowSyncStatus(r.syncState)),
                 ],
               ),
-              const SizedBox(height: AppSizes.xs),
+              const SizedBox(height: AppSizes.sm),
               _Value('PSA', formatMeasurement(r.psaNgMl, 'ng/mL')),
               if (r.freePsaNgMl != null)
                 _Value('Free PSA', formatMeasurement(r.freePsaNgMl, 'ng/mL')),
@@ -135,7 +137,7 @@ class PatientDetailScreen extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: AppSizes.sm),
+        const SizedBox(height: AppSizes.sm + 4),
       ],
     ];
   }
@@ -161,15 +163,29 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
+              InitialsAvatar(
+                name: '${p.givenName} ${p.familyName}',
+                size: 56,
+                tone: toneFor(p.id),
+              ),
+              const SizedBox(width: AppSizes.md - 4),
               Expanded(
-                child: Text(
-                  '${p.givenName} ${p.familyName}',
-                  style: theme.textTheme.titleLarge,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${p.givenName} ${p.familyName}',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: AppSizes.xs),
+                    SyncStatusBadge(status: rowSyncStatus(p.syncState)),
+                  ],
                 ),
               ),
-              SyncStatusBadge(status: rowSyncStatus(p.syncState)),
             ],
           ),
+          const SizedBox(height: AppSizes.md - 4),
+          Divider(color: context.colors.border),
           const SizedBox(height: AppSizes.sm),
           _Value('MRN', p.mrn ?? 'Assigned after sync'),
           _Value(

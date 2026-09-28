@@ -137,12 +137,21 @@ These screens talk to the server directly. They need the patient's **server id**
 - **Routes.** `/patients/:id/consents` is clinician-only. `/review` and `/review/:slideId` are pathologist-only. `/patients/:id/imaging`, `/patients/:id/ai`, `/ai-jobs` and `/ai-jobs/:jobId` are for both clinical roles. Patients and administrators are redirected home.
 - **The model screens are ready for the real models.** When the trained models replace the mocks, only the AI service changes ([ai-model-integration-guide.md](ai-model-integration-guide.md)); the banner switches to the research-model wording from the report's `provenance`.
 
+## The look: "modern health app" (ADR-008)
+
+- **Home screens** (clinician, pathologist, administrator, patient) open with a green gradient header (`HeroHeader`): menu, title, sync badge, then today's date, a greeting and the person's initials. The flag stripe runs along its rounded lower edge.
+- **Sign-in and sign-up** use the same gradient header with the "PCa" app mark.
+- **Tiles:** `ActionTile` has a coloured icon square (`TintedIcon`, one of the `AccentTone` colours), a title, a description and an arrow. Tiles that are not ready yet are grey, with a "Coming in build phase …" label.
+- **Colour meaning:** tile colours only tell tiles apart. They never mean good or bad, and clinical values stay in neutral ink.
+- **Cards** have rounded 20 px corners. Light mode uses a soft shadow plus a hairline border; dark mode uses a border only. Patients have initials avatars in the list, on the patient page and in Profile.
+- **Where it lives:** the shared pieces are in `lib/shared/widgets/hero_header.dart`, the colours in `app/theme/tokens.dart` and the shapes in `app/theme/app_theme.dart`.
+
 ## Appearance: light and dark mode
 
 - **Settings** (staff: the ☰ menu; patients: Profile › Settings) offers **Same as the phone** (default), **Light** and **Dark**.
 - The choice is a phone setting, saved with `shared_preferences` (it holds nothing else) and loaded before the first frame, so the app never flashes the wrong theme. It stays after sign-out because it belongs to the phone, not to an account.
 - Colours live in `AppPalette` (`app/theme/tokens.dart`), a `ThemeExtension` with a light and a dark set. Widgets read `context.colors`, never fixed colours. The Zambian flag colours (`AppColors.flag*`) stay the same in both modes.
-- **Readable in both modes:** `theme_test.dart` checks every text/background pair (20 of them, including the warning banner, the error colour and the snackbar) against WCAG AA 4.5:1 for light **and** dark. The app bar stays flag green with white text; clinical values keep the monospaced font; the AI disclaimer keeps its amber warning look.
+- **Readable in both modes:** `theme_test.dart` checks every text/background pair against WCAG AA 4.5:1 for light **and** dark. There are 30 pairs per mode, including the warning banner, the error colour, the snackbar, the gradient header and every tile colour. The app bar stays flag green with white text; clinical values keep the monospaced font; the AI disclaimer keeps its amber warning look.
 
 ## Phone permissions
 
