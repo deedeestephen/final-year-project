@@ -25,7 +25,7 @@ Testing runs continuously in every phase (red → green → refactor), not as a 
   version conflict (no silent overwrite), partial batch success, app killed mid-sync.
 - **AI safety:** every AI response carries provenance; mock outputs contain the mock label; no metrics endpoint returns
   numbers without an evaluation record.
-- **Chatbot safety:** empty retrieval → "I don't have verified information" response; a diagnosis request → refusal +
+- **Chatbot safety** (Phase 13: `chat-safety.spec.ts` red-team set, `test_chat.py` retrieval quality set, `chatbot.int-spec.ts`): empty retrieval → "I don't have verified information" response; a diagnosis request → refusal +
   referral; prompt injection in the question or document; citations present; language detection for en/bem/nya.
 
 ## End-to-end workflows (Phase 16)

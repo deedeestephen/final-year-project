@@ -1,6 +1,6 @@
 # Chatbot build plan (Phase 13): for patients and clinicians
 
-**Status:** planned, not built. The app already shows where the chatbot will appear: "Ask a question" for patients and "Ask the assistant" for clinicians, both marked *Coming in build phase 13*. The planned API is in [`2-api-gateway/openapi/chat-contract.md`](../2-api-gateway/openapi/chat-contract.md).
+**Status (2026-09-29): built for English, as an offline extractive assistant.** The design and the defaults chosen for the owner's open decisions are in [ADR-009](decisions/ADR-009-offline-extractive-chatbot.md), and the API is summarised in [`chat-contract.md`](../2-api-gateway/openapi/chat-contract.md). The table in section 6 shows what is done and what still needs the owner.
 
 ## 1. What it is for (and what it must never do)
 
@@ -53,17 +53,17 @@ question → safety check → find passages (vector search) → write answer fro
 Once the trained models are integrated (see [ai-model-integration-guide.md](ai-model-integration-guide.md)), the clinician assistant may explain **what a section of an AI report means**, for example "What is a grade group?". It will never produce new numbers or reinterpret a patient's result. Patients do not get AI-report explanations from the chatbot; their clinician explains results.
 
 ## 6. Build steps (when the owner says "start")
-| Step | What | Done when |
-|---|---|---|
-| 1 | Knowledge base: collect, check licences, clinician sign-off, store as versioned files | a reviewed set of at least 30 patient and 30 clinician documents |
-| 2 | Ingestion: chunk → embed → Qdrant (embedding model chosen: a small multilingual open model, run locally) | a re-runnable script; tests on synthetic documents |
-| 3 | Backend `services/chatbot` + the API in `chat-contract.md` (permission `chatbot:use`, audit, rate limit) | integration tests: role behaviour, sources required, conversation history |
-| 4 | Safety filter and output check | a red-team test set (emergency, diagnosis, dosing and injection prompts) passes 100% |
-| 5 | Extractive answering (free, offline) | answers cite sources; the retrieval quality set reaches the agreed score |
-| 6 | App screens: patient "Ask a question", clinician "Ask the assistant"; chat bubbles, sources, disclaimer, offline message | widget tests; tested on the S9+ |
-| 7 | (Optional, needs the owner's approval of cost) LLM provider | same tests pass; cost per 1,000 questions measured |
-| 8 | Bemba and Nyanja content after human verification | reviewer sign-off recorded |
-| 9 | Measure the ≤ 2 s answer target (FR-07) and report honestly | results in `docs/scalability.md` |
+| Step | What | Done when | Status (Phase 13) |
+|---|---|---|---|
+| 1 | Knowledge base: collect, check licences, clinician sign-off, store as versioned files | a reviewed set of at least 30 patient and 30 clinician documents | **Started:** 6 patient articles and 5 clinician cards (32 passages), all marked draft; clinician sign-off and more documents needed |
+| 2 | Ingestion: chunk → embed → Qdrant (embedding model chosen: a small multilingual open model, run locally) | a re-runnable script; tests on synthetic documents | **Done differently:** BM25 over the passages, loaded at start-up, with no embedding model (ADR-009); Qdrant kept for later |
+| 3 | Backend `services/chatbot` + the API in `chat-contract.md` (permission `chatbot:use`, audit, rate limit) | integration tests: role behaviour, sources required, conversation history | **Done** (`chatbot.int-spec.ts`) |
+| 4 | Safety filter and output check | a red-team test set (emergency, diagnosis, dosing and injection prompts) passes 100% | **Done:** 34 prompts, 100% |
+| 5 | Extractive answering (free, offline) | answers cite sources; the retrieval quality set reaches the agreed score | **Done:** 18 questions, ≥ 90% right at the first passage, all within the first two |
+| 6 | App screens: patient "Ask a question", clinician "Ask the assistant"; chat bubbles, sources, disclaimer, offline message | widget tests; tested on the S9+ | **Widget tests done;** on-device check after the development servers are restarted |
+| 7 | (Optional, needs the owner's approval of cost) LLM provider | same tests pass; cost per 1,000 questions measured | Not started (needs the owner's approval) |
+| 8 | Bemba and Nyanja content after human verification | reviewer sign-off recorded | Waiting for translators and reviewers |
+| 9 | Measure the ≤ 2 s answer target (FR-07) and report honestly | results in `docs/scalability.md` | **Done:** P95 43 ms with 100 users, in [performance.md](performance.md) |
 
 ## 7. Decisions needed from the owner before building
 1. Which documents make up the knowledge base, and who signs them off clinically.

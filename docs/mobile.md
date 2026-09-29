@@ -150,6 +150,16 @@ These screens talk to the server directly. They need the patient's **server id**
 - **Cards** have rounded 20 px corners. Light mode uses a soft shadow plus a hairline border; dark mode uses a border only. Patients have initials avatars in the list, on the patient page and in Profile.
 - **Where it lives:** the shared pieces are in `lib/shared/widgets/hero_header.dart`, the colours in `app/theme/tokens.dart` and the shapes in `app/theme/app_theme.dart`.
 
+## The assistant (Phase 13)
+
+- **Where:** "Ask a question" on the patient home and "Ask the assistant" on the clinician home both open `/chat` (`features/chat/`). Pathologists and administrators are sent back to their home.
+- **How it works:**
+  - The first question starts a conversation; follow-ups reuse it.
+  - Answers show their sources, the knowledge base's review status and the disclaimer.
+  - Urgent care, declined and "no reviewed information" answers carry an icon and a word label.
+  - Nothing is stored on the phone. The chat is online only: it shows an offline notice, and the send button is off while offline.
+- **Menu:** "New conversation" and "Delete conversation" (asks first, then deletes it on the server).
+
 ## Appearance: light and dark mode
 
 - **Settings** (staff: the ☰ menu; patients: Profile › Settings) offers **Same as the phone** (default), **Light** and **Dark**.

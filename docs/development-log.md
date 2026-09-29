@@ -950,3 +950,41 @@ The device run signs out whoever was signed in on the emulator.
 - Trained models, with their evaluations and fairness figures.
 - A user acceptance test (SUS, screen-reader users).
 - Paid delivery services, and the deployment items R-1 to R-8.
+
+## 2026-09-29: Phase 13: The assistant (chatbot) for patients and clinicians
+
+**Objective:** the proposal's RAG chatbot (FR-07, UC-07), built within the project rules: no paid services, no invented medical content, and synthetic data only. The owner asked for it once the other phases were done. The defaults for the plan's open decisions are recorded in [ADR-009](decisions/ADR-009-offline-extractive-chatbot.md).
+
+**Built (four milestones):**
+1. **Knowledge base and answers** (`21b9634`):
+   - `4-ai-intelligence-layer/knowledge-base/` holds the app's 6 Learn articles, kept word for word by a test, and 5 clinician cards: ISUP grade groups, PI-RADS v2.1, PSA density and free PSA, DRE findings, and the AI report.
+   - The four journal citations were checked in PubMed. One DOI I remembered was wrong, and the verified one is used.
+   - Everything is marked *draft for review by a qualified clinician*.
+   - The AI service's `POST /v1/chat/answer` uses BM25 retrieval with a small everyday-word map, and quotes whole passages. It says "no match" rather than guessing, and patients never get clinician content (AI contract v0.3).
+2. **Chat API** (`2841f7b`):
+   - `/api/v1/chat/conversations` (`chatbot:use`: patients and clinicians).
+   - Safety rules run before any look-up: urgent-care text for emergencies and self-harm; refusals for medicines and doses, and (patients) for their own results or a diagnosis.
+   - Output check: a source is required and no dose may appear.
+   - MongoDB storage for the owner only, with a TTL retention of 180 days, a chat limit of 30 an hour, and an audit entry without text.
+   - Access matrix: 72 routes. Patients may use `/chat` as one of their own areas.
+3. **App screens** (`5f3624f`):
+   - "Ask a question" (patient home) and "Ask the assistant" (clinician home), guarded to those roles.
+   - Quoted answers with sources, review status and disclaimer; labelled safety answers; suggestions; offline state; "New conversation" and "Delete conversation".
+4. **Measured and documented:** 100 clinicians asking every 2–8 s: P50 25 ms, P95 43 ms, 0 errors (target 2 s).
+
+**Tests:**
+- AI service: 16 tests, including a retrieval quality set (18 questions, ≥ 90% right at the first passage) and a check that every answer equals the quoted passages.
+- Backend: 34-prompt red-team set (100%), 9 integration tests with a fake AI service, and end-to-end workflow 7 against the real AI service and knowledge base. The chat questions were added to the log review, and none appear in the logs.
+- App: 7 widget tests and a route-guard test.
+- The chat screen was checked by eye in light and dark mode.
+
+**Found along the way:**
+- **Quoted sentences lost context.** The first answers quoted single sentences, such as "The PSA test measures how much is there…", which lost the sentence before. Now whole sections are quoted, and the knowledge base rule is that sections stand alone.
+- **A leak-check false positive.** gitleaks flagged a made-up one-time password in an admin website test that was already pushed. It is recorded as a false positive, and the gate now also scans staged changes before a commit.
+- **Memory crashes.** Test runs again aborted from low memory while the emulator, Android Studio, Docker and `flutter run` were all open. Stopping `flutter run` fixed it (the app stays installed).
+
+**Still open:**
+- Clinical sign-off and more documents (the plan asks for 30 of each).
+- Human-verified Bemba and Nyanja.
+- An optional language model, only with the owner's approval.
+- A check on the S9+ after restarting the development servers.

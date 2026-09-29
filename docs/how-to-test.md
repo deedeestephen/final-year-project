@@ -365,6 +365,28 @@ The AI service now runs in its own window, *PCa mHealth AI service (mock models)
   ```
   → The browser opens tables like `patients` and `users`. Names show as scrambled bytes, because patient names are **encrypted** in the database. That is on purpose.
 
+### Phase 13: the assistant ("Ask a question" and "Ask the assistant")
+
+First, restart everything so the new chat is loaded: close the server windows and run `dev-up.ps1` again.
+
+- [ ] **As the patient**, on the home screen tap **Ask a question**.
+  → A short note explains that answers come from reviewed information, that it cannot see your records, and that it is not for emergencies. Three suggested questions are shown.
+- [ ] Tap **What does a PSA test measure?**
+  → A card with the answer, **Source** (NHS), *Content status: Draft for review by a qualified clinician…*, and *This is general information, not medical advice…*.
+- [ ] Type **Is my PSA bad?**
+  → *I cannot help with that* and a polite text: your clinician will explain your results.
+- [ ] Type **I cannot pass urine at all**
+  → A red **Urgent** label: go to the nearest clinic or hospital now.
+- [ ] Type **What is the capital of France?**
+  → *No reviewed information*, and a suggestion to ask your clinician.
+- [ ] **As the clinician**, tap **Ask the assistant**, then **What does PI-RADS 4 mean?**
+  → The five PI-RADS categories, with the Turkbey 2019 article as the source.
+- [ ] Turn off Wi-Fi.
+  → The send button is greyed out, and a line says the assistant needs the internet.
+- [ ] Tap **⋮** → **Delete conversation** → **Delete**.
+  → The conversation is gone, from the server too.
+- [ ] **As the pathologist or administrator** there is no assistant tile.
+
 ### Phase 17: how fast is it? (the robot measures it)
 
 - [ ] With `dev-up.ps1` running and nothing heavy open, open Git Bash in `3-application-logic/backend` and type `npm run perf`.

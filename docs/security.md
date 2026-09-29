@@ -65,6 +65,16 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 - Performance metrics are shown only from stored evaluation records; otherwise the UI says "Evaluation data not yet available."
 - The chatbot never claims to diagnose, answers only from retrieved sources with citations, and treats retrieved text as
   data, not instructions.
+- **How that is enforced (Phase 13, ADR-009):**
+  - Answers are whole reviewed passages, quoted, so there is no generated text; a test checks this.
+  - Emergency and self-harm wording gets the fixed urgent-care text. Doses (everyone) and a patient's own results or diagnosis (patients) are declined before anything is looked up.
+  - An answer without a source, or with a dose in it, is never shown.
+  - Patients never get clinician content.
+- **Chat privacy:**
+  - Conversations belong to one account (others get 404) and can be deleted by the owner. MongoDB deletes them automatically after `CHAT_RETENTION_DAYS` (180).
+  - The audit log records `chat.asked` with the safety result and the number of sources, never the text.
+  - Questions never leave the system: no external service is called.
+  - A limit of `CHAT_MAX_QUESTIONS_PER_HOUR` (30) applies per account, with `Retry-After`.
 
 ## Dependency hygiene
 - `npm audit`, `pip-audit`, `flutter pub outdated`, Dependabot in CI.
@@ -152,4 +162,5 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | Reset delivery channel | dev outbox file only; **production needs an SMS/e-mail provider (a cost decision for the owner)** | Open |
 | Admin activity dashboard: administrators only (`audit:read`), counts only, every view audited; the `X-Client` label is never used for access | `services/audit/activity.*`, `permissions.guard.ts` | Verified (`activity.int-spec.ts`, access matrix) |
 | Log review: no passwords, tokens or patient details in the server or AI logs (production mode, debug level) | `test/workflows/system.workflow-spec.ts` (last test), gate target `workflows` | Verified (Ph.16) |
+| Chatbot: quoted answers only, safety rules before look-up, source required, dose check, owner-only conversations with retention, text-free audit, chat limit | `services/chatbot`, `ai-services/app/chat` | Verified (Ph.13: `chat-safety.spec.ts`, `chatbot.int-spec.ts`, `test_chat.py`, workflow 7 incl. log review) |
 | TLS 1.3 termination | reverse proxy config; `6-infrastructure/scripts/tls-check.sh` (real nginx in Docker: 1.3 accepted, 1.2 and 1.1 refused, HSTS, HTTP redirect) | Verified (Ph.15, gate) |

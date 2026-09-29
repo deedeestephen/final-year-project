@@ -36,7 +36,7 @@ The folders follow the six layers of the architecture ([docs/architecture.md](do
 | 2–5 | Database, API gateway, sign-in and roles, patients and consent | Done (`f70dafe`, `c32a729`, `af0dbbb`, `d3bf0be`) |
 | 6–9 | Offline sync, phone app foundation, patient app, clinician and pathologist screens | Done (`5f77bd6`, `d726503`, `7c3aa00`, `e85f15a`) |
 | 10–12 | Imaging and slides, AI service (mock models), explanations and evaluation | Done (`e1959f4`, `f379c26`, `0fd06c1`) |
-| 13 | Chatbot (RAG) | Planned in [docs/chatbot-plan.md](docs/chatbot-plan.md); not built yet |
+| 13 | Chatbot: offline, quoted answers from a reviewed knowledge base ([ADR-009](docs/decisions/ADR-009-offline-extractive-chatbot.md)) | Done for English (`21b9634`, `2841f7b`, `5f3624f`, and the docs commit); the knowledge base awaits clinician sign-off |
 | 14 | FHIR R4 export and SmartCare Pro mock | Done (`dae7661`) |
 | 15 | Security and compliance review | Done (`3bbb4ec`) |
 | 16 | End-to-end workflows on the live system | Done (`763f1a8`) |
@@ -47,4 +47,5 @@ The folders follow the six layers of the architecture ([docs/architecture.md](do
 **Still waiting for outside input:**
 - **Trained AI models:** see the [integration guide](docs/ai-model-integration-guide.md). The mocks stay labelled until then.
 - **Owner decisions** on paid services: SMS or e-mail delivery, and a chatbot language model.
+- **Clinical sign-off** of the chatbot's knowledge base, and **Bemba and Nyanja** translations checked by people.
 - **Deployment hardening:** listed in the [security review](docs/security-review.md), R-1 to R-8.

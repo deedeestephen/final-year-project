@@ -9,7 +9,7 @@ This page reports **what was measured**, next to the research targets in the pro
 | **NFR-02:** AI result within **3 s at the 95th percentile** under concurrent load | **545 ms** P95 end to end, with 500 users active and one analysis a second. **1,027 ms** P95 for 20 analyses at the same moment | **Met for the pipeline, with mock models.** Must be measured again once the trained models are in (see the limits below) |
 | **NFR-05:** **at least 500 concurrent users** without response-time degradation | **500 users**, each acting every 2–8 s (about 98 requests a second): **0 errors**, P95 **156 ms**, P99 269 ms. With 25 users: P95 41 ms | **Met in practice.** Answers slowed from 41 to 156 ms at P95, but stayed far under a second, which users would not notice. One laptop instance saturates at about **133 requests a second** (see Stress) |
 | **NFR-08:** offline changes are never lost or saved twice, also under load | 100 phones × 20 changes at the same moment: all **2,000 saved**, 0 errors, and all 2,000 recognised as already saved when sent again | **Met.** Bulk speed is limited by the audit chain (below) |
-| Chatbot answer within 2 s (UC-07) | Not built yet (Phase 13) | Not measured |
+| **FR-07:** chatbot answer within **2 s** (UC-07) | 100 clinicians each asking every 2–8 s (about 20 questions a second): **0 errors**, P50 **25 ms**, P95 **43 ms** (Phase 13, `PERF_ONLY=chat`) | **Met** for the offline extractive assistant (ADR-009) |
 | Start-up (no target in the proposal) | Backend ready in **3.8 s**, AI service in **1.4 s**. Phone app cold start **1.7 s** median (emulator, profile build) | Reported |
 
 ## How it was measured
@@ -102,6 +102,18 @@ Status codes: 200 × 3990.
 **Sign-in:** 500 sign-ins, 25 at a time: P50 1,947 ms, P95 2,355 ms; all done in 39.5 s.
 
 **Start-up:** backend ready in 3,799 ms (production build, databases checked, AI service reachable); AI service ready in 1,385 ms.
+
+### The assistant (Phase 13)
+
+`PERF_ONLY=chat PERF_USERS=100 npm run perf` (results file `var/perf/phase17-2026-09-29T07-48-49-320Z.json`):
+- 100 synthetic clinicians started a conversation each, then asked one of six reference questions every 2–8 s for 30 s.
+- The timing covers the whole path: the safety check, the call to the AI service (BM25 over the knowledge base), storing both messages in MongoDB, and the audit entry.
+
+| Request | Count | Errors | P50 | P95 | P99 | Max |
+|---|---|---|---|---|---|---|
+| `POST /chat/conversations/:id/messages` | 590 | 0 | 25 ms | 43 ms | 52 ms | 56 ms |
+
+The answer is quoted, not generated. A language-model provider, if the owner ever approves one, would add its own seconds, and would have to be measured against the same 2 s target.
 
 ### Why bulk sync is slow: the audit chain
 

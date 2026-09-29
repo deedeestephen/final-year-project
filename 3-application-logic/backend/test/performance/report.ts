@@ -38,12 +38,13 @@ const r = JSON.parse(readFileSync(file, 'utf8')) as {
   settings: { users: number; measureMs: number };
   startup: { aiReadyMs: number; backendReadyMs: number };
   login: Stats & { totalSeconds: number; concurrency: number };
-  baseline: Load;
-  main: Load;
-  stress: Load;
-  aiUnderLoad: Ai;
-  aiBurst: Ai & { maxConcurrentJobs: number };
-  syncStress: {
+  baseline?: Load;
+  main?: Load;
+  stress?: Load;
+  aiUnderLoad?: Ai;
+  aiBurst?: Ai & { maxConcurrentJobs: number };
+  chat?: Load;
+  syncStress?: {
     phones: number;
     changesPerPhone: number;
     first: Stats;
@@ -88,29 +89,37 @@ const loadTable = (title: string, l: Load) => {
   line();
 };
 
-loadTable('Baseline', r.baseline);
-loadTable('Main run', r.main);
-loadTable('Stress', r.stress);
+if (r.baseline) loadTable('Baseline', r.baseline);
+if (r.main) loadTable('Main run', r.main);
+if (r.stress) loadTable('Stress', r.stress);
+if (r.chat) loadTable('Chat (the assistant)', r.chat);
 
 const aiRow = (label: string, a: Ai) =>
   line(
     `| ${label} | ${a.jobs} | ${a.failed} | ${ms(a.endToEndMs.p50)} | ${ms(a.endToEndMs.p95)} | ${ms(a.endToEndMs.max)} | ${ms(a.serverMs.p50)} | ${ms(a.serverMs.p95)} |`,
   );
-line(
-  '| AI analyses | Jobs | Failed | End to end P50 | End to end P95 | Max | Server P50 | Server P95 |',
-);
-line('|---|---|---|---|---|---|---|---|');
-aiRow('One a second, during the main run', r.aiUnderLoad);
-aiRow(`20 at once (${r.aiBurst.maxConcurrentJobs} run at a time)`, r.aiBurst);
-line();
+if (r.aiUnderLoad || r.aiBurst) {
+  line(
+    '| AI analyses | Jobs | Failed | End to end P50 | End to end P95 | Max | Server P50 | Server P95 |',
+  );
+  line('|---|---|---|---|---|---|---|---|');
+  if (r.aiUnderLoad) aiRow('One a second, during the main run', r.aiUnderLoad);
+  if (r.aiBurst)
+    aiRow(
+      `20 at once (${r.aiBurst.maxConcurrentJobs} run at a time)`,
+      r.aiBurst,
+    );
+  line();
+}
 
 const s = r.syncStress;
-line(
-  `**Sync:** ${s.phones} phones × ${s.changesPerPhone} changes at once: P50 ${ms(s.first.p50)}, ` +
-    `P95 ${ms(s.first.p95)}, max ${ms(s.first.max)}, ${s.first.errors} errors; ` +
-    `${s.applied} changes saved, ${s.patientsCreated} new patients. Sent again: P95 ${ms(s.resend.p95)}, ` +
-    `${s.replayedOnResend} of ${s.applied} recognised as already saved.`,
-);
+if (s)
+  line(
+    `**Sync:** ${s.phones} phones × ${s.changesPerPhone} changes at once: P50 ${ms(s.first.p50)}, ` +
+      `P95 ${ms(s.first.p95)}, max ${ms(s.first.max)}, ${s.first.errors} errors; ` +
+      `${s.applied} changes saved, ${s.patientsCreated} new patients. Sent again: P95 ${ms(s.resend.p95)}, ` +
+      `${s.replayedOnResend} of ${s.applied} recognised as already saved.`,
+  );
 line();
 line(
   `**Sign-in:** ${r.login.count} sign-ins, ${r.login.concurrency} at a time: P50 ${ms(r.login.p50)}, ` +

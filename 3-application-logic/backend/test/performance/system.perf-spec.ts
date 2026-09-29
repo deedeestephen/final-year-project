@@ -29,7 +29,7 @@ import {
  *
  *   npm run perf                       (full run, about 6 minutes)
  *   PERF_USERS=100 PERF_MEASURE_S=20 npm run perf   (a quick look)
- *   PERF_ONLY=sync npm run perf        (only some stages: load, ai, sync)
+ *   PERF_ONLY=sync npm run perf        (only some stages: load, ai, sync, chat)
  *
  * The results are written to var/perf/ and summarised in docs/performance.md.
  * Nothing is asserted about speed here: the numbers are reported as they
@@ -43,7 +43,7 @@ const PATIENTS_PER_FACILITY = 30;
 const AI_READY_PER_FACILITY = 10;
 const ONLY = process.env.PERF_ONLY?.split(',');
 /** A measured stage; skipped when PERF_ONLY names other stages. */
-const stage = (name: 'load' | 'ai' | 'sync') =>
+const stage = (name: 'load' | 'ai' | 'sync' | 'chat') =>
   !ONLY || ONLY.includes(name) ? it : it.skip;
 
 const prisma = new PrismaClient();
@@ -442,6 +442,52 @@ describe('performance on the live system (Phase 17)', () => {
   });
 
   const PHONES = Math.min(100, USERS);
+  stage('chat')(
+    'chat: 100 clinicians asking the assistant (FR-07 target 2 s)',
+    async () => {
+      const askers = users.slice(0, Math.min(100, USERS));
+      const conversations: string[] = [];
+      await inBatches(askers, 20, async (u, i) => {
+        const res = await timed(url('/chat/conversations'), {
+          method: 'POST',
+          headers: auth(u),
+          body: JSON.stringify({ language: 'en' }),
+        });
+        expect(res.status).toBe(201);
+        conversations[i] = (res.body as { id: string }).id;
+      });
+      const questions = [
+        'What does PI-RADS 4 mean?',
+        'How is PSA density calculated?',
+        'What is grade group 3?',
+        'What does a nodular DRE mean?',
+        'Why does the AI report say mock data?',
+        'What does a PSA test measure?',
+      ];
+      // Each asks about every 5 s: far under the 30-an-hour chat limit
+      // over this short window.
+      const { samples, windowMs } = await runVirtualUsers({
+        users: askers.length,
+        rampMs: 5_000,
+        measureMs: Math.min(30_000, MEASURE_MS),
+        thinkMs: [2_000, 8_000],
+        nextStep: (i) => ({
+          name: 'POST /chat/conversations/:id/messages',
+          run: () =>
+            timed(url(`/chat/conversations/${conversations[i]}/messages`), {
+              method: 'POST',
+              headers: auth(askers[i]),
+              body: JSON.stringify({
+                text: questions[Math.floor(Math.random() * questions.length)],
+              }),
+            }),
+        }),
+      });
+      results.chat = summarise(samples, windowMs, askers.length);
+      expect(samples.filter((x) => x.status !== 200)).toEqual([]);
+    },
+  );
+
   stage('sync')(
     `sync stress: ${PHONES} phones send 20 changes each at once, then resend them`,
     async () => {
