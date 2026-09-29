@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../core/network/api_exception.dart';
@@ -129,7 +130,8 @@ class _MessageTile extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(top: 6),
           child: Icon(
-            unread ? Icons.circle : Icons.circle_outlined,
+            Symbols.circle_rounded,
+            fill: unread ? 1 : 0,
             size: 12,
             color: unread ? context.colors.sky : context.colors.borderStrong,
           ),

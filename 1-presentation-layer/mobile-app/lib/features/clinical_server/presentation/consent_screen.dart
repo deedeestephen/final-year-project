@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../shared/widgets/async_state_view.dart';
@@ -29,7 +30,7 @@ class ConsentScreen extends ConsumerWidget {
           : FloatingActionButton.extended(
               key: const Key('consent.add'),
               onPressed: () => _record(context, ref, serverId),
-              icon: const Icon(Icons.add),
+              icon: const Icon(Symbols.add_rounded),
               label: const Text('Record consent'),
             ),
       body: serverId == null

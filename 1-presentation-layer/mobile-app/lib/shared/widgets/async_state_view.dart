@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../core/network/api_exception.dart';
@@ -32,7 +33,7 @@ class AsyncStateView<T> extends StatelessWidget {
       final offline =
           error is ApiException && (error as ApiException).isNetwork;
       return _Message(
-        icon: offline ? Icons.cloud_off_outlined : Icons.error_outline,
+        icon: offline ? Symbols.cloud_off_rounded : Symbols.error_rounded,
         title: offline ? 'You are offline' : 'Something went wrong',
         body: offline
             ? 'Connect to the internet and try again.'
@@ -48,7 +49,7 @@ class AsyncStateView<T> extends StatelessWidget {
       );
     }
     if (isEmpty?.call(value) ?? false) {
-      return _Message(icon: Icons.inbox_outlined, title: emptyMessage);
+      return _Message(icon: Symbols.inbox_rounded, title: emptyMessage);
     }
     return builder(context, value);
   }

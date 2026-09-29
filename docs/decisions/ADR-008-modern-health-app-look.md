@@ -1,6 +1,6 @@
 # ADR-008: "Modern health app" look for the phone app
 
-- **Status:** Accepted (owner request, 2026-09-28). Applies to `1-presentation-layer/mobile-app/`. It builds on ADR-002 (legibility) and ADR-004 (Zambian national colours); both still apply.
+- **Status:** Accepted (owner request, 2026-09-28). Applies to `1-presentation-layer/mobile-app/`. It builds on ADR-002 (legibility). **Its colours (green gradient, flag stripe) are superseded by [ADR-011](ADR-011-awareness-blue-and-modern-icons.md) (2026-09-29)**; the layout, tiles, cards and shapes stay.
 - **Context:** The owner found the phone app "too plain" and chose, from three options, a **modern health app** style for **every screen**, in light and dark mode:
   - a green gradient header with a greeting and the person's initials
   - colourful icon tiles

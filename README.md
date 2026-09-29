@@ -43,6 +43,7 @@ The folders follow the six layers of the architecture ([docs/architecture.md](do
 | 17 | Performance against the research targets | Done (`a70ecc8`) |
 | 18 | Final quality audit | Done (see the [development log](docs/development-log.md)) |
 | extra | Admin website, activity dashboard, dark mode, "modern health app" redesign | Done (`bfd9cfc`, `5bc85f3`, `967c988`, `0aebf4e`, `12c1d57`) |
+| extra | Awareness-blue theme, modern icons and the assistant bot ([ADR-011](docs/decisions/ADR-011-awareness-blue-and-modern-icons.md)); voice messages and read-aloud ([ADR-012](docs/decisions/ADR-012-voice-input-and-read-aloud.md)) | Done (see the [development log](docs/development-log.md)) |
 
 **Still waiting for outside input:**
 - **Trained AI models:** see the [integration guide](docs/ai-model-integration-guide.md). The mocks stay labelled until then.

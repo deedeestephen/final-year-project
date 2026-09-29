@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../core/network/api_exception.dart';
@@ -30,7 +31,7 @@ class OfflineStamp extends StatelessWidget {
 
 /// A calm information box (no alarm colours).
 class InfoNote extends StatelessWidget {
-  const InfoNote(this.text, {super.key, this.icon = Icons.info_outline});
+  const InfoNote(this.text, {super.key, this.icon = Symbols.info_rounded});
 
   final String text;
   final IconData icon;
@@ -106,7 +107,7 @@ class _Failed extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            offline ? Icons.cloud_off_outlined : Icons.error_outline,
+            offline ? Symbols.cloud_off_rounded : Symbols.error_rounded,
             size: 40,
             color: context.colors.textSecondary,
           ),

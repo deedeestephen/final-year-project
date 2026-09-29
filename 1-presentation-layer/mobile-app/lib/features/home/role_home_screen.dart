@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/routes.dart';
 import '../../core/config/app_env.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/providers.dart';
+import '../../shared/widgets/assistant_avatar.dart';
 import '../../shared/widgets/hero_header.dart';
 import '../../shared/widgets/offline_banner.dart';
 import '../auth/application/session_controller.dart';
@@ -22,7 +24,7 @@ class HomeDestination {
     this.phase,
     this.route,
     this.later = false,
-    this.tone = AccentTone.green,
+    this.tone = AccentTone.blue,
   });
   final String title;
   final String description;
@@ -53,20 +55,20 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
     HomeDestination(
       'Patients',
       'Register and find patients, also offline',
-      Icons.people_outline,
+      Symbols.group_rounded,
       route: Routes.patients,
     ),
     HomeDestination(
       'New screening',
       'Choose a patient, then add PSA, DRE and PI-RADS',
-      Icons.add_task_outlined,
+      Symbols.add_task_rounded,
       route: Routes.patients,
       tone: AccentTone.blue,
     ),
     HomeDestination(
       'AI results to review',
       'Recent AI analyses in your facility (decision support only)',
-      Icons.fact_check_outlined,
+      Symbols.fact_check_rounded,
       route: Routes.aiResults,
       tone: AccentTone.purple,
     ),
@@ -74,14 +76,14 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
     HomeDestination(
       'Ask the assistant',
       'Reference cards with their sources: PI-RADS, grade groups, PSA density',
-      Icons.chat_outlined,
+      Symbols.chat_rounded,
       route: Routes.chat,
       tone: AccentTone.teal,
     ),
     HomeDestination(
       'Referrals',
       'Referrals and follow-up',
-      Icons.send_outlined,
+      Symbols.send_rounded,
       later: true,
       tone: AccentTone.orange,
     ),
@@ -90,20 +92,20 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
     HomeDestination(
       'Review queue',
       'Slides waiting for your Gleason review',
-      Icons.inbox_outlined,
+      Symbols.inbox_rounded,
       route: Routes.review,
       tone: AccentTone.purple,
     ),
     HomeDestination(
       'Patients',
       'Open a patient to see or add images and slides',
-      Icons.people_outline,
+      Symbols.group_rounded,
       route: Routes.patients,
     ),
     HomeDestination(
       'AI results',
       'Recent AI analyses in your facility (decision support only)',
-      Icons.description_outlined,
+      Symbols.description_rounded,
       route: Routes.aiResults,
       tone: AccentTone.blue,
     ),
@@ -113,7 +115,7 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       'Administration is on the web',
       'Manage users, roles and permissions, and patient accounts in the '
           'PCa mHealth admin portal on a computer (${AppEnv.adminPortalUrl}).',
-      Icons.computer_outlined,
+      Symbols.computer_rounded,
       tone: AccentTone.blue,
     ),
   ],
@@ -137,6 +139,9 @@ class RoleHomeScreen extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: AppSizes.sm + 4),
       child: ActionTile(
         icon: d.icon,
+        leading: d.route == Routes.chat && d.available
+            ? const AssistantAvatar(size: 52)
+            : null,
         title: d.title,
         description: d.description,
         tone: d.available ? d.tone : AccentTone.grey,
@@ -147,6 +152,9 @@ class RoleHomeScreen extends ConsumerWidget {
 
     return Scaffold(
       drawer: _HomeDrawer(user: user, current: role),
+      floatingActionButton: now.any((d) => d.route == Routes.chat)
+          ? const AssistantFab()
+          : null,
       body: Column(
         children: [
           HeroHeader(
@@ -168,7 +176,7 @@ class RoleHomeScreen extends ConsumerWidget {
                 AppSizes.md,
                 AppSizes.sm,
                 AppSizes.md,
-                AppSizes.lg,
+                96,
               ),
               children: [
                 if (now.isNotEmpty) const SectionTitle('Your work'),
@@ -255,7 +263,7 @@ class _HomeDrawer extends ConsumerWidget {
             if (roles.length > 1)
               for (final r in roles)
                 ListTile(
-                  leading: const Icon(Icons.swap_horiz),
+                  leading: const Icon(Symbols.swap_horiz_rounded),
                   title: Text(r.label),
                   selected: r == current,
                   onTap: () {
@@ -265,7 +273,7 @@ class _HomeDrawer extends ConsumerWidget {
                 ),
             if (user.canSync)
               ListTile(
-                leading: const Icon(Icons.sync),
+                leading: const Icon(Symbols.sync_rounded),
                 title: const Text('Sync'),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -274,7 +282,7 @@ class _HomeDrawer extends ConsumerWidget {
               ),
             ListTile(
               key: const Key('home.settings'),
-              leading: const Icon(Icons.settings_outlined),
+              leading: const Icon(Symbols.settings_rounded),
               title: const Text('Settings'),
               onTap: () {
                 Navigator.of(context).pop();
@@ -285,7 +293,7 @@ class _HomeDrawer extends ConsumerWidget {
             const Divider(),
             ListTile(
               key: const Key('home.signOut'),
-              leading: const Icon(Icons.logout),
+              leading: const Icon(Symbols.logout_rounded),
               title: const Text('Sign out'),
               onTap: () async {
                 Navigator.of(context).pop();

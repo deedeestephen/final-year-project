@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
@@ -36,7 +37,7 @@ class ImagingScreen extends ConsumerWidget {
           : FloatingActionButton.extended(
               key: const Key('imaging.add'),
               onPressed: () => context.push(Routes.uploadImaging(patientId)),
-              icon: const Icon(Icons.upload_file),
+              icon: const Icon(Symbols.upload_file_rounded),
               label: const Text('Add a file'),
             ),
       body: Column(
@@ -375,7 +376,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                   OutlinedButton.icon(
                     key: const Key('upload.pick'),
                     onPressed: _pick,
-                    icon: const Icon(Icons.folder_open),
+                    icon: const Icon(Symbols.folder_open_rounded),
                     label: Text(_file == null ? 'Choose file' : _file!.name),
                   ),
                   const SizedBox(height: AppSizes.sm),

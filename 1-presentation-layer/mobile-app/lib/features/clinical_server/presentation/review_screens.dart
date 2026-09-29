@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
@@ -63,7 +64,7 @@ class ReviewQueueScreen extends ConsumerWidget {
                               ),
                             ),
                             Icon(
-                              Icons.chevron_right,
+                              Symbols.chevron_right_rounded,
                               color: context.colors.textSecondary,
                             ),
                           ],

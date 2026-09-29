@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
@@ -95,54 +96,54 @@ class ProfileScreen extends ConsumerWidget {
                       ListTile(
                         key: const Key('profile.consents'),
                         leading: const TintedIcon(
-                          Icons.verified_user_outlined,
+                          Symbols.verified_user_rounded,
                           size: 40,
                         ),
                         title: const Text('My consents'),
                         subtitle: const Text(
                           'See or withdraw what you agreed to',
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Symbols.chevron_right_rounded),
                         onTap: () => context.go(Routes.myConsents),
                       ),
                       ListTile(
                         key: const Key('profile.reports'),
                         leading: const TintedIcon(
-                          Icons.description_outlined,
+                          Symbols.description_rounded,
                           tone: AccentTone.blue,
                           size: 40,
                         ),
                         title: const Text('My reports'),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Symbols.chevron_right_rounded),
                         onTap: () => context.go(Routes.myReports),
                       ),
                       ListTile(
                         key: const Key('profile.password'),
                         leading: const TintedIcon(
-                          Icons.password_outlined,
+                          Symbols.password_rounded,
                           tone: AccentTone.purple,
                           size: 40,
                         ),
                         title: const Text('Change password'),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Symbols.chevron_right_rounded),
                         onTap: () => context.go(Routes.myPassword),
                       ),
                       ListTile(
                         key: const Key('profile.settings'),
                         leading: const TintedIcon(
-                          Icons.settings_outlined,
+                          Symbols.settings_rounded,
                           tone: AccentTone.teal,
                           size: 40,
                         ),
                         title: const Text('Settings'),
                         subtitle: const Text('Light or dark appearance'),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Symbols.chevron_right_rounded),
                         onTap: () => context.push(Routes.settings),
                       ),
                       ListTile(
                         key: const Key('profile.signOut'),
                         leading: const TintedIcon(
-                          Icons.logout,
+                          Symbols.logout_rounded,
                           tone: AccentTone.grey,
                           size: 40,
                         ),
@@ -319,7 +320,7 @@ class MyReportsScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.description_outlined,
+                Symbols.description_rounded,
                 size: 40,
                 color: context.colors.textSecondary,
               ),

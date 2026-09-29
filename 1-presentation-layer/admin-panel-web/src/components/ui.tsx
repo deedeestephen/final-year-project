@@ -1,16 +1,9 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useConnection } from './online';
 
-/** Zambian flag colours; decorative only. */
-export function NationalStripe() {
-  return (
-    <div className="stripe" aria-hidden="true">
-      <span />
-      <span />
-      <span />
-      <span />
-    </div>
-  );
+/** A thin line from blue to the awareness light blue; decorative only. */
+export function AccentLine() {
+  return <div className="accent-line" aria-hidden="true" />;
 }
 
 /** Product mark and name; "Admin" says which surface this is. */

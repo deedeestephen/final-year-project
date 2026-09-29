@@ -81,6 +81,11 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
   - The audit log records `chat.asked` with the safety result and the number of sources, never the text.
   - Without a Claude key, questions never leave the system. With one, they go to Anthropic as described above.
   - A limit of `CHAT_MAX_QUESTIONS_PER_HOUR` (30) applies per account, with `Retry-After`.
+- **Voice messages and read-aloud (ADR-012):**
+  - The microphone permission (`RECORD_AUDIO`) is asked for only when the microphone is first tapped; the app works without it.
+  - The app never records, stores or sends sound. The phone's speech service turns speech into text and only the text reaches the app; it then goes through the same safety rules, limits and content-free audit as a typed question.
+  - On most Android phones the speech service is Google's, which may process the voice on its servers. The chat's intro says so, and the data-protection review needed before real use (ADR-010) must cover it.
+  - Reading aloud uses the phone's own text-to-speech; nothing is sent.
 
 ## Dependency hygiene
 - `npm audit`, `pip-audit`, `flutter pub outdated`, Dependabot in CI.
@@ -141,7 +146,8 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | **Dependency audits (Ph.15):** npm (including development tools), pip-audit, and OSV for the Dart/Flutter packages | `quality-gate.sh`, `6-infrastructure/scripts/pub-audit.py` | Verified: 0 known vulnerabilities (2026-09-28) |
 | Linking a patient account needs an exact NRC match; the admin sees only record number and facility (data minimisation); linking notifies the patient; unlinking ends their sessions; all audited | `AdminService.link/unlink` | Verified |
 | Admin password reset issues a one-time password, forces a change and ends all sessions; admins cannot reset their own this way | `UsersService.resetPassword` | Verified |
-| No official emblems; every sign-in screen says the app is not an official government service (ADR-004) | `NationalStripe.notOfficial` | Verified |
+| No official emblems; every sign-in screen says the app is not an official government service (ADR-004, kept by ADR-011) | `lib/shared/app_notice.dart` (`notOfficialNotice`) | Verified |
+| Microphone only for voice messages, asked at first use; no sound recorded, stored or sent by the app (ADR-012) | `AndroidManifest.xml`, `features/chat/application/voice_input.dart`, `chat_composer.dart` | Verified (`chat_test.dart`: permission refused, no speech service, cancel) |
 | Uploads: streamed (never whole in memory), size cap (413), magic-byte type check (415), DICOM header and modality check (422), server-generated keys, original file name not stored, rejected files deleted and audited | `gateway/upload/*`, `services/imaging` | Verified (Ph.10, `imaging.int-spec.ts`) |
 | Imaging and slide reads facility-scoped (other facilities get 404), every list and download audited without identifiers; downloads sent as attachments with `nosniff` | `ImagingService` | Verified (Ph.10) |
 | Only technical DICOM fields (UIDs, modality, size) copied to MongoDB; patient name and ID tags never read | `dicom-header.ts` | Verified (Ph.10) |

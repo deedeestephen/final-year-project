@@ -2,6 +2,10 @@
     <!-- The app talks to the PCa mHealth API. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Voice messages to the assistant (ADR-012): asked for the first time
+         the microphone is tapped. The phone's speech service turns speech
+         into text; the app never records or stores the sound. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="PCa mHealth"
         android:allowBackup="false"
@@ -45,6 +49,14 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- ADR-012: find the phone's speech-to-text and text-to-speech
+             services (package visibility, Android 11 and later). -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
     </queries>
 </manifest>

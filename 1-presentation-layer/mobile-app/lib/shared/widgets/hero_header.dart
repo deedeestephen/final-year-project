@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/theme/tokens.dart';
-import 'national_stripe.dart';
 
 /// Up to two capital letters from a name ("Demo Clinician" → "DC").
 String initialsOf(String name) {
@@ -42,8 +42,8 @@ String longDate(DateTime d) {
 /// It only tells people apart and means nothing clinically.
 AccentTone toneFor(String name) {
   const tones = [
-    AccentTone.green,
     AccentTone.blue,
+    AccentTone.sky,
     AccentTone.purple,
     AccentTone.teal,
   ];
@@ -61,7 +61,7 @@ class InitialsAvatar extends StatelessWidget {
     required this.name,
     this.size = 48,
     this.onHero = false,
-    this.tone = AccentTone.green,
+    this.tone = AccentTone.blue,
   });
 
   final String name;
@@ -101,9 +101,10 @@ class InitialsAvatar extends StatelessWidget {
   }
 }
 
-/// The green gradient header of the home screens: menu, title and actions
-/// on top; below them the date, a greeting and the person's initials. A thin
-/// band in the flag's colours follows its rounded lower edge.
+/// The blue gradient header of the home screens: menu, title and actions
+/// on top; below them the date, a greeting and the person's initials. Two
+/// soft circles decorate it, and a thin awareness-blue line follows its
+/// rounded lower edge.
 class HeroHeader extends StatelessWidget {
   const HeroHeader({
     super.key,
@@ -147,101 +148,146 @@ class HeroHeader extends StatelessWidget {
                   colors: [p.heroStart, p.heroEnd],
                 ),
               ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSizes.xs,
-                    AppSizes.xs,
-                    AppSizes.xs,
-                    AppSizes.lg,
-                  ),
-                  child: IconTheme(
-                    data: IconThemeData(color: p.onPrimary),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(
-                          height: AppSizes.minTouchTarget + 8,
-                          child: Row(
-                            children: [
-                              if (leading != null)
-                                leading!
-                              else
-                                const SizedBox(width: AppSizes.md - 4),
-                              Expanded(
-                                child: Semantics(
-                                  header: true,
-                                  child: Text(
-                                    title,
-                                    style: text.titleLarge?.copyWith(
-                                      color: p.onPrimary,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                              ...actions,
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSizes.md - 4,
-                            AppSizes.sm,
-                            AppSizes.md - 4,
-                            0,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      longDate(date ?? DateTime.now()),
-                                      style: text.bodyMedium?.copyWith(
-                                        color: p.onHeroMuted,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      greeting,
-                                      style: text.headlineSmall?.copyWith(
+              child: CustomPaint(
+                painter: HeroDecorPainter(p.onPrimary),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSizes.xs,
+                      AppSizes.xs,
+                      AppSizes.xs,
+                      AppSizes.lg,
+                    ),
+                    child: IconTheme(
+                      data: IconThemeData(color: p.onPrimary),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            height: AppSizes.minTouchTarget + 8,
+                            child: Row(
+                              children: [
+                                if (leading != null)
+                                  leading!
+                                else
+                                  const SizedBox(width: AppSizes.md - 4),
+                                Expanded(
+                                  child: Semantics(
+                                    header: true,
+                                    child: Text(
+                                      title,
+                                      style: text.titleLarge?.copyWith(
                                         color: p.onPrimary,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    if (subtitle != null) ...[
-                                      const SizedBox(height: 2),
+                                  ),
+                                ),
+                                ...actions,
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSizes.md - 4,
+                              AppSizes.sm,
+                              AppSizes.md - 4,
+                              0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
                                       Text(
-                                        subtitle!,
+                                        longDate(date ?? DateTime.now()),
                                         style: text.bodyMedium?.copyWith(
                                           color: p.onHeroMuted,
                                         ),
                                       ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        greeting,
+                                        style: text.headlineSmall?.copyWith(
+                                          color: p.onPrimary,
+                                        ),
+                                      ),
+                                      if (subtitle != null) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          subtitle!,
+                                          style: text.bodyMedium?.copyWith(
+                                            color: p.onHeroMuted,
+                                          ),
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
-                              ),
-                              if (name != null) ...[
-                                const SizedBox(width: AppSizes.md),
-                                InitialsAvatar(
-                                  name: name!,
-                                  size: 56,
-                                  onHero: true,
-                                ),
+                                if (name != null) ...[
+                                  const SizedBox(width: AppSizes.md),
+                                  InitialsAvatar(
+                                    name: name!,
+                                    size: 56,
+                                    onHero: true,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-            const NationalStripe(height: 4),
+            const AccentLine(),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Two large, faint circles in the top-right corner of a hero gradient.
+class HeroDecorPainter extends CustomPainter {
+  const HeroDecorPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color.withValues(alpha: 0.07);
+    canvas.drawCircle(Offset(size.width - 24, 18), 92, paint);
+    canvas.drawCircle(Offset(size.width - 118, size.height + 6), 54, paint);
+  }
+
+  @override
+  bool shouldRepaint(HeroDecorPainter old) => old.color != color;
+}
+
+/// A thin line from the primary blue to the awareness light blue, under a
+/// hero header. Decoration only.
+class AccentLine extends StatelessWidget {
+  const AccentLine({super.key, this.height = 4});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.colors;
+    return ExcludeSemantics(
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [p.primary, p.accent]),
+          ),
         ),
       ),
     );
@@ -302,7 +348,7 @@ class TintedIcon extends StatelessWidget {
   const TintedIcon(
     this.icon, {
     super.key,
-    this.tone = AccentTone.green,
+    this.tone = AccentTone.blue,
     this.size = 52,
   });
 
@@ -333,13 +379,17 @@ class ActionTile extends StatelessWidget {
     required this.icon,
     required this.title,
     this.description,
-    this.tone = AccentTone.green,
+    this.tone = AccentTone.blue,
     this.onTap,
     this.badge,
     this.descriptionKey,
+    this.leading,
   });
 
   final IconData icon;
+
+  /// Replaces the tinted icon, for example with the assistant's face.
+  final Widget? leading;
   final String title;
   final String? description;
   final AccentTone tone;
@@ -361,7 +411,7 @@ class ActionTile extends StatelessWidget {
           padding: const EdgeInsets.all(AppSizes.md),
           child: Row(
             children: [
-              TintedIcon(icon, tone: tone),
+              leading ?? TintedIcon(icon, tone: tone),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(
@@ -387,7 +437,7 @@ class ActionTile extends StatelessWidget {
               ),
               if (onTap != null) ...[
                 const SizedBox(width: AppSizes.sm),
-                Icon(Icons.chevron_right, color: p.textSecondary),
+                Icon(Symbols.chevron_right_rounded, color: p.textSecondary),
               ],
             ],
           ),

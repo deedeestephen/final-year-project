@@ -38,7 +38,7 @@ const TEXT_PAIRS: [string, string, string][] = [
   [t['ink-secondary'], t.canvas, 'table headers'],
   [t['ink-muted'], t.surface, 'hints and timestamps on cards'],
   [t['ink-muted'], t.canvas, 'hints on the canvas'],
-  [t.primary, t.surface, 'links and emerald text'],
+  [t.primary, t.surface, 'links and blue text'],
   [t['on-primary'], t.primary, 'primary button'],
   [t['on-primary'], t['primary-pressed'], 'primary button, pressed'],
   [WHITE, t.ink, 'secondary (slate) button and selected filter'],
@@ -74,10 +74,17 @@ describe('design tokens (WCAG 2.1 AA)', () => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('keeps bright emerald and amber for decoration only', () => {
+  it('keeps the light blues and amber for decoration only', () => {
     // These fail AA as text on white, which is why text uses the deeper tones.
     expect(contrast(t['primary-accent'], WHITE)).toBeLessThan(4.5);
+    expect(contrast(t.accent, WHITE)).toBeLessThan(4.5);
     expect(contrast(t['warning-accent'], WHITE)).toBeLessThan(4.5);
+  });
+
+  it('no longer uses the national flag colours (ADR-011)', () => {
+    const flag = ['#198a00', '#de2010', '#ef7d00'];
+    for (const value of Object.values(t)) expect(flag).not.toContain(value);
+    expect(css).not.toMatch(/--flag-/);
   });
 
   it('keeps chart lines visible on white cards (3:1 for graphics)', () => {

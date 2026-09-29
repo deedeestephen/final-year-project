@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
@@ -87,8 +88,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     tooltip: _obscure ? 'Show password' : 'Hide password',
                     icon: Icon(
                       _obscure
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+                          ? Symbols.visibility_rounded
+                          : Symbols.visibility_off_rounded,
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),

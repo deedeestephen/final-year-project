@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/app_theme.dart';
@@ -56,7 +57,7 @@ class PatientDetailScreen extends ConsumerWidget {
                             key: const Key('patient.addRecord'),
                             onPressed: () =>
                                 context.push(Routes.newRecord(p.id)),
-                            icon: const Icon(Icons.add),
+                            icon: const Icon(Symbols.add_rounded),
                             label: const Text('Add screening record'),
                           ),
                           const SizedBox(height: AppSizes.sm),
@@ -65,7 +66,7 @@ class PatientDetailScreen extends ConsumerWidget {
                             onPressed: p.serverId == null
                                 ? null
                                 : () => context.push(Routes.editPatient(p.id)),
-                            icon: const Icon(Icons.edit_outlined),
+                            icon: const Icon(Symbols.edit_rounded),
                             label: const Text('Edit details'),
                           ),
                           if (p.serverId == null)
@@ -108,7 +109,7 @@ class PatientDetailScreen extends ConsumerWidget {
               Row(
                 children: [
                   Icon(
-                    Icons.event_note_outlined,
+                    Symbols.event_note_rounded,
                     size: 20,
                     color: context.colors.textSecondary,
                   ),

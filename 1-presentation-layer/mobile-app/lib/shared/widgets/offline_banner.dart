@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../core/connectivity/connectivity_service.dart';
@@ -26,7 +27,7 @@ class OfflineBanner extends ConsumerWidget {
         child: Row(
           children: [
             Icon(
-              Icons.cloud_off_outlined,
+              Symbols.cloud_off_rounded,
               size: 18,
               color: context.colors.offlineText,
             ),

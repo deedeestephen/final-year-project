@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/theme/tokens.dart';
-import '../../../shared/widgets/national_stripe.dart';
+import '../../../shared/app_notice.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/offline_banner.dart';
 
-/// Layout shared by the signed-out screens: a green gradient header with the
+/// Layout shared by the signed-out screens: a blue gradient header with the
 /// app's name and the screen title, the offline strip, then the form in a
 /// readable column and a research-prototype footer.
 class AuthScaffold extends StatelessWidget {
@@ -50,7 +52,7 @@ class AuthScaffold extends StatelessWidget {
                       SafeArea(
                         top: false,
                         child: Text(
-                          NationalStripe.notOfficial,
+                          notOfficialNotice,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodySmall,
                         ),
@@ -87,7 +89,7 @@ class AppMark extends StatelessWidget {
         child: Text(
           'PCa',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            // Fixed brand green: the mark is always on white.
+            // Fixed brand blue: the mark is always on white.
             color: AppPalette.light.primary,
             fontSize: size * 0.34,
             fontWeight: FontWeight.w800,
@@ -129,69 +131,72 @@ class _AuthHeader extends StatelessWidget {
                   colors: [p.heroStart, p.heroEnd],
                 ),
               ),
-              child: SafeArea(
-                bottom: false,
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 488),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        AppSizes.lg,
-                        showBack ? AppSizes.xs : AppSizes.xl,
-                        AppSizes.lg,
-                        AppSizes.xl,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (showBack)
-                            Transform.translate(
-                              offset: const Offset(-12, 0),
-                              child: BackButton(color: p.onPrimary),
-                            ),
-                          Row(
-                            children: [
-                              const AppMark(),
-                              const SizedBox(width: AppSizes.md - 4),
-                              // Flexible: wraps instead of overflowing with
-                              // very large text (WCAG resize text).
-                              Flexible(
-                                child: Text(
-                                  'PCa mHealth',
-                                  style: text.titleLarge?.copyWith(
-                                    color: p.onPrimary,
+              child: CustomPaint(
+                painter: HeroDecorPainter(p.onPrimary),
+                child: SafeArea(
+                  bottom: false,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 488),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          AppSizes.lg,
+                          showBack ? AppSizes.xs : AppSizes.xl,
+                          AppSizes.lg,
+                          AppSizes.xl,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (showBack)
+                              Transform.translate(
+                                offset: const Offset(-12, 0),
+                                child: BackButton(color: p.onPrimary),
+                              ),
+                            Row(
+                              children: [
+                                const AppMark(),
+                                const SizedBox(width: AppSizes.md - 4),
+                                // Flexible: wraps instead of overflowing with
+                                // very large text (WCAG resize text).
+                                Flexible(
+                                  child: Text(
+                                    'PCa mHealth',
+                                    style: text.titleLarge?.copyWith(
+                                      color: p.onPrimary,
+                                    ),
                                   ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSizes.lg),
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                title,
+                                style: text.headlineMedium?.copyWith(
+                                  color: p.onPrimary,
+                                ),
+                              ),
+                            ),
+                            if (subtitle != null) ...[
+                              const SizedBox(height: AppSizes.sm),
+                              Text(
+                                subtitle!,
+                                style: text.bodyLarge?.copyWith(
+                                  color: p.onHeroMuted,
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: AppSizes.lg),
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              title,
-                              style: text.headlineMedium?.copyWith(
-                                color: p.onPrimary,
-                              ),
-                            ),
-                          ),
-                          if (subtitle != null) ...[
-                            const SizedBox(height: AppSizes.sm),
-                            Text(
-                              subtitle!,
-                              style: text.bodyLarge?.copyWith(
-                                color: p.onHeroMuted,
-                              ),
-                            ),
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-            const NationalStripe(height: 4),
+            const AccentLine(),
           ],
         ),
       ),
@@ -220,7 +225,7 @@ class FormErrorBox extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.error_outline, color: context.colors.danger),
+            Icon(Symbols.error_rounded, color: context.colors.danger),
             const SizedBox(width: AppSizes.sm),
             Expanded(
               child: Text(

@@ -11,7 +11,10 @@ import 'package:pca_mhealth/core/connectivity/connectivity_service.dart';
 import 'package:pca_mhealth/core/db/app_database.dart';
 import 'package:pca_mhealth/core/providers.dart';
 import 'package:pca_mhealth/core/storage/token_store.dart';
+import 'package:pca_mhealth/features/chat/application/voice_input.dart';
+import 'package:pca_mhealth/shared/audio/read_aloud.dart';
 
+import 'audio_fakes.dart';
 import 'fakes.dart';
 import 'test_db.dart';
 
@@ -94,6 +97,8 @@ List<Override> testOverrides({
   required InMemoryTokenStore store,
   FakeConnectivity? connectivity,
   AppDatabase? database,
+  FakeSpeech? speech,
+  FakeReadAloud? reader,
   List<Override> extra = const [],
 }) => [
   appDatabaseProvider.overrideWithValue(database ?? memoryDatabase()),
@@ -104,6 +109,9 @@ List<Override> testOverrides({
   ),
   // Queued upload copies go to a throwaway folder, never the real app storage.
   uploadDirectoryProvider.overrideWithValue(testUploadDirectory()),
+  // The phone's speech services do not exist in tests.
+  speechServiceProvider.overrideWithValue(speech ?? FakeSpeech()),
+  readAloudProvider.overrideWithValue(reader ?? FakeReadAloud()),
   ...extra,
 ];
 
@@ -122,6 +130,8 @@ Future<void> pumpApp(
   required InMemoryTokenStore store,
   FakeConnectivity? connectivity,
   AppDatabase? database,
+  FakeSpeech? speech,
+  FakeReadAloud? reader,
   List<Override> overrides = const [],
 }) async {
   final db = database ?? memoryDatabase();
@@ -137,6 +147,8 @@ Future<void> pumpApp(
         store: store,
         connectivity: connectivity,
         database: db,
+        speech: speech,
+        reader: reader,
         extra: overrides,
       ),
       child: const PcaApp(),

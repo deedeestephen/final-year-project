@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import 'tokens.dart';
 
@@ -121,6 +122,20 @@ ThemeData buildAppTheme([AppPalette p = AppPalette.light]) {
       outlineVariant: p.border,
     ),
     scaffoldBackgroundColor: p.canvas,
+    // Material Symbols Rounded (ADR-011): outlined at regular weight;
+    // selected and active states set fill: 1.
+    iconTheme: IconThemeData(
+      color: p.textSecondary,
+      fill: 0,
+      weight: 400,
+      opticalSize: 24,
+    ),
+    // The framework's own back, menu and close buttons in the same style.
+    actionIconTheme: ActionIconThemeData(
+      backButtonIconBuilder: (_) => const Icon(Symbols.arrow_back_rounded),
+      drawerButtonIconBuilder: (_) => const Icon(Symbols.menu_rounded),
+      closeButtonIconBuilder: (_) => const Icon(Symbols.close_rounded),
+    ),
     // Soft, tinted shadows (not the default black) for every raised surface.
     shadowColor: p.brightness == Brightness.dark
         ? const Color(0x66000000)
@@ -238,14 +253,17 @@ ThemeData buildAppTheme([AppPalette p = AppPalette.light]) {
       elevation: 3,
       shadowColor: p.shadow,
       height: 72,
-      indicatorColor: AccentTone.green.background(p),
+      indicatorColor: AccentTone.blue.background(p),
       indicatorShape: const StadiumBorder(),
+      // The selected tab's icon is filled (Material Symbols fill axis).
       iconTheme: WidgetStateProperty.resolveWith(
-        (states) => IconThemeData(
-          color: states.contains(WidgetState.selected)
-              ? AccentTone.green.foreground(p)
-              : p.textSecondary,
-        ),
+        (states) => states.contains(WidgetState.selected)
+            ? IconThemeData(
+                color: AccentTone.blue.foreground(p),
+                fill: 1,
+                weight: 500,
+              )
+            : IconThemeData(color: p.textSecondary, fill: 0, weight: 400),
       ),
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => text.labelMedium?.copyWith(
@@ -257,6 +275,10 @@ ThemeData buildAppTheme([AppPalette p = AppPalette.light]) {
     ),
     chipTheme: ChipThemeData(
       backgroundColor: p.surfaceMuted,
+      // Selected chips: the tinted blue tone, whose text pair is checked.
+      selectedColor: AccentTone.blue.background(p),
+      secondarySelectedColor: AccentTone.blue.background(p),
+      checkmarkColor: AccentTone.blue.foreground(p),
       side: BorderSide(color: p.border),
       shape: const StadiumBorder(),
       labelStyle: text.labelMedium?.copyWith(color: p.textPrimary),

@@ -53,7 +53,49 @@ FakeBackend _backend(List<String> roles) => FakeBackend()
       'pageSize': 50,
       'total': 0,
     }),
+  )
+  ..on('POST /chat/conversations', const FakeResponse(201, {'id': 'c-1'}))
+  ..on(
+    'POST /chat/conversations/c-1/messages',
+    const FakeResponse(200, {
+      'question': {
+        'id': 'q-1',
+        'role': 'user',
+        'text': 'What does a PSA test measure?',
+        'at': '2026-09-29T08:00:00.000Z',
+      },
+      'answer': {
+        'id': 'a-1',
+        'role': 'assistant',
+        'text': 'PSA is a protein made by the prostate.',
+        'at': '2026-09-29T08:00:01.000Z',
+        'sources': [
+          {'name': 'NHS: PSA testing', 'url': 'https://www.nhs.uk/'},
+        ],
+        'safety': 'OK',
+        'mode': 'GENERATED',
+        'model': 'claude-haiku-4-5-20251001',
+        'disclaimer': 'This is general information, not medical advice.',
+      },
+    }),
   );
+
+/// Opens the Learn tab and waits for the library (real asset I/O).
+Future<void> _openLearn(WidgetTester t) async {
+  await t.tap(
+    find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Learn'),
+    ),
+  );
+  final listen = find.byKey(const Key('learn.listen.psa-test'));
+  for (var i = 0; i < 40 && listen.evaluate().isEmpty; i++) {
+    await t.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await t.pump(const Duration(milliseconds: 50));
+  }
+}
 
 /// Screens to check: the role to sign in as (none: stay signed out) and how
 /// to get there after signing in.
@@ -68,6 +110,31 @@ _screens = {
     (t) async {
       await t.tap(find.text('Patients').last);
       await settle(t);
+    },
+  ),
+  // The assistant, voice messages and read-aloud (ADR-011, ADR-012).
+  'patient chat': (['PATIENT'], (t) => t.tapKey('assistant.fab')),
+  'chat with an answer': (
+    ['PATIENT'],
+    (t) async {
+      await t.tapKey('assistant.fab');
+      await t.tapKey('chat.suggestion.0');
+    },
+  ),
+  'chat while recording': (
+    ['PATIENT'],
+    (t) async {
+      await t.tapKey('assistant.fab');
+      await t.tapKey('chat.mic');
+    },
+  ),
+  'clinician chat': (['CLINICIAN'], (t) => t.tapKey('assistant.fab')),
+  'learn': (['PATIENT'], _openLearn),
+  'article being read aloud': (
+    ['PATIENT'],
+    (t) async {
+      await _openLearn(t);
+      await t.tapKey('learn.listen.psa-test');
     },
   ),
   'settings': (

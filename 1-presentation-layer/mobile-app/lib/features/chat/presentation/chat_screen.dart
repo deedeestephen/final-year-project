@@ -1,14 +1,19 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../core/connectivity/connectivity_service.dart';
-import '../../../shared/widgets/hero_header.dart';
+import '../../../shared/audio/read_aloud.dart';
+import '../../../shared/widgets/assistant_avatar.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/current_user.dart';
 import '../application/chat_controller.dart';
 import '../data/chat_api.dart';
+import 'chat_composer.dart';
 
 const _patientSuggestions = [
   'What does a PSA test measure?',
@@ -21,9 +26,10 @@ const _clinicianSuggestions = [
   'How is PSA density calculated?',
 ];
 
-/// The assistant (Phase 13): patients ("Ask a question") and clinicians
-/// ("Ask the assistant"). Answers are quoted from reviewed documents, with
-/// their sources; it never diagnoses (ADR-009).
+/// The PCa Assistant (Phase 13) for patients and clinicians. Answers come
+/// from reviewed documents, with their sources; it never diagnoses (ADR-009,
+/// ADR-010). Questions can be typed or spoken, and answers read aloud
+/// (ADR-012).
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
@@ -34,9 +40,19 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+  late final ReadAloudController _reader;
+
+  @override
+  void initState() {
+    super.initState();
+    _reader = ref.read(readAloudControllerProvider.notifier);
+  }
 
   @override
   void dispose() {
+    // Leaving the chat stops an answer being read. Deferred: providers
+    // cannot change while the widget tree is being torn down.
+    Future.microtask(() => _reader.stop(prefix: 'chat:'));
     _input.dispose();
     _scroll.dispose();
     super.dispose();
@@ -83,6 +99,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
     );
     if (ok == true) {
+      await _reader.stop(prefix: 'chat:');
       await ref.read(chatControllerProvider.notifier).startOver(delete: true);
     }
   }
@@ -97,17 +114,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final theme = Theme.of(context);
     final p = context.colors;
     final suggestions = clinician ? _clinicianSuggestions : _patientSuggestions;
+    final canAsk = online && !state.sending;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(clinician ? 'Ask the assistant' : 'Ask a question'),
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            // On a white disc: the app bar is blue.
+            const AssistantAvatar(size: 40, onBadge: true),
+            const SizedBox(width: AppSizes.sm + 2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      AssistantAvatar.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: p.onPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    clinician
+                        ? 'Answers from reviewed reference cards'
+                        : 'Answers from reviewed health information',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: p.onPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           PopupMenuButton<String>(
             key: const Key('chat.menu'),
             tooltip: 'More',
-            onSelected: (v) => v == 'new'
-                ? ref.read(chatControllerProvider.notifier).startOver()
-                : _delete(),
+            icon: const Icon(Symbols.more_vert_rounded),
+            onSelected: (v) async {
+              if (v == 'new') {
+                await _reader.stop(prefix: 'chat:');
+                await ref.read(chatControllerProvider.notifier).startOver();
+              } else {
+                await _delete();
+              }
+            },
             itemBuilder: (_) => [
               const PopupMenuItem(
                 key: Key('chat.new'),
@@ -132,48 +189,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               controller: _scroll,
               padding: const EdgeInsets.all(AppSizes.md),
               children: [
-                _Intro(clinician: clinician),
-                if (state.messages.isEmpty) ...[
-                  const SectionTitle('Try asking'),
-                  Wrap(
-                    spacing: AppSizes.sm,
-                    runSpacing: AppSizes.sm,
-                    children: [
-                      for (final (i, s) in suggestions.indexed)
-                        ActionChip(
-                          key: Key('chat.suggestion.$i'),
-                          label: Text(s),
-                          onPressed: online && !state.sending
-                              ? () => _send(s)
-                              : null,
-                        ),
-                    ],
+                if (state.messages.isEmpty)
+                  _Welcome(
+                    clinician: clinician,
+                    suggestions: suggestions,
+                    onPick: canAsk ? _send : null,
                   ),
-                ],
+                _Intro(clinician: clinician),
                 for (final (i, m) in state.messages.indexed)
                   Padding(
                     key: Key('chat.message.$i'),
                     padding: const EdgeInsets.only(top: AppSizes.sm + 4),
                     child: m.fromUser
                         ? _QuestionBubble(message: m)
-                        : _AnswerCard(message: m),
+                        : _FromAssistant(child: _AnswerCard(message: m)),
                   ),
                 if (state.sending)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSizes.md),
-                    child: Row(
-                      children: [
-                        const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        const SizedBox(width: AppSizes.sm + 4),
-                        Text(
-                          'Looking in the reviewed information…',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: AppSizes.sm + 4),
+                    child: _FromAssistant(child: _Typing()),
                   ),
               ],
             ),
@@ -207,35 +241,147 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 style: theme.textTheme.bodySmall,
               ),
             ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSizes.sm + 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      key: const Key('chat.input'),
-                      controller: _input,
-                      maxLength: 1000,
-                      minLines: 1,
-                      maxLines: 4,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: online ? (_) => _send() : null,
-                      decoration: const InputDecoration(
-                        hintText: 'Type your question',
-                        counterText: '',
-                      ),
-                    ),
+          ChatComposer(controller: _input, enabled: canAsk, onSend: _send),
+        ],
+      ),
+    );
+  }
+}
+
+/// The empty chat: the bot says hello and offers questions to start with.
+class _Welcome extends StatelessWidget {
+  const _Welcome({
+    required this.clinician,
+    required this.suggestions,
+    required this.onPick,
+  });
+
+  final bool clinician;
+  final List<String> suggestions;
+  final void Function(String)? onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.colors;
+    final theme = Theme.of(context);
+    final pick = onPick;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.md),
+      child: Column(
+        children: [
+          const SizedBox(height: AppSizes.sm),
+          const AssistantAvatar(
+            size: 96,
+            animate: true,
+            semanticLabel: AssistantAvatar.name,
+          ),
+          const SizedBox(height: AppSizes.md - 4),
+          Container(
+            key: const Key('chat.welcome'),
+            padding: const EdgeInsets.all(AppSizes.md),
+            decoration: BoxDecoration(
+              color: p.surface,
+              borderRadius: const BorderRadius.all(AppRadii.card),
+              border: Border.all(color: p.border),
+              boxShadow: [
+                BoxShadow(
+                  color: p.shadow,
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Text(
+                  clinician
+                      ? 'Hello! I am the PCa Assistant.'
+                      : 'Hi! I am the PCa Assistant.',
+                  style: theme.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSizes.xs),
+                Text(
+                  clinician
+                      ? 'Ask me about the reference cards: PI-RADS, grade '
+                            'groups, PSA density and more.'
+                      : 'Ask me about prostate health, tests such as PSA, and '
+                            'what happens at the clinic. Type, or tap the '
+                            'microphone and speak.',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: p.textSecondary,
                   ),
-                  const SizedBox(width: AppSizes.sm),
-                  IconButton.filled(
-                    key: const Key('chat.send'),
-                    tooltip: 'Send',
-                    onPressed: online && !state.sending ? () => _send() : null,
-                    icon: const Icon(Icons.send),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSizes.md),
+          Text('Try asking', style: theme.textTheme.titleSmall),
+          const SizedBox(height: AppSizes.sm),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: AppSizes.sm,
+            runSpacing: AppSizes.sm,
+            children: [
+              for (final (i, s) in suggestions.indexed)
+                ActionChip(
+                  key: Key('chat.suggestion.$i'),
+                  avatar: Icon(
+                    Symbols.chat_bubble_rounded,
+                    size: 18,
+                    color: p.linkText,
                   ),
-                ],
+                  label: Text(s),
+                  onPressed: pick == null ? null : () => pick(s),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What the assistant can and cannot do, and what not to type. Stays at the
+/// top of the conversation.
+class _Intro extends StatelessWidget {
+  const _Intro({required this.clinician});
+
+  final bool clinician;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final p = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.md - 4),
+      decoration: BoxDecoration(
+        color: p.surfaceMuted,
+        borderRadius: const BorderRadius.all(AppRadii.control),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Symbols.shield_person_rounded, size: 22, color: p.linkText),
+          const SizedBox(width: AppSizes.sm + 2),
+          Expanded(
+            child: Text(
+              clinician
+                  ? 'Answers come only from reviewed reference cards, with '
+                        'their sources; an AI may help word them. They do not '
+                        'replace clinical judgement or the local protocol. '
+                        'Do not type patient names or numbers. $_voiceNote'
+                  : 'Answers come only from reviewed health information, '
+                        'with their sources; an AI may help word them. The '
+                        'assistant cannot see your records and never tells '
+                        'you what your results mean. Do not type your name, '
+                        'NRC, phone number or results. Not for emergencies: '
+                        'if you feel very unwell, go to a clinic or hospital '
+                        'now. $_voiceNote',
+              key: const Key('chat.intro'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: p.textSecondary,
               ),
             ),
           ),
@@ -245,51 +391,121 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 }
 
-class _Intro extends StatelessWidget {
-  const _Intro({required this.clinician});
+const _voiceNote =
+    'If you speak, your phone\'s speech service (for example Google\'s) '
+    'turns your voice into text; the app only receives the text.';
 
-  final bool clinician;
+/// An assistant message: the bot on the left, the content next to it.
+class _FromAssistant extends StatelessWidget {
+  const _FromAssistant({required this.child});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.md),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const TintedIcon(
-              Icons.chat_outlined,
-              tone: AccentTone.teal,
-              size: 44,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 2),
+          child: AssistantAvatar(size: 34),
+        ),
+        const SizedBox(width: AppSizes.sm),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+/// Three dots that rise in turn while the answer is on its way.
+class _Typing extends StatefulWidget {
+  const _Typing();
+
+  @override
+  State<_Typing> createState() => _TypingState();
+}
+
+class _TypingState extends State<_Typing> with SingleTickerProviderStateMixin {
+  late final _dots = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _dots.stop();
+    } else if (!_dots.isAnimating) {
+      _dots.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _dots.dispose();
+    super.dispose();
+  }
+
+  /// 0 to 1 and back for dot [i], a third of a cycle after the one before.
+  static double _bounce(double t, int i) {
+    final x = (t - i / 3) % 1;
+    return x < 0.4 ? math.sin(x / 0.4 * math.pi) : 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.colors;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Semantics(
+        key: const Key('chat.typing'),
+        liveRegion: true,
+        label: 'Looking in the reviewed information',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: p.surface,
+            border: Border.all(color: p.border),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(6),
+              topRight: AppRadii.card,
+              bottomLeft: AppRadii.card,
+              bottomRight: AppRadii.card,
             ),
-            const SizedBox(width: AppSizes.md - 4),
-            Expanded(
-              child: Text(
-                clinician
-                    ? 'Answers come only from reviewed reference cards, with '
-                          'their sources; an AI may help word them. They do not '
-                          'replace clinical judgement or the local protocol. '
-                          'Do not type patient names or numbers.'
-                    : 'Answers come only from reviewed health information, '
-                          'with their sources; an AI may help word them. The '
-                          'assistant cannot see your records and never tells '
-                          'you what your results mean. Do not type your name, '
-                          'NRC, phone number or results. Not for emergencies: '
-                          'if you feel very unwell, go to a clinic or hospital '
-                          'now.',
-                key: const Key('chat.intro'),
-                style: theme.textTheme.bodyMedium,
-              ),
+          ),
+          child: AnimatedBuilder(
+            animation: _dots,
+            builder: (_, _) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < 3; i++)
+                  Transform.translate(
+                    offset: Offset(0, -4 * _bounce(_dots.value, i)),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Color.lerp(
+                          p.borderStrong,
+                          p.primary,
+                          _bounce(_dots.value, i),
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
+/// The person's question: a blue bubble on the right.
 class _QuestionBubble extends StatelessWidget {
   const _QuestionBubble({required this.message});
 
@@ -306,7 +522,11 @@ class _QuestionBubble extends StatelessWidget {
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: AccentTone.green.background(p),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [p.primary, p.primaryPressed],
+            ),
             borderRadius: const BorderRadius.only(
               topLeft: AppRadii.card,
               topRight: AppRadii.card,
@@ -323,7 +543,7 @@ class _QuestionBubble extends StatelessWidget {
               message.text,
               style: Theme.of(
                 context,
-              ).textTheme.bodyLarge?.copyWith(color: p.textPrimary),
+              ).textTheme.bodyLarge?.copyWith(color: p.onPrimary),
             ),
           ),
         ),
@@ -332,31 +552,31 @@ class _QuestionBubble extends StatelessWidget {
   }
 }
 
-class _AnswerCard extends StatelessWidget {
+class _AnswerCard extends ConsumerWidget {
   const _AnswerCard({required this.message});
 
   final ChatMessage message;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final p = context.colors;
     final (label, icon, fg, bg) = switch (message.safety) {
       ChatSafety.urgentCare => (
         'Urgent',
-        Icons.warning_amber_rounded,
+        Symbols.warning_rounded,
         p.danger,
         p.dangerBg,
       ),
       ChatSafety.declined => (
         'I cannot help with that',
-        Icons.info_outline,
+        Symbols.info_rounded,
         p.infoText,
         p.infoBg,
       ),
       ChatSafety.noSource => (
         'No reviewed information',
-        Icons.help_outline,
+        Symbols.help_rounded,
         p.textSecondary,
         p.surfaceMuted,
       ),
@@ -399,7 +619,11 @@ class _AnswerCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: AppSizes.sm),
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome, size: 18, color: p.textSecondary),
+                    Icon(
+                      Symbols.auto_awesome_rounded,
+                      size: 18,
+                      color: p.textSecondary,
+                    ),
                     const SizedBox(width: AppSizes.xs + 2),
                     Expanded(
                       child: Text(
@@ -427,7 +651,7 @@ class _AnswerCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
-                        Icons.menu_book_outlined,
+                        Symbols.menu_book_rounded,
                         size: 18,
                         color: p.textSecondary,
                       ),
@@ -453,8 +677,42 @@ class _AnswerCard extends StatelessWidget {
               const SizedBox(height: AppSizes.sm),
               Text(message.disclaimer!, style: theme.textTheme.bodySmall),
             ],
+            const SizedBox(height: AppSizes.xs),
+            _ListenToAnswer(
+              id: 'chat:${message.id}',
+              parts: [?label, message.text, ?message.disclaimer],
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "Listen" reads the answer aloud (not the sources), for people who find
+/// reading hard. Tapping again stops it.
+class _ListenToAnswer extends ConsumerWidget {
+  const _ListenToAnswer({required this.id, required this.parts});
+
+  final String id;
+  final List<String> parts;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reading = ref.watch(
+      readAloudControllerProvider.select((s) => s.isReading(id)),
+    );
+    final reader = ref.read(readAloudControllerProvider.notifier);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        key: Key('chat.listen.${id.substring(5)}'),
+        onPressed: () => reading ? reader.stop() : reader.play(id, parts),
+        icon: Icon(
+          reading ? Symbols.stop_circle_rounded : Symbols.volume_up_rounded,
+          fill: reading ? 1 : 0,
+        ),
+        label: Text(reading ? 'Stop reading' : 'Listen'),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
@@ -41,7 +42,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
           ? FloatingActionButton.extended(
               key: const Key('patients.register'),
               onPressed: () => context.push(Routes.newPatient),
-              icon: const Icon(Icons.person_add_alt_1_outlined),
+              icon: const Icon(Symbols.person_add_rounded),
               label: const Text('Register patient'),
             )
           : null,
@@ -59,7 +60,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
               key: const Key('patients.search'),
               decoration: const InputDecoration(
                 labelText: 'Search by name or MRN',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(Symbols.search_rounded),
               ),
               onChanged: (v) => setState(() => _query = v),
             ),
@@ -140,7 +141,10 @@ class _PatientTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSizes.sm),
-          Icon(Icons.chevron_right, color: context.colors.textSecondary),
+          Icon(
+            Symbols.chevron_right_rounded,
+            color: context.colors.textSecondary,
+          ),
         ],
       ),
     );

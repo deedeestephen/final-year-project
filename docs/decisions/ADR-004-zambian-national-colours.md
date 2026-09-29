@@ -1,6 +1,6 @@
 # ADR-004: Zambian national colours for the app theme
 
-- **Status:** Accepted (owner request, 2026-09-24). Supersedes the colour palette of ADR-002; ADR-002's legibility rules stay.
+- **Status:** **Superseded by [ADR-011](ADR-011-awareness-blue-and-modern-icons.md)** (owner request, 2026-09-29: awareness blue, and no flag stripe). Kept as the record of the first theme. It was accepted on 2026-09-24 and replaced the colour palette of ADR-002, whose legibility rules still apply. The "not an official government service" notice and the no-emblem rule carry on under ADR-011.
 - **Scope note (2026-09-24):** the admin website uses the "Clinical Field Health" palette instead (ADR-006). It keeps the stripe, the notice and the no-emblem rule. This ADR still governs the mobile app.
 - **Context:** The owner asked for the app to follow the style of Zambian government public applications.
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../core/db/app_database.dart';
@@ -90,7 +91,7 @@ class SyncScreen extends ConsumerWidget {
                       PrimaryButton(
                         key: const Key('sync.now'),
                         label: 'Sync now',
-                        icon: Icons.sync,
+                        icon: Symbols.sync_rounded,
                         busy: syncing,
                         onPressed: () =>
                             ref.read(syncEngineProvider).sync(force: true),
@@ -299,7 +300,7 @@ class _RejectedCard extends ConsumerWidget {
                   await ref.read(localStoreProvider).discardRejected(op.seq);
                 }
               },
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(Symbols.delete_rounded),
               label: const Text('Discard'),
             ),
           ],

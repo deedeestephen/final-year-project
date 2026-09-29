@@ -164,6 +164,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: ':articleId',
                     builder: (_, state) => ArticleScreen(
                       articleId: state.pathParameters['articleId']!,
+                      listen: state.uri.queryParameters['listen'] == '1',
                     ),
                   ),
                 ],

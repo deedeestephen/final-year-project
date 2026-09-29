@@ -80,8 +80,10 @@ void main() {
     expect(find.text('Clinician'), findsOneWidget);
     expect(find.text('Welcome, Demo Clinician'), findsOneWidget);
     expect(find.text('Patients'), findsOneWidget);
-    // The assistant is available now (Phase 13).
-    expect(find.text('Ask the assistant'), findsOneWidget);
+    // The assistant is available (Phase 13): a tile with the bot, and the
+    // floating bot button (ADR-011).
+    expect(find.text('Ask the assistant'), findsNWidgets(2));
+    expect(find.byKey(const Key('assistant.fab')), findsOneWidget);
 
     await tester.tap(find.byTooltip('Open navigation menu'));
     await settle(tester);

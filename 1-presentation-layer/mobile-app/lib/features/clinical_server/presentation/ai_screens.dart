@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/app_theme.dart';
@@ -132,7 +133,7 @@ class _AnalysesScreenState extends ConsumerState<AnalysesScreen> {
                 FilledButton.icon(
                   key: const Key('ai.request'),
                   onPressed: canRequest ? () => _request(serverId) : null,
-                  icon: const Icon(Icons.analytics_outlined),
+                  icon: const Icon(Symbols.analytics_rounded),
                   label: Text(_busy ? 'Asking…' : 'Request AI analysis'),
                 ),
                 if (reason != null) ...[
@@ -207,7 +208,10 @@ class AnalysisCard extends StatelessWidget {
               ),
             ),
             if (done)
-              Icon(Icons.chevron_right, color: context.colors.textSecondary),
+              Icon(
+                Symbols.chevron_right_rounded,
+                color: context.colors.textSecondary,
+              ),
           ],
         ),
       ),

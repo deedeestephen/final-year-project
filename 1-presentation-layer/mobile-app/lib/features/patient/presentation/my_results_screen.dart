@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/theme/app_theme.dart';
 import '../../../app/theme/tokens.dart';
@@ -41,7 +42,7 @@ class MyResultsScreen extends ConsumerWidget {
                 children: [
                   const InfoNote(
                     note,
-                    icon: Icons.medical_information_outlined,
+                    icon: Symbols.medical_information_rounded,
                   ),
                   const SizedBox(height: AppSizes.md),
                   if (notLinked)

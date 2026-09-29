@@ -10,7 +10,7 @@ const OUTCOME_LABELS: Record<AuditEntry['outcome'], string> = {
   FAILURE: 'Failed',
 };
 
-/** Badge colours reuse the account-status styles (green, amber, red). */
+/** Badge colours reuse the account-status styles (blue, amber, red). */
 const OUTCOME_BADGE: Record<AuditEntry['outcome'], string> = {
   SUCCESS: 'ACTIVE',
   DENIED: 'LOCKED',

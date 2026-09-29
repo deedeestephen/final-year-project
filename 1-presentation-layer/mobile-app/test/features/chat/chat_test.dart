@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:pca_mhealth/features/chat/application/voice_input.dart';
+import 'package:pca_mhealth/features/chat/presentation/chat_composer.dart';
+import 'package:pca_mhealth/shared/widgets/assistant_avatar.dart';
+
 import '../../support/app_harness.dart';
+import '../../support/audio_fakes.dart';
 import '../../support/fakes.dart';
 
 Map<String, dynamic> _answer({
@@ -66,6 +71,8 @@ Map<String, dynamic> _patientView() => {
 void main() {
   late FakeBackend backend;
   late InMemoryTokenStore store;
+  late FakeSpeech speech;
+  late FakeReadAloud reader;
 
   FakeBackend backendFor(List<String> roles) => FakeBackend()
     ..on('POST /auth/login', FakeResponse(200, loginJson(userJson())))
@@ -90,14 +97,19 @@ void main() {
     WidgetTester tester, {
     List<String> roles = const ['PATIENT'],
     FakeConnectivity? connectivity,
+    VoiceAvailability voice = VoiceAvailability.ready,
   }) async {
     backend = backendFor(roles);
     store = InMemoryTokenStore();
+    speech = FakeSpeech(availability: voice);
+    reader = FakeReadAloud();
     await pumpApp(
       tester,
       backend: backend,
       store: store,
       connectivity: connectivity,
+      speech: speech,
+      reader: reader,
     );
     await tester.enter('login.email', 'someone@demo.pca-mhealth.test');
     await tester.enter('login.password', 'a-password-1234');
@@ -105,15 +117,16 @@ void main() {
     if (roles.contains('PATIENT')) {
       await tester.tapKey('home.chat');
     } else {
-      await tester.tap(find.text('Ask the assistant'));
-      await settle(tester);
+      // The floating bot button on the clinician's home.
+      await tester.tapKey('assistant.fab');
     }
   }
 
   testWidgets('a patient asks a question and gets a quoted answer with its '
       'source, status and disclaimer', (tester) async {
     await openChat(tester);
-    expect(find.text('Ask a question'), findsWidgets);
+    expect(find.text(AssistantAvatar.name), findsOneWidget);
+    expect(find.byKey(const Key('chat.welcome')), findsOneWidget);
     expect(
       find.textContaining('never tells you what your results mean'),
       findsOneWidget,
@@ -236,7 +249,7 @@ void main() {
     tester,
   ) async {
     await openChat(tester, roles: ['CLINICIAN']);
-    expect(find.text('Ask the assistant'), findsWidgets);
+    expect(find.text('Answers from reviewed reference cards'), findsOneWidget);
     expect(find.text('What does PI-RADS 4 mean?'), findsOneWidget);
     expect(
       find.textContaining('do not replace clinical judgement'),
@@ -272,5 +285,153 @@ void main() {
     await tester.tapKey('chat.suggestion.0');
     expect(find.textContaining('Written by AI'), findsNothing);
     expect(find.textContaining('Do not type your name'), findsOneWidget);
+  });
+
+  group('voice messages (ADR-012)', () {
+    testWidgets('speak, see the words appear, finish, then send', (
+      tester,
+    ) async {
+      await openChat(tester);
+      await tester.tapKey('chat.mic');
+      expect(speech.listening, isTrue);
+      expect(find.byKey(const Key('chat.voice.recording')), findsOneWidget);
+      expect(find.text('Listening… speak now'), findsOneWidget);
+
+      speech.hear('What does a PSA');
+      await tester.pump();
+      expect(find.text('What does a PSA'), findsOneWidget);
+      speech.hear('What does a PSA test measure');
+      await tester.pump();
+
+      // Nothing is sent while listening.
+      final send = tester.widget<IconButton>(
+        find.byKey(const Key('chat.send')),
+      );
+      expect(send.onPressed, isNull);
+
+      await tester.tapKey('chat.voice.done');
+      expect(find.byKey(const Key('chat.voice.recording')), findsNothing);
+      await tester.tapKey('chat.send');
+      expect(backend.last('POST /chat/conversations/c-1/messages').body, {
+        'text': 'What does a PSA test measure',
+      });
+    });
+
+    testWidgets('listening stops by itself after a pause', (tester) async {
+      await openChat(tester);
+      await tester.tapKey('chat.mic');
+      speech.hear('Does it hurt');
+      speech.finish();
+      await settle(tester);
+      expect(find.byKey(const Key('chat.voice.recording')), findsNothing);
+      expect(find.text('Does it hurt'), findsOneWidget);
+    });
+
+    testWidgets('cancel throws the words away and keeps what was typed', (
+      tester,
+    ) async {
+      await openChat(tester);
+      await tester.enter('chat.input', 'About the DRE:');
+      await tester.tapKey('chat.mic');
+      speech.hear('does it hurt');
+      await tester.pump();
+      expect(find.text('About the DRE: does it hurt'), findsOneWidget);
+      await tester.tapKey('chat.voice.cancel');
+      expect(speech.cancelled, isTrue);
+      expect(find.text('About the DRE:'), findsOneWidget);
+      expect(backend.calls, isNot(contains('POST /chat/conversations')));
+    });
+
+    testWidgets('says when nothing was heard', (tester) async {
+      await openChat(tester);
+      await tester.tapKey('chat.mic');
+      speech.finish();
+      await settle(tester);
+      expect(find.text(ChatComposer.heardNothing), findsOneWidget);
+    });
+
+    testWidgets('explains how to allow the microphone', (tester) async {
+      await openChat(tester, voice: VoiceAvailability.noPermission);
+      await tester.tapKey('chat.mic');
+      expect(find.text(ChatComposer.noPermission), findsOneWidget);
+      expect(speech.listening, isFalse);
+      // The microphone stays, so it can be tried again after allowing it.
+      expect(find.byKey(const Key('chat.mic')), findsOneWidget);
+    });
+
+    testWidgets(
+      'hides the microphone when the phone cannot turn speech into text',
+      (tester) async {
+        await openChat(tester, voice: VoiceAvailability.unavailable);
+        await tester.tapKey('chat.mic');
+        expect(find.text(ChatComposer.unavailable), findsOneWidget);
+        expect(find.byKey(const Key('chat.mic')), findsNothing);
+      },
+    );
+
+    testWidgets('the microphone waits while offline', (tester) async {
+      await openChat(tester, connectivity: FakeConnectivity(online: false));
+      final mic = tester.widget<IconButton>(find.byKey(const Key('chat.mic')));
+      expect(mic.onPressed, isNull);
+    });
+
+    testWidgets('the intro says what happens to the voice', (tester) async {
+      await openChat(tester);
+      expect(
+        find.textContaining('the app only receives the text'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('the assistant is easy to find and to hear', () {
+    testWidgets('the bot button on the patient home opens the chat', (
+      tester,
+    ) async {
+      backend = backendFor(['PATIENT']);
+      await pumpApp(tester, backend: backend, store: InMemoryTokenStore());
+      await tester.enter('login.email', 'someone@demo.pca-mhealth.test');
+      await tester.enter('login.password', 'a-password-1234');
+      await tester.tapKey('login.submit');
+      expect(find.byType(AssistantAvatar), findsWidgets);
+      await tester.tapKey('assistant.fab');
+      expect(find.text(AssistantAvatar.name), findsOneWidget);
+      expect(find.bySemanticsLabel(AssistantAvatar.name), findsOneWidget);
+    });
+
+    testWidgets('an answer can be read aloud, and stopped', (tester) async {
+      await openChat(tester);
+      await tester.tapKey('chat.suggestion.0');
+      await tester.tapKey('chat.listen.a-1');
+      expect(reader.spoken, [
+        'PSA (prostate-specific antigen) is a protein made by the prostate.',
+      ]);
+      expect(find.text('Stop reading'), findsOneWidget);
+      reader.finishPart();
+      await settle(tester);
+      // The disclaimer is read too; the sources are not.
+      expect(reader.spoken.last, startsWith('This is general information'));
+      await tester.tapKey('chat.listen.a-1');
+      expect(find.text('Listen'), findsOneWidget);
+      expect(reader.speaking, isFalse);
+    });
+
+    testWidgets('a safety label is read before the fixed text', (tester) async {
+      await openChat(tester);
+      backend.on(
+        'POST /chat/conversations/c-1/messages',
+        FakeResponse(
+          200,
+          _answer(safety: 'URGENT_CARE', text: 'Go now.', sources: []),
+        ),
+      );
+      await tester.enter('chat.input', 'question');
+      await tester.tapKey('chat.send');
+      await tester.tapKey('chat.listen.a-1');
+      expect(reader.spoken, ['Urgent']);
+      reader.finishPart();
+      await settle(tester);
+      expect(reader.spoken, ['Urgent', 'Go now.']);
+    });
   });
 }

@@ -1,6 +1,6 @@
 # Mobile app (Flutter): Layer 1
 
-Flutter replaces React Native (ADR-001). The colours are the Zambian national colours (ADR-004), with the legibility rules of ADR-002. There is no national emblem, and every sign-in screen says the app is not an official government service.
+Flutter replaces React Native (ADR-001). The colours are awareness blue and the icons Material Symbols Rounded (ADR-011, which replaced the Zambian national colours of ADR-004), with the legibility rules of ADR-002. There is no national emblem, and every sign-in screen says the app is not an official government service.
 
 ## Structure
 
@@ -89,7 +89,7 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 
 ## Accessibility (NFR-11)
 
-- `test/app/accessibility_test.dart` (Phase 18) runs Flutter's accessibility guidelines on six main screens: sign-in, the clinician, pathologist and patient homes, the patient list and Settings.
+- `test/app/accessibility_test.dart` (Phase 18) runs Flutter's accessibility guidelines on twelve screens: sign-in, the clinician, pathologist and patient homes, the patient list, Settings, and (since ADR-011 and ADR-012) the chat empty, with an answer and while recording, the clinician chat, Learn, and an article being read aloud.
   - It checks tap targets of at least 48 dp, labels on everything tappable, and the text contrast of the rendered screen, in light and dark mode.
   - It also lays each screen out at 200% text size (the WCAG "resize text" rule), which found and fixed an overflow in the sign-in header.
 
@@ -97,6 +97,7 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 - Body text is 15 px or larger, touch targets are 48 dp or larger, and inputs are 52 px tall.
 - Severity and sync states are always written in words, never shown by colour alone.
 - Loading spinners and error messages have semantic labels or live regions.
+- **For people who cannot read (ADR-012):** every Learn article and every assistant answer can be read aloud by the phone, and questions can be spoken instead of typed.
 
 ## Patient app (Phase 8)
 
@@ -141,9 +142,10 @@ These screens talk to the server directly. They need the patient's **server id**
 - **Routes.** `/patients/:id/consents` is clinician-only. `/review` and `/review/:slideId` are pathologist-only. `/patients/:id/imaging`, `/patients/:id/ai`, `/ai-jobs` and `/ai-jobs/:jobId` are for both clinical roles. Patients and administrators are redirected home.
 - **The model screens are ready for the real models.** When the trained models replace the mocks, only the AI service changes ([ai-model-integration-guide.md](ai-model-integration-guide.md)); the banner switches to the research-model wording from the report's `provenance`.
 
-## The look: "modern health app" (ADR-008)
+## The look: "modern health app" (ADR-008), in awareness blue (ADR-011)
 
-- **Home screens** (clinician, pathologist, administrator, patient) open with a green gradient header (`HeroHeader`): menu, title, sync badge, then today's date, a greeting and the person's initials. The flag stripe runs along its rounded lower edge.
+- **Home screens** (clinician, pathologist, administrator, patient) open with a blue gradient header (`HeroHeader`): menu, title, sync badge, then today's date, a greeting and the person's initials. Two faint circles decorate it, and a thin line from blue to the awareness light blue (`AccentLine`) runs along its rounded lower edge.
+- **Icons** are Material Symbols Rounded (`Symbols.<name>_rounded`, weight 400). The selected tab's icon is filled. `test/app/icon_style_test.dart` keeps it that way.
 - **Sign-in and sign-up** use the same gradient header with the "PCa" app mark.
 - **Tiles:** `ActionTile` has a coloured icon square (`TintedIcon`, one of the `AccentTone` colours), a title, a description and an arrow. Tiles that are not ready yet are grey, with a "Coming in build phase …" label.
 - **Colour meaning:** tile colours only tell tiles apart. They never mean good or bad, and clinical values stay in neutral ink.
@@ -152,7 +154,16 @@ These screens talk to the server directly. They need the patient's **server id**
 
 ## The assistant (Phase 13)
 
-- **Where:** "Ask a question" on the patient home and "Ask the assistant" on the clinician home both open `/chat` (`features/chat/`). Pathologists and administrators are sent back to their home.
+- **Where:**
+  - **Patients:** a floating **Ask the assistant** button with the bot, on Home and Learn, and the **Ask a question** tile on Home.
+  - **Clinicians:** the same floating button, and the **Ask the assistant** tile on their home.
+  - All of them open `/chat` (`features/chat/`). Pathologists and administrators are sent back to their home.
+- **The PCa Assistant bot** (`shared/widgets/assistant_avatar.dart`, ADR-011) is a robot whose head is a speech bubble, drawn in code. It appears in the chat header, next to every answer, and large on the welcome screen, where it blinks unless the phone asks for less motion. Questions are blue bubbles on the right; answers are white cards next to the bot; "typing" dots show while an answer is on its way.
+- **Voice messages (ADR-012):**
+  - Tap the microphone in the question box and speak. The words appear as they are heard, with a pulsing red dot and a sound-level bar. ✕ throws them away; ✓ finishes; listening also stops after 3 s of silence or 60 s. Then check the words and send.
+  - It uses the phone's own speech-to-text (`speech_to_text`), in English, behind the `SpeechService` interface (`features/chat/application/voice_input.dart`).
+  - It explains what to do when the microphone is refused, hides the microphone when the phone has no speech service, and says so when nothing was heard.
+- **Listen:** every answer has a **Listen** button that reads the safety label, the answer and the disclaimer aloud (not the sources).
 - **How it works:**
   - The first question starts a conversation; follow-ups reuse it.
   - Answers show their sources, the knowledge base's review status and the disclaimer.
@@ -164,8 +175,14 @@ These screens talk to the server directly. They need the patient's **server id**
 
 - **Settings** (staff: the ☰ menu; patients: Profile › Settings) offers **Same as the phone** (default), **Light** and **Dark**.
 - The choice is a phone setting, saved with `shared_preferences` (it holds nothing else) and loaded before the first frame, so the app never flashes the wrong theme. It stays after sign-out because it belongs to the phone, not to an account.
-- Colours live in `AppPalette` (`app/theme/tokens.dart`), a `ThemeExtension` with a light and a dark set. Widgets read `context.colors`, never fixed colours. The Zambian flag colours (`AppColors.flag*`) stay the same in both modes.
-- **Readable in both modes:** `theme_test.dart` checks every text/background pair against WCAG AA 4.5:1 for light **and** dark. There are 30 pairs per mode, including the warning banner, the error colour, the snackbar, the gradient header and every tile colour. The app bar stays flag green with white text; clinical values keep the monospaced font; the AI disclaimer keeps its amber warning look.
+- Colours live in `AppPalette` (`app/theme/tokens.dart`), a `ThemeExtension` with a light and a dark set. Widgets read `context.colors`, never fixed colours. The awareness light blue (`accent`) is decoration only and the same in both modes, as are the bot's colours.
+- **Readable in both modes:** `theme_test.dart` checks every text/background pair against WCAG AA 4.5:1 for light **and** dark. There are 30 pairs per mode, including the warning banner, the error colour, the snackbar, the gradient header and every tile colour. The app bar stays blue with white text; clinical values keep the monospaced font; the AI disclaimer keeps its amber warning look.
+
+## Learn: listening instead of reading (ADR-012)
+
+- Every article card has a large **▶ Listen** button (announced as "Listen to <title>"). It opens the article with `?listen=1`, which starts reading at once.
+- The article has a player pinned to the bottom: **Listen / Pause / Resume**, **Stop**, **Slower voice**, and "Part 2 of 5". It reads the title and summary, each section, then the closing advice; the part being read is tinted, marked "Being read aloud" for screen readers, and scrolled into view. Sources are not read.
+- The phone's own voice is used (`flutter_tts`, English, works offline on most phones) behind the `ReadAloud` interface (`shared/audio/read_aloud.dart`). `readAloudControllerProvider` makes sure only one thing is read at a time; closing the article or the chat, or changing tab, stops it.
 
 ## Phone permissions
 
@@ -175,10 +192,12 @@ The app asks the phone for as little as possible (checked in the built APK's mer
 |---|---|---|
 | `INTERNET` | talk to the PCa mHealth server | No (Android grants it) |
 | `ACCESS_NETWORK_STATE` | know when the phone is offline, to save work locally and sync later | No (Android grants it) |
+| `RECORD_AUDIO` | voice messages to the assistant (ADR-012): the phone's speech service turns speech into text; the app never records or stores sound | Yes, the first time the microphone is tapped; the app works without it (type instead) |
 
-- **Not used:** camera, location, microphone, contacts, phone storage, notifications.
+- **Also declared:** `<queries>` for the phone's speech-to-text (`android.speech.RecognitionService`) and text-to-speech (`android.intent.action.TTS_SERVICE`) services, so Android 11 and later let the app find them. These are not permissions.
+- **Not used:** camera, location, contacts, phone storage, notifications.
 - **Files** are chosen with Android's own file chooser (Storage Access Framework). The app receives only the one file the user picks, so no storage permission is needed. Picked files are copied into the app's private storage and deleted after upload and at sign-out.
-- **iPhone:** no privacy usage descriptions are declared, because nothing that needs one is used.
+- **iPhone:** `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription` explain the voice messages. Nothing else that needs a usage description is used.
 - **Rule for later features:** a permission is added only with the feature that needs it, asked for at the moment it is needed (not at start-up), with a plain explanation, and the app keeps working if the user says no. Likely later: notifications (push messages), and the camera only if photographing documents is ever wanted.
 
 ## Administration (moved to the web)

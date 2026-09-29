@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/theme/tokens.dart';
 import 'appearance.dart';
@@ -11,14 +12,19 @@ class SettingsScreen extends ConsumerWidget {
   static const _choices = [
     (
       ThemeMode.system,
-      Icons.brightness_auto_outlined,
+      Symbols.brightness_auto_rounded,
       'Same as the phone',
       'Follows the phone\'s own light or dark setting',
     ),
-    (ThemeMode.light, Icons.light_mode_outlined, 'Light', 'Dark text on light'),
+    (
+      ThemeMode.light,
+      Symbols.light_mode_rounded,
+      'Light',
+      'Dark text on light',
+    ),
     (
       ThemeMode.dark,
-      Icons.dark_mode_outlined,
+      Symbols.dark_mode_rounded,
       'Dark',
       'Light text on dark; easier on the eyes at night',
     ),
@@ -48,7 +54,7 @@ class SettingsScreen extends ConsumerWidget {
                     selected: mode == current,
                     trailing: mode == current
                         ? Icon(
-                            Icons.check,
+                            Symbols.check_rounded,
                             color: context.colors.linkText,
                             semanticLabel: 'Selected',
                           )

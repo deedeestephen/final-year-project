@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
+import '../../../shared/widgets/assistant_avatar.dart';
 import '../../../shared/widgets/clinical_card.dart';
 import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/offline_banner.dart';
@@ -63,6 +65,9 @@ class MyHomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
+      floatingActionButton: user?.canUseChat ?? false
+          ? const AssistantFab()
+          : null,
       body: Column(
         children: [
           HeroHeader(
@@ -76,11 +81,12 @@ class MyHomeScreen extends ConsumerWidget {
             child: RefreshIndicator(
               onRefresh: refresh,
               child: ListView(
+                // Room at the bottom so the assistant button covers nothing.
                 padding: const EdgeInsets.fromLTRB(
                   AppSizes.md,
                   AppSizes.md,
                   AppSizes.md,
-                  AppSizes.lg,
+                  96,
                 ),
                 children: [
                   PatientLoad<Cached<PatientProfile?>>(
@@ -98,6 +104,18 @@ class MyHomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSizes.sm + 4),
+                  // The assistant (Phase 13, docs/chatbot-plan.md).
+                  ActionTile(
+                    key: const Key('home.chat'),
+                    icon: Symbols.chat_rounded,
+                    leading: const AssistantAvatar(size: 52),
+                    title: 'Ask a question',
+                    description:
+                        'Chat with the PCa Assistant: answers from reviewed '
+                        'health information, with sources. Type or speak.',
+                    onTap: () => context.push(Routes.chat),
+                  ),
+                  const SizedBox(height: AppSizes.sm + 4),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(AppSizes.md),
@@ -107,7 +125,7 @@ class MyHomeScreen extends ConsumerWidget {
                           Row(
                             children: [
                               const TintedIcon(
-                                Icons.favorite_outline,
+                                Symbols.favorite_rounded,
                                 tone: AccentTone.teal,
                                 size: 40,
                               ),
@@ -131,7 +149,7 @@ class MyHomeScreen extends ConsumerWidget {
                             key: const Key('home.getHelp'),
                             onPressed: () =>
                                 context.go(Routes.article('get-help')),
-                            icon: const Icon(Icons.health_and_safety_outlined),
+                            icon: const Icon(Symbols.health_and_safety_rounded),
                             label: const Text('When to get help quickly'),
                           ),
                         ],
@@ -139,20 +157,10 @@ class MyHomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSizes.sm + 4),
-                  // The assistant (Phase 13, docs/chatbot-plan.md).
-                  ActionTile(
-                    key: const Key('home.chat'),
-                    icon: Icons.chat_outlined,
-                    title: 'Ask a question',
-                    description:
-                        'Answers from reviewed health information, with sources',
-                    tone: AccentTone.teal,
-                    onTap: () => context.push(Routes.chat),
-                  ),
                   const SectionTitle('Coming later'),
                   for (final (title, icon) in const [
-                    ('Symptom check', Icons.checklist_outlined),
-                    ('Appointments and reminders', Icons.event_outlined),
+                    ('Symptom check', Symbols.checklist_rounded),
+                    ('Appointments and reminders', Symbols.event_rounded),
                   ]) ...[
                     ActionTile(
                       icon: icon,
@@ -184,7 +192,7 @@ class _LinkedCards extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ActionTile(
-          icon: Icons.assignment_outlined,
+          icon: Symbols.assignment_rounded,
           title: 'My results',
           description: latest == null
               ? 'No screening results yet.'
@@ -194,7 +202,7 @@ class _LinkedCards extends ConsumerWidget {
         ),
         const SizedBox(height: AppSizes.sm + 4),
         ActionTile(
-          icon: Icons.mail_outline,
+          icon: Symbols.mail_rounded,
           title: 'Messages',
           tone: AccentTone.blue,
           description: unread == null

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:pca_mhealth/app/theme/app_theme.dart';
 import 'package:pca_mhealth/app/theme/tokens.dart';
 import 'package:pca_mhealth/core/network/api_exception.dart';
@@ -7,7 +8,6 @@ import 'package:pca_mhealth/shared/widgets/ai_disclaimer_banner.dart';
 import 'package:pca_mhealth/shared/widgets/async_state_view.dart';
 import 'package:pca_mhealth/shared/widgets/clinical_card.dart';
 import 'package:pca_mhealth/shared/widgets/hero_header.dart';
-import 'package:pca_mhealth/shared/widgets/national_stripe.dart';
 import 'package:pca_mhealth/shared/widgets/primary_button.dart';
 import 'package:pca_mhealth/shared/widgets/sync_status_badge.dart';
 
@@ -156,19 +156,30 @@ void main() {
     expect(find.text('PSA raised'), findsOneWidget);
   });
 
-  testWidgets('the national stripe is visible in all four flag colours', (
+  testWidgets('the accent line runs from primary blue to awareness blue', (
     tester,
   ) async {
-    await pump(tester, const NationalStripe(height: 6));
-    final boxes = tester.widgetList<ColoredBox>(find.byType(ColoredBox));
-    expect(boxes.map((b) => b.color), [
-      AppColors.flagGreen,
-      AppColors.flagRed,
-      AppColors.flagBlack,
-      AppColors.flagOrange,
+    await pump(tester, const AccentLine(height: 6));
+    final box = tester.widget<DecoratedBox>(
+      find.descendant(
+        of: find.byType(AccentLine),
+        matching: find.byType(DecoratedBox),
+      ),
+    );
+    final gradient = (box.decoration as BoxDecoration).gradient!;
+    expect(gradient.colors, [
+      AppPalette.light.primary,
+      AppPalette.light.accent,
     ]);
-    for (final box in find.byType(ColoredBox).evaluate()) {
-      expect(tester.getSize(find.byWidget(box.widget)).height, 6);
+    expect(tester.getSize(find.byType(AccentLine)).height, 6);
+  });
+
+  test('no national flag colours remain in the palette (ADR-011)', () {
+    const flag = [0xFF198A00, 0xFFDE2010, 0xFFEF7D00];
+    for (final p in [AppPalette.light, AppPalette.dark]) {
+      for (final c in [p.primary, p.heroStart, p.heroEnd, p.linkText]) {
+        expect(flag, isNot(contains(c.toARGB32())));
+      }
     }
   });
 
@@ -220,8 +231,8 @@ void main() {
       expect(find.text('Welcome, Demo Clinician'), findsOneWidget);
       expect(find.text('DC'), findsOneWidget);
       expect(find.text('Synced'), findsOneWidget);
-      // The flag band follows the header.
-      expect(find.byType(NationalStripe), findsOneWidget);
+      // The awareness-blue line follows the header.
+      expect(find.byType(AccentLine), findsOneWidget);
       // Initials are decoration: the name is written next to them.
       expect(
         find.ancestor(
@@ -239,27 +250,27 @@ void main() {
       await pump(
         tester,
         ActionTile(
-          icon: Icons.people_outline,
+          icon: Symbols.group_rounded,
           title: 'Patients',
           description: 'Register and find patients',
           onTap: () => opened++,
         ),
       );
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      expect(find.byIcon(Symbols.chevron_right_rounded), findsOneWidget);
       await tester.tap(find.text('Patients'));
       expect(opened, 1);
 
       await pump(
         tester,
         const ActionTile(
-          icon: Icons.chat_outlined,
+          icon: Symbols.chat_rounded,
           title: 'Ask the assistant',
           badge: 'Coming in build phase 13',
         ),
       );
       expect(find.text('Coming in build phase 13'), findsOneWidget);
       // Nothing to open yet, so no arrow.
-      expect(find.byIcon(Icons.chevron_right), findsNothing);
+      expect(find.byIcon(Symbols.chevron_right_rounded), findsNothing);
     });
   });
 }

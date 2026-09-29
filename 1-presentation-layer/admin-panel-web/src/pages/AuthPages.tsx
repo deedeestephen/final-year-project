@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { ApiError } from '../api/client';
 import { useSession } from '../auth/session-context';
-import { Brand, NationalStripe, Notice } from '../components/ui';
+import { AccentLine, Brand, Notice } from '../components/ui';
 import { errorMessage, NOT_OFFICIAL } from '../components/messages';
 
 function AuthShell({
@@ -13,7 +13,7 @@ function AuthShell({
 }) {
   return (
     <div className="auth-page">
-      <NationalStripe />
+      <AccentLine />
       <main className="auth-main">
         <div className="auth-card">
           <Brand subtitle="Administration" />

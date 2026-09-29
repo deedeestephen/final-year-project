@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
@@ -25,15 +26,15 @@ class PatientServerSections extends ConsumerWidget {
       if (isClinician)
         (
           const Key('patient.consents'),
-          Icons.verified_user_outlined,
-          AccentTone.green,
+          Symbols.verified_user_rounded,
+          AccentTone.sky,
           'Consent',
           'Record or withdraw the patient\'s consent, including for AI analysis',
           Routes.consents(patient.id),
         ),
       (
         const Key('patient.imaging'),
-        Icons.image_outlined,
+        Symbols.image_rounded,
         AccentTone.blue,
         'Images and slides',
         'MRI, ultrasound and CT images; histopathology slides',
@@ -41,7 +42,7 @@ class PatientServerSections extends ConsumerWidget {
       ),
       (
         const Key('patient.ai'),
-        Icons.analytics_outlined,
+        Symbols.analytics_rounded,
         AccentTone.purple,
         'AI analysis',
         'Ask for an analysis and read the report',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../app/theme/tokens.dart';
 import 'clinical_formats.dart';
@@ -24,7 +25,7 @@ class SyntheticDataNotice extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.science_outlined, color: context.colors.infoText),
+          Icon(Symbols.science_rounded, color: context.colors.infoText),
           const SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(
@@ -66,7 +67,7 @@ class DateField extends StatelessWidget {
         hintText: 'YYYY-MM-DD',
         suffixIcon: IconButton(
           tooltip: 'Choose a date',
-          icon: const Icon(Icons.calendar_month_outlined),
+          icon: const Icon(Symbols.calendar_month_rounded),
           onPressed: () async {
             final now = DateTime.now();
             final current = DateTime.tryParse(controller.text);

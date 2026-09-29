@@ -1,6 +1,6 @@
 # ADR-006: "Clinical Field Health" design system for the admin website
 
-- **Status:** Accepted (owner request, 2026-09-24). Applies to `1-presentation-layer/admin-panel-web/` only. The mobile app keeps ADR-004.
+- **Status:** Accepted (owner request, 2026-09-24). Applies to `1-presentation-layer/admin-panel-web/` only. **Its colours are superseded by [ADR-011](ADR-011-awareness-blue-and-modern-icons.md) (2026-09-29):** awareness blue replaces Clinical Emerald, and the flag stripe is removed. The layout, borders, type and components below stay.
 - **Context:** The owner supplied a design specification, "Clinical Field Health", and asked for the admin page to follow it. It is written for clinical field work in Zambia:
   - high contrast
   - crisp borders instead of soft shadows (these wash out in sunlight)

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../shared/audio/read_aloud.dart';
 import '../application/patient_providers.dart';
 
 /// Bottom tabs for the patient app: Home · Results · Learn · Messages · Profile.
@@ -18,41 +20,35 @@ class PatientShell extends ConsumerWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: shell.currentIndex,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        onDestinationSelected: (i) =>
-            shell.goBranch(i, initialLocation: i == shell.currentIndex),
+        onDestinationSelected: (i) {
+          // Changing tab stops anything being read aloud.
+          ref.read(readAloudControllerProvider.notifier).stop();
+          shell.goBranch(i, initialLocation: i == shell.currentIndex);
+        },
         destinations: [
           const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+            icon: Icon(Symbols.home_rounded),
             label: 'Home',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment),
+            icon: Icon(Symbols.assignment_rounded),
             label: 'Results',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
+            icon: Icon(Symbols.menu_book_rounded),
             label: 'Learn',
           ),
           NavigationDestination(
             icon: Badge(
               isLabelVisible: unread > 0,
               label: Text('$unread'),
-              child: const Icon(Icons.mail_outline),
-            ),
-            selectedIcon: Badge(
-              isLabelVisible: unread > 0,
-              label: Text('$unread'),
-              child: const Icon(Icons.mail),
+              child: const Icon(Symbols.mail_rounded),
             ),
             label: 'Messages',
             tooltip: unread > 0 ? 'Messages, $unread unread' : 'Messages',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            icon: Icon(Symbols.person_rounded),
             label: 'Profile',
           ),
         ],

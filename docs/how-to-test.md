@@ -168,9 +168,9 @@ Sign in as the **clinician** and open **Patients**, then a synced patient. Below
 
 ### The new look of the phone app
 
-- [ ] **Sign-in page.** A green header with a white **PCa** square and **PCa mHealth**, then **Sign in**. A thin flag-coloured band follows its rounded bottom edge.
+- [ ] **Sign-in page.** A blue header with a white **PCa** square and **PCa mHealth**, then **Sign in**. A thin line from blue to light blue follows its rounded bottom edge (no flag colours any more, ADR-011).
 - [ ] **Clinician home.** Sign in as the clinician.
-  → A green gradient header with **☰**, **Clinician** and the sync badge, then today's date, **Welcome, Demo Clinician** and a round **DC** badge.
+  → A blue gradient header with **☰**, **Clinician** and the sync badge, then today's date, **Welcome, Demo Clinician** and a round **DC** badge.
   → Under **Your work**: **Patients** (green), **New screening** (blue), **AI results to review** (purple), each with a coloured icon square. Under **Coming later**: grey tiles with a *Coming in build phase 13* label.
 - [ ] **Colours never mean good or bad.** Open a patient's AI report.
   → The orange **DEVELOPMENT MOCK DATA** banner comes first, and the numbers are plain dark text: no green or red on results.
@@ -268,7 +268,7 @@ The admin page is now a **website on your PC**, not part of the phone app. `dev-
 2. Sign in with **`admin@demo.pca-mhealth.test`** and the **demo password** from Part 1.
 3. The first time, it asks you to **choose a new password** (12 or more letters). **Write it down.** If you lose it, run `dev-up.ps1 -ResetDemoPasswords`.
 
-- [ ] **The look.** Clean white cards on a light grey page, dark text, **emerald green** buttons, and a thin Zambian flag stripe under the top bar (the design from your "Clinical Field Health" file).
+- [ ] **The look.** Clean white cards on a light grey page, dark text, **blue** buttons, a blue current page in the menu, and a thin blue-to-light-blue line under the top bar (the "Clinical Field Health" layout in awareness blue, ADR-011).
 - [ ] **No internet.** Turn off your PC's Wi-Fi for a moment.
   → An amber strip at the top: *"You are offline. Changes cannot be saved until the connection returns."* Turn Wi-Fi back on: a green *"Back online."* shows for a few seconds.
 - [ ] **Only admins get in.** Try signing in on the website as `clinician@demo.pca-mhealth.test`.
@@ -395,6 +395,24 @@ First, restart everything so the new chat is loaded: close the server windows an
 - [ ] Tap **⋮** → **Delete conversation** → **Delete**.
   → The conversation is gone, from the server too.
 - [ ] **As the pathologist or administrator** there is no assistant tile.
+
+### The blue look, the assistant bot, voice and read-aloud (ADR-011, ADR-012)
+
+- [ ] **Colours and icons.** Everything is blue now, with no green or flag colours; icons are soft and rounded; the selected tab's icon is filled. Try **Profile › Settings › Dark**: dark navy, still easy to read.
+- [ ] **The bot.** As the patient, a blue **Ask the assistant** button with a little robot floats at the bottom of **Home** and **Learn**. Tap it.
+  → The chat opens with a large robot that blinks, *"Hi! I am the PCa Assistant."* and three suggested questions.
+- [ ] **Voice message.** On a real phone (or the emulator with **Extended controls › Microphone › Virtual microphone uses host audio input** switched on): tap the **microphone** in the question box.
+  → The first time, Android asks to allow the microphone: tap **Allow**.
+  → A red dot pulses and bars move while you speak. Say *"What happens during a DRE?"*: the words appear in the box.
+  → Tap **✓** (or stop talking for 3 seconds), check the words, then tap the **send arrow**.
+- [ ] **Microphone refused.** In Android Settings, turn the app's microphone permission off, then tap the microphone again.
+  → A blue note explains how to allow it. You can still type.
+- [ ] **Listen to an answer.** Under an answer, tap **Listen**.
+  → The phone reads the answer and the disclaimer aloud (not the web links). Tap **Stop reading** to stop.
+- [ ] **Learn for people who cannot read.** Open **Learn**. Each article has a big **▶ Listen** button. Tap it on **What is a PSA test?**
+  → The article opens and the phone starts reading. The part being read is tinted blue and scrolls into view; the bottom shows **Pause**, **■** and *Part 1 of 5*.
+  → **Pause**, then **Resume**: it starts that part again. **Slower voice** slows it down from the next part.
+  → Go back, or tap another tab: the voice stops.
 
 ### Phase 17: how fast is it? (the robot measures it)
 

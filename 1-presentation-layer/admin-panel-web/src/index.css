@@ -1,9 +1,10 @@
-/* PCa mHealth admin portal: "Clinical Field Health" design system (ADR-006).
-   Slate ink on a glare-reducing canvas, Clinical Emerald for actions and good
+/* PCa mHealth admin portal: "Clinical Field Health" design system (ADR-006),
+   in awareness blue (ADR-011, replacing the emerald and the flag stripe).
+   Slate ink on a glare-reducing canvas, awareness blue for actions and good
    states, amber for warnings, red for critical. Crisp 1-1.5 px borders instead
    of soft shadows (they wash out in bright light). Every text colour below is
-   checked for WCAG AA in src/design/contrast.test.ts. The thin Zambian flag
-   stripe stays as a decorative national accent (ADR-004); no emblem is used. */
+   checked for WCAG AA in src/design/contrast.test.ts. The light awareness
+   blue (the prostate-cancer ribbon colour) is decoration only. */
 
 @font-face {
   font-family: 'PlusJakartaSans';
@@ -34,13 +35,14 @@
   --ink-secondary: #475569; /* Slate 600 */
   --ink-muted: #64748b; /* Slate 500: timestamps and descriptors only */
 
-  /* Clinical Emerald: primary actions and positive states */
-  --primary: #047857;
-  --primary-pressed: #065f46;
-  --primary-accent: #059669; /* decorative only: not AA as text on white */
+  /* Awareness blue: primary actions and positive states */
+  --primary: #2563eb; /* Blue 600 */
+  --primary-pressed: #1d4ed8; /* Blue 700 */
+  --primary-accent: #60a5fa; /* decorative only: not AA as text on white */
+  --accent: #38bdf8; /* awareness light blue: the accent line, decoration only */
   --on-primary: #ffffff;
-  --positive-bg: #ecfdf5;
-  --positive-border: #a7f3d0;
+  --positive-bg: #eff6ff;
+  --positive-border: #bfdbfe;
 
   /* Amber: warnings and pending states */
   --warning: #b45309;
@@ -55,19 +57,13 @@
   --danger-bg: #fef2f2;
   --danger-border: #fecaca;
 
-  /* Zambian flag (decorative stripe only) */
-  --flag-green: #198a00;
-  --flag-red: #de2010;
-  --flag-black: #000000;
-  --flag-orange: #ef7d00;
-
   /* Navigation sidebar (dark slate) */
   --nav-bg: #0f172a; /* Slate 900 */
   --nav-hover: #1e293b; /* Slate 800 */
   --nav-ink: #e2e8f0; /* Slate 200 */
   --nav-muted: #94a3b8; /* Slate 400: section labels */
-  --nav-active: #047857; /* Clinical Emerald */
-  --hero-soft: #d1fae5; /* Emerald 100: small text on the emerald hero card */
+  --nav-active: #2563eb; /* awareness blue */
+  --hero-soft: #eff6ff; /* Blue 50: small text on the blue hero card */
 
   /* Dashboard charts: validated categorical order (CVD-safe, see ADR-006) */
   --series-1: #2a78d6; /* blue */
@@ -174,31 +170,15 @@ a:hover {
   border-radius: var(--radius);
 }
 
-/* National stripe: decorative only */
-.stripe {
-  display: flex;
+/* Accent line: blue to the awareness light blue; decorative only */
+.accent-line {
   height: 4px;
-}
-.stripe span:nth-child(1) {
-  flex: 7;
-  background: var(--flag-green);
-}
-.stripe span:nth-child(2) {
-  flex: 1;
-  background: var(--flag-red);
-}
-.stripe span:nth-child(3) {
-  flex: 1;
-  background: var(--flag-black);
-}
-.stripe span:nth-child(4) {
-  flex: 1;
-  background: var(--flag-orange);
+  background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
 }
 
 /* Buttons: 48 px touch targets.
    default   = neutral outlined action
-   .primary  = primary clinical action (emerald)
+   .primary  = primary clinical action (awareness blue)
    .secondary= structural action (slate)
    .danger   = outlined, red text, for destructive actions */
 button,
@@ -539,7 +519,7 @@ select:focus {
   display: none;
 }
 
-/* Sidebar: dark slate with an emerald current-page pill */
+/* Sidebar: dark slate with a blue current-page pill */
 .sidebar {
   background: var(--nav-bg);
   color: var(--nav-ink);

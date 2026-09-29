@@ -13,7 +13,7 @@ import {
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from '../auth/session-context';
-import { Brand, NationalStripe } from './ui';
+import { AccentLine, Brand } from './ui';
 import { NOT_OFFICIAL } from './messages';
 
 interface NavItem {
@@ -108,7 +108,7 @@ export function Layout() {
             Sign out
           </button>
         </div>
-        <NationalStripe />
+        <AccentLine />
       </header>
       <nav
         id="sidebar"

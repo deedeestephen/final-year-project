@@ -1,19 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens: Zambian national colours (ADR-004), with the legibility
-/// rules kept from ADR-002. The flag's colours appear as accents and in the
-/// national stripe; where a colour carries text it is deepened until it
-/// reaches WCAG 2.1 AA contrast. No national emblem is used: this is a
-/// research prototype, not an official Government of Zambia service.
-abstract final class AppColors {
-  // Flag colours, exactly (accents, stripe, icons; not for body text). The
-  // same in light and dark mode.
-  static const flagGreen = Color(0xFF198A00);
-  static const flagRed = Color(0xFFDE2010);
-  static const flagBlack = Color(0xFF000000);
-  static const flagOrange = Color(0xFFEF7D00);
-}
-
+/// Design tokens: awareness blue (ADR-011, which replaces the national
+/// colours of ADR-004), with the legibility rules kept from ADR-002. Light
+/// blue is the prostate-cancer awareness colour; it is used for decoration
+/// only, and every colour that carries text is deep enough to reach WCAG 2.1
+/// AA contrast. The app is a research prototype, not an official service.
 /// The colours that change between light and dark mode. Widgets read them
 /// with `context.colors`; every text pair is checked for WCAG AA in both.
 @immutable
@@ -52,6 +43,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.heroStart,
     required this.heroEnd,
     required this.onHeroMuted,
+    required this.accent,
     required this.shadow,
   });
 
@@ -71,7 +63,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color syncedDot;
   final Color amber; // warnings, highlights (not text)
   final Color sky; // syncing / information dot
-  final Color linkText; // green text and icons
+  final Color linkText; // blue text and icons
   final Color amberText; // copper text
   final Color danger;
   final Color onDanger; // text on a danger fill
@@ -86,7 +78,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color offlineText;
   final Color offlineBg;
 
-  /// The green gradient behind the home greeting and the sign-in header
+  /// The blue gradient behind the home greeting and the sign-in header
   /// (white text on both ends).
   final Color heroStart;
   final Color heroEnd;
@@ -94,80 +86,86 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// Smaller text on the hero gradient.
   final Color onHeroMuted;
 
+  /// The awareness light blue: the accent line under the hero, the bot's
+  /// antenna, the recording glow. Decoration only, never text.
+  final Color accent;
+
   /// Soft card shadow (transparent in dark mode, where borders carry depth).
   final Color shadow;
 
   static const light = AppPalette(
     brightness: Brightness.light,
-    primary: Color(0xFF146E00),
-    primaryPressed: Color(0xFF0F5500),
-    canvas: Color(0xFFF7F9F6),
+    primary: Color(0xFF2563EB),
+    primaryPressed: Color(0xFF1D4ED8),
+    canvas: Color(0xFFF5F8FF),
     surface: Color(0xFFFFFFFF),
-    surfaceMuted: Color(0xFFEEF3EC),
-    border: Color(0xFFDDE5DA),
-    borderStrong: Color(0xFFC2CFBE),
-    textPrimary: Color(0xFF111111),
-    textSecondary: Color(0xFF45503F),
-    textMuted: Color(0xFF5E6858),
+    surfaceMuted: Color(0xFFEEF3FF),
+    border: Color(0xFFDCE4F2),
+    borderStrong: Color(0xFFB8C6DE),
+    textPrimary: Color(0xFF0F172A),
+    textSecondary: Color(0xFF334155),
+    textMuted: Color(0xFF52627A),
     onPrimary: Color(0xFFFFFFFF),
-    positive: Color(0xFF198A00),
-    syncedDot: Color(0xFF2E9E1A),
+    positive: Color(0xFF3B82F6),
+    syncedDot: Color(0xFF16A34A),
     amber: Color(0xFFEF7D00),
-    sky: Color(0xFF0277BD),
-    linkText: Color(0xFF146E00),
-    amberText: Color(0xFFA04A00),
-    danger: Color(0xFFB81A0D),
+    sky: Color(0xFF0284C7),
+    linkText: Color(0xFF1D4ED8),
+    amberText: Color(0xFFB45309),
+    danger: Color(0xFFB91C1C),
     onDanger: Color(0xFFFFFFFF),
-    dangerBg: Color(0xFFFFF1EF),
-    dangerBorder: Color(0xFFF4A79E),
-    warningText: Color(0xFF8A3E00),
-    warningBg: Color(0xFFFFF3E3),
-    successText: Color(0xFF0F5C12),
-    successBg: Color(0xFFEAF6E6),
-    infoText: Color(0xFF065A8C),
-    infoBg: Color(0xFFEEF7FC),
-    offlineText: Color(0xFF3A4336),
-    offlineBg: Color(0xFFEEF1EC),
-    heroStart: Color(0xFF146E00),
-    heroEnd: Color(0xFF0A4F3A),
-    onHeroMuted: Color(0xFFE2F5DC),
-    shadow: Color(0x1A1B3A12),
+    dangerBg: Color(0xFFFEF2F2),
+    dangerBorder: Color(0xFFFCA5A5),
+    warningText: Color(0xFF92400E),
+    warningBg: Color(0xFFFFF7ED),
+    successText: Color(0xFF166534),
+    successBg: Color(0xFFF0FDF4),
+    infoText: Color(0xFF075985),
+    infoBg: Color(0xFFF0F9FF),
+    offlineText: Color(0xFF334155),
+    offlineBg: Color(0xFFEEF2F7),
+    heroStart: Color(0xFF1D4ED8),
+    heroEnd: Color(0xFF1E3A8A),
+    onHeroMuted: Color(0xFFDBEAFE),
+    accent: Color(0xFF38BDF8),
+    shadow: Color(0x1A1E3A8A),
   );
 
   static const dark = AppPalette(
     brightness: Brightness.dark,
-    primary: Color(0xFF1F7A0E),
-    primaryPressed: Color(0xFF16600A),
-    canvas: Color(0xFF101410),
-    surface: Color(0xFF1A201A),
-    surfaceMuted: Color(0xFF243024),
-    border: Color(0xFF2E3A2D),
-    borderStrong: Color(0xFF55664F),
-    textPrimary: Color(0xFFEDF1EB),
-    textSecondary: Color(0xFFC3CCBF),
-    textMuted: Color(0xFFA3AE9E),
+    primary: Color(0xFF2563EB),
+    primaryPressed: Color(0xFF1D4ED8),
+    canvas: Color(0xFF0B1220),
+    surface: Color(0xFF111A2E),
+    surfaceMuted: Color(0xFF1A2540),
+    border: Color(0xFF243150),
+    borderStrong: Color(0xFF4A5B80),
+    textPrimary: Color(0xFFE8EEF9),
+    textSecondary: Color(0xFFB9C5DA),
+    textMuted: Color(0xFF93A3BD),
     onPrimary: Color(0xFFFFFFFF),
-    positive: Color(0xFF5CC247),
-    syncedDot: Color(0xFF4CC23A),
-    amber: Color(0xFFF08A1C),
-    sky: Color(0xFF4FB3F0),
-    linkText: Color(0xFF7FD46A),
-    amberText: Color(0xFFF5A55A),
-    danger: Color(0xFFFF8A80),
-    onDanger: Color(0xFF2A0A07),
-    dangerBg: Color(0xFF3A1714),
-    dangerBorder: Color(0xFF8C3A33),
-    warningText: Color(0xFFFFB870),
-    warningBg: Color(0xFF3A2610),
-    successText: Color(0xFF8EDB7C),
-    successBg: Color(0xFF15301A),
-    infoText: Color(0xFF8CCBF5),
-    infoBg: Color(0xFF0F2A3A),
-    offlineText: Color(0xFFD0D8CC),
-    offlineBg: Color(0xFF252C24),
-    heroStart: Color(0xFF1C6E0D),
-    heroEnd: Color(0xFF0C3A2B),
-    onHeroMuted: Color(0xFFE2F5DC),
+    positive: Color(0xFF60A5FA),
+    syncedDot: Color(0xFF4ADE80),
+    amber: Color(0xFFF59E0B),
+    sky: Color(0xFF38BDF8),
+    linkText: Color(0xFF93C5FD),
+    amberText: Color(0xFFFCD34D),
+    danger: Color(0xFFFCA5A5),
+    onDanger: Color(0xFF2A0A0A),
+    dangerBg: Color(0xFF3A1418),
+    dangerBorder: Color(0xFF8C3A3A),
+    warningText: Color(0xFFFCD34D),
+    warningBg: Color(0xFF3A2A10),
+    successText: Color(0xFF86EFAC),
+    successBg: Color(0xFF0F2A1C),
+    infoText: Color(0xFF7DD3FC),
+    infoBg: Color(0xFF0C2436),
+    offlineText: Color(0xFFCBD5E1),
+    offlineBg: Color(0xFF1A2334),
+    heroStart: Color(0xFF1E40AF),
+    heroEnd: Color(0xFF172554),
+    onHeroMuted: Color(0xFFDBEAFE),
+    accent: Color(0xFF38BDF8),
     shadow: Color(0x00000000),
   );
 
@@ -212,6 +210,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       heroStart: l(heroStart, other.heroStart),
       heroEnd: l(heroEnd, other.heroEnd),
       onHeroMuted: l(onHeroMuted, other.onHeroMuted),
+      accent: l(accent, other.accent),
       shadow: l(shadow, other.shadow),
     );
   }
@@ -220,41 +219,41 @@ class AppPalette extends ThemeExtension<AppPalette> {
 /// Colourful icon backgrounds for navigation tiles. They only tell tiles
 /// apart; they never mean good or bad, and are not used on clinical results.
 enum AccentTone {
-  green(
-    Color(0xFFE5F4E0),
-    Color(0xFF146E00),
-    Color(0xFF1D3A18),
-    Color(0xFF8EDB7C),
-  ),
   blue(
-    Color(0xFFE2EFFA),
-    Color(0xFF0B5E9E),
-    Color(0xFF132F47),
-    Color(0xFF8CCBF5),
+    Color(0xFFDBEAFE),
+    Color(0xFF1D4ED8),
+    Color(0xFF172554),
+    Color(0xFF93C5FD),
+  ),
+  sky(
+    Color(0xFFE0F2FE),
+    Color(0xFF075985),
+    Color(0xFF0C2D44),
+    Color(0xFF7DD3FC),
   ),
   orange(
-    Color(0xFFFFEEDC),
-    Color(0xFF9A4500),
+    Color(0xFFFFEDD5),
+    Color(0xFF9A3412),
     Color(0xFF3B2912),
-    Color(0xFFFFB870),
+    Color(0xFFFDBA74),
   ),
   purple(
-    Color(0xFFEFE8FA),
-    Color(0xFF5F37A3),
-    Color(0xFF2C2345),
-    Color(0xFFC9B2F5),
+    Color(0xFFEDE9FE),
+    Color(0xFF5B21B6),
+    Color(0xFF2E2350),
+    Color(0xFFC4B5FD),
   ),
   teal(
-    Color(0xFFDDF3EF),
-    Color(0xFF0A665E),
-    Color(0xFF10352F),
-    Color(0xFF72D8C9),
+    Color(0xFFCCFBF1),
+    Color(0xFF0F766E),
+    Color(0xFF0F3531),
+    Color(0xFF5EEAD4),
   ),
   grey(
-    Color(0xFFEEF1EC),
-    Color(0xFF45503F),
-    Color(0xFF252C24),
-    Color(0xFFC3CCBF),
+    Color(0xFFEEF2F7),
+    Color(0xFF334155),
+    Color(0xFF1E293B),
+    Color(0xFFCBD5E1),
   );
 
   const AccentTone(this._lightBg, this._lightFg, this._darkBg, this._darkFg);
@@ -310,11 +309,11 @@ List<(String, Color, Color)> textColourPairs(AppPalette p) => [
   ('secondary text on canvas', p.textSecondary, p.canvas),
   ('muted meta text on surface', p.textMuted, p.surface),
   ('muted meta text on canvas', p.textMuted, p.canvas),
-  ('label on primary green', p.onPrimary, p.primary),
-  ('label on pressed green', p.onPrimary, p.primaryPressed),
-  ('green text on muted surface', p.linkText, p.surfaceMuted),
-  ('green link text on surface', p.linkText, p.surface),
-  ('green link text on canvas', p.linkText, p.canvas),
+  ('label on primary blue', p.onPrimary, p.primary),
+  ('label on pressed blue', p.onPrimary, p.primaryPressed),
+  ('blue text on muted surface', p.linkText, p.surfaceMuted),
+  ('blue link text on surface', p.linkText, p.surface),
+  ('blue link text on canvas', p.linkText, p.canvas),
   ('copper text on surface', p.amberText, p.surface),
   ('danger on danger background', p.danger, p.dangerBg),
   ('danger on surface', p.danger, p.surface),

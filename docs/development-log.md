@@ -1016,3 +1016,71 @@ The device run signs out whoever was signed in on the emulator.
 **Checked on the phone:** the Galaxy S9+ emulator ran against the restarted development server and AI service, signed in as a synthetic patient. "What does a PSA test measure?" was answered with two sources, "Hello" got the greeting, and "Does it hurt?" after the DRE question was answered from the DRE passage.
 
 **Not yet measured:** Claude's speed and cost. That needs the owner's API key in `.env`; then run `PERF_ONLY=chat npm run perf`, and the live test with `ANTHROPIC_API_KEY_LIVE_TEST=1`.
+
+## 2026-09-29: Awareness blue, modern icons, a bot you can see, voice messages and read-aloud (owner request)
+
+**Request:**
+- "design an actual bot icon that lets the user know that they can chat with the chatbot from there";
+- "with the design it is still plain";
+- "make sure the icons that are used for buttons are modern icons";
+- "abandon the green colour theme of Zambia colours";
+- "make sure that the chat bot can be sent messages using voice record just like ChatGPT";
+- "on the learn section for people that can't read … they can have an audio play read for them".
+
+**Owner's choices:**
+- **Awareness blue** in the app **and** the admin website, with the flag stripe removed from both.
+- **Material Symbols Rounded** icons.
+- The **phone's own speech-to-text** for voice (free).
+
+Recorded in [ADR-011](decisions/ADR-011-awareness-blue-and-modern-icons.md) and [ADR-012](decisions/ADR-012-voice-input-and-read-aloud.md). ADR-004 is superseded; the colour parts of ADR-006 and ADR-008 are too.
+
+**Built:**
+- **Theme:**
+  - New `AppPalette` light and dark values: primary `#2563EB`, header gradient `#1D4ED8 → #1E3A8A`, awareness light blue `#38BDF8` for decoration only. The green tile tone is now a sky blue.
+  - `NationalStripe` and `AppColors.flag*` are gone. A blue-to-light-blue `AccentLine` and two faint circles (`HeroDecorPainter`) decorate the headers. The "not an official service" notice moved to `lib/shared/app_notice.dart`.
+  - Admin website: the same blue tokens, and an `AccentLine` instead of the stripe.
+- **Icons:**
+  - All 87 `Icons.*` uses (57 icons, 25 files) are now `Symbols.*_rounded`. Selected tabs are filled, and the framework's back, menu and close buttons match.
+  - `icon_style_test.dart` guards this.
+- **The PCa Assistant bot** (`assistant_avatar.dart`):
+  - a robot whose head is a speech bubble, drawn in code;
+  - on a floating **Ask the assistant** button (patient Home and Learn, clinician home), the chat tiles, the chat header, next to answers, and large on a new welcome screen, where it blinks unless the phone asks for less motion.
+  - Questions are blue bubbles; "typing" dots replace the spinner.
+- **Voice messages** (`voice_input.dart`, `chat_composer.dart`):
+  - A microphone in the question box. The words appear as they are heard, with a pulsing dot and a sound-level bar; ✕ cancels and ✓ finishes. Listening also stops after 3 s of silence or 60 s; nothing is sent until the person taps send.
+  - Plain messages for a refused microphone, no speech service, and nothing heard.
+  - `RECORD_AUDIO` is asked for at first use. The iOS usage descriptions are added too.
+- **Read-aloud** (`read_aloud.dart`):
+  - a big **▶ Listen** button on every Learn card;
+  - an article player pinned to the bottom (Listen/Pause/Resume, Stop, Slower voice, "Part 2 of 5") that highlights and scrolls to the part being read;
+  - **Listen** on every chat answer.
+  - One voice at a time; it stops on leaving the screen or changing tab.
+
+**Found and fixed while testing:**
+- **The article player scrolled out of reach.** It started at the top of the article; as the reader scrolled to the part being read, Pause went off-screen. It is now pinned to the bottom.
+- **A bottom bar that filled the screen.** The pinned player's column had no `MainAxisSize.min`, so the article was squeezed to nothing. Existing Learn tests caught it.
+- **The Listen button lost its own tap for screen readers.** Wrapping it in `Semantics(excludeSemantics)` removed its action, so a TalkBack double-tap would have opened the article without reading it. The button now keeps its semantics, and its label says "Listen to <title>".
+- **Dark text on the blue chat header.** It failed contrast; the new accessibility cases found it.
+- **Selected chips** (the Learn language chip) put dark text on the secondary blue: 2.66:1 in light mode, 1.55:1 in dark. This was already true with the green theme, but no test covered Learn until now. Selected chips now use the blue tile tone.
+- **Two lifecycle crashes in tests:**
+  - an animation controller created lazily inside `dispose()`;
+  - the read-aloud controller changing state after the app was torn down (it now checks `ref.mounted`).
+- **A wrong claim in my own ADR draft.** The minimum contrast was 4.86:1 (teal tile), not 5.0:1, and the icon fonts are about 35 MB in debug builds, not 11 MB. Both were measured and corrected.
+
+**Tests:**
+- **App:** 274 tests pass (239 before), including:
+  - 11 new chat tests (voice with a fake recognizer; Listen);
+  - 6 read-aloud tests with a fake voice;
+  - 2 icon-style guards;
+  - the flag-free palette and accent-line tests.
+- **Accessibility:** the suite now covers twelve screens, including the chat (empty, with an answer, recording), the clinician chat, Learn, and an article being read aloud. Each is checked in light and dark mode and at 200% text.
+- **Coverage and admin:** app line coverage is 90.8%. The admin website has 78 tests (coverage 87.7%); `contrast.test.ts` checks that no flag tokens remain.
+- **Gates:** the mobile (including the APK build and OSV), admin-web and docs gates pass.
+- **Merged manifest:** only `INTERNET`, `ACCESS_NETWORK_STATE` and `RECORD_AUDIO`.
+
+**Checked on the Galaxy S9+ emulator** (synthetic patient, development server):
+- **Look:** blue home with the bot tile and floating button.
+- **Read-aloud:** Learn → **Listen** on "What is a PSA test?" opened the article and Google's text-to-speech spoke it. Android reported a speech track playing; the parts advanced to "Part 3 of 5" with the highlight and scrolling; TalkBack announced "Being read aloud".
+- **Stopping:** changing tab stopped the voice.
+- **Voice:** the microphone permission was granted and the listening bar appeared. The emulator hears silence unless its host microphone is on, so it ended with "I did not hear anything", as designed.
+- **Not yet checked:** real speech recognition needs a microphone. It is switched on for the emulator (`adb emu avd hostmicon`), or use the USB phone (how-to-test.md).

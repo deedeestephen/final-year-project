@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/theme/tokens.dart';
 
@@ -40,7 +41,7 @@ class AiDisclaimerBanner extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.info_outline, color: context.colors.warningText),
+            Icon(Symbols.info_rounded, color: context.colors.warningText),
             const SizedBox(width: AppSizes.sm),
             Expanded(
               child: Column(

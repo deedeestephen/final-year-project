@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>To let you speak your question to the PCa Assistant. The sound is not recorded or stored.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>To turn your spoken question into text for the PCa Assistant. Only the text is sent.</string>
 </dict>
 </plist>
