@@ -169,6 +169,85 @@ describe('user detail', () => {
     expect(
       screen.queryByRole('button', { name: 'Reset password' }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Delete account' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('deletes an account after confirming, and says so on the Users list', async () => {
+    const { calls } = renderAt('/users/u-c', {
+      'GET /users/u-c': () => json(200, clinician()),
+      'DELETE /users/u-c': () => new Response(null, { status: 204 }),
+      'GET /users': () =>
+        json(200, { items: [], page: 1, pageSize: 25, total: 0 }),
+    });
+    await screen.findByRole('heading', { name: 'SYNTHETIC Clinician' });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete account' }));
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Delete this account?',
+    });
+    expect(dialog).toHaveTextContent('clinician@example.test');
+    expect(dialog).toHaveTextContent('cannot be undone');
+    // Cancel gets the focus, so Enter does not delete by accident.
+    expect(
+      within(dialog).getByRole('button', { name: 'Cancel' }),
+    ).toHaveFocus();
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Delete account' }),
+    );
+    expect(
+      await screen.findByText(
+        'The account clinician@example.test was deleted.',
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Users' })).toBeVisible();
+    expect(calls.filter((c) => c.method === 'DELETE')).toHaveLength(1);
+  });
+
+  it('can be cancelled', async () => {
+    const { calls } = renderAt('/users/u-c', {
+      'GET /users/u-c': () => json(200, clinician()),
+    });
+    await screen.findByRole('heading', { name: 'SYNTHETIC Clinician' });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete account' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Cancel',
+      }),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+  });
+
+  it('explains why an account with clinical history cannot be deleted', async () => {
+    renderAt('/users/u-c', {
+      'GET /users/u-c': () => json(200, clinician()),
+      'DELETE /users/u-c': () =>
+        apiError(
+          409,
+          'HAS_CLINICAL_HISTORY',
+          'This account has clinical history, so it cannot be deleted. Disable it instead.',
+        ),
+    });
+    await screen.findByRole('heading', { name: 'SYNTHETIC Clinician' });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete account' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', {
+        name: 'Delete account',
+      }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Disable it instead.',
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'SYNTHETIC Clinician' }),
+    ).toBeVisible();
   });
 });
 

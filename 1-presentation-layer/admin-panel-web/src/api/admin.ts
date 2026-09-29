@@ -108,6 +108,8 @@ export const adminApi = {
   ) => api.patch<User>(`/users/${id}`, body),
   resetPassword: (id: string) =>
     api.post<{ temporaryPassword: string }>(`/users/${id}/reset-password`),
+  /** Refused (409 HAS_CLINICAL_HISTORY) for accounts with clinical history. */
+  deleteUser: (id: string) => api.delete<void>(`/users/${id}`),
   roles: () => api.get<RoleInfo[]>('/admin/roles'),
   permissions: () => api.get<Permission[]>('/admin/permissions'),
   setRolePermissions: (role: Role, permissions: string[]) =>

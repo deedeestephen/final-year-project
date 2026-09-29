@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -12,7 +13,9 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -95,5 +98,22 @@ export class UsersController {
     @Ctx() ctx: RequestContext,
   ): Promise<UserView> {
     return this.users.update(id, dto, actor, ctx);
+  }
+
+  /** Only accounts without clinical history; the others can be disabled. */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions('user:manage')
+  @ApiNoContentResponse({ description: 'The account was deleted' })
+  @ApiConflictResponse({
+    description:
+      'HAS_CLINICAL_HISTORY: the account has clinical history; disable it instead',
+  })
+  remove(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+    @Ctx() ctx: RequestContext,
+  ): Promise<void> {
+    return this.users.delete(id, actor, ctx);
   }
 }

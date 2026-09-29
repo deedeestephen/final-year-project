@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { MongoService } from '../../persistence/database/mongo.service';
 import { PrismaService } from '../../persistence/database/prisma.service';
 import type {
   AuthenticatedUser,
@@ -29,6 +30,24 @@ type UserWithRoles = Prisma.UserGetPayload<{ include: typeof WITH_ROLES }>;
 
 const STAFF_ROLES_NEEDING_FACILITY: RoleName[] = ['CLINICIAN', 'PATHOLOGIST'];
 
+/** The assistant's conversations, owned by one account (chatbot.service.ts). */
+const CHAT_COLLECTION = 'chatbot_conversations';
+
+/**
+ * Work an account has done that is part of the clinical record. These rows
+ * name the account by id; an account that appears in any of them is disabled,
+ * never deleted, so the history stays traceable.
+ */
+export interface ClinicalHistory {
+  patientsRegistered: number;
+  screeningRecords: number;
+  consentsRecorded: number;
+  scansUploaded: number;
+  slidesUploadedOrReviewed: number;
+  aiAnalysesRequested: number;
+  phoneChangesSynced: number;
+}
+
 export function toUserView(u: UserWithRoles): UserView {
   return {
     id: u.id,
@@ -50,6 +69,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly passwords: PasswordHasher,
     private readonly audit: AuditService,
+    private readonly mongo: MongoService,
   ) {}
 
   async me(user: AuthenticatedUser): Promise<UserView> {
@@ -308,5 +328,101 @@ export class UsersService {
       return user;
     });
     return toUserView(updated);
+  }
+
+  /** How much of the clinical record names this account (all zero: none). */
+  async clinicalHistory(id: string): Promise<ClinicalHistory> {
+    const [
+      patientsRegistered,
+      screeningRecords,
+      consentsRecorded,
+      scansUploaded,
+      slidesUploadedOrReviewed,
+      aiAnalysesRequested,
+      phoneChangesSynced,
+    ] = await this.prisma.$transaction([
+      this.prisma.patient.count({ where: { createdById: id } }),
+      this.prisma.clinicalRecord.count({ where: { recordedById: id } }),
+      this.prisma.consent.count({ where: { capturedById: id } }),
+      this.prisma.imagingStudy.count({ where: { uploadedById: id } }),
+      this.prisma.histopathologySpecimen.count({
+        where: { OR: [{ uploadedById: id }, { reviewedById: id }] },
+      }),
+      this.prisma.aiJob.count({ where: { requestedById: id } }),
+      this.prisma.syncOperation.count({ where: { userId: id } }),
+    ]);
+    return {
+      patientsRegistered,
+      screeningRecords,
+      consentsRecorded,
+      scansUploaded,
+      slidesUploadedOrReviewed,
+      aiAnalysesRequested,
+      phoneChangesSynced,
+    };
+  }
+
+  /**
+   * Deletes an account that has no clinical history (owner request,
+   * 2026-09-29). Its roles, sessions, reset links and notifications go with
+   * it, a linked patient record is only unlinked (the record stays), and its
+   * assistant conversations are deleted. The audit log keeps its entries,
+   * which name the account by id. An account with clinical history is
+   * refused: it can be disabled, so the medical history stays traceable.
+   */
+  async delete(
+    id: string,
+    actor: AuthenticatedUser,
+    ctx: RequestContext,
+  ): Promise<void> {
+    if (id === actor.id) {
+      throw new BadRequestException({
+        code: 'SELF_DELETE',
+        message: 'You cannot delete your own account',
+      });
+    }
+    const existing = await this.prisma.user.findUnique({
+      where: { id },
+      include: { ...WITH_ROLES, patientProfile: { select: { id: true } } },
+    });
+    if (!existing)
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'User not found',
+      });
+    const history = await this.clinicalHistory(id);
+    if (Object.values(history).some((n) => n > 0)) {
+      throw new ConflictException({
+        code: 'HAS_CLINICAL_HISTORY',
+        message:
+          'This account has clinical history, so it cannot be deleted. Disable it instead: it can no longer sign in, and the history stays traceable.',
+        details: history,
+      });
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.delete({ where: { id } });
+      await this.audit.record(
+        {
+          action: 'user.deleted',
+          entityType: 'user',
+          entityId: id,
+          outcome: 'SUCCESS',
+          actorUserId: actor.id,
+          actorRole: actor.roles.join(','),
+          details: {
+            roles: existing.roles.map((r) => r.role.name).sort(),
+            wasLinkedToPatient: existing.patientProfile !== null,
+            synthetic: existing.isSynthetic,
+          },
+          ...ctx,
+        },
+        tx,
+      );
+    });
+    await (
+      await this.mongo.db()
+    )
+      .collection(CHAT_COLLECTION)
+      .deleteMany({ userId: id });
   }
 }

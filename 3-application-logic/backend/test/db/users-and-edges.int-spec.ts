@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
+import { createMongoClient } from '../../src/persistence/mongo/client';
 import {
   createDbTestApp,
   createFacility,
@@ -137,6 +138,100 @@ describe('user administration and edge cases (real database)', () => {
           roles: ['SUPERUSER'],
         })
         .expect(400);
+    });
+
+    it('deletes an account without clinical history, with its chats, and audits it', async () => {
+      const user = await createUser(prisma, 'PATIENT', null);
+      const token = await loginAs(app, user.email);
+      const chat = await http()
+        .post('/api/v1/chat/conversations')
+        .set(as(token))
+        .send({ language: 'en' })
+        .expect(201);
+      const chatId = (chat.body as { id: string }).id;
+
+      await http()
+        .delete(`/api/v1/users/${user.id}`)
+        .set(as(adminToken))
+        .expect(204);
+
+      await http()
+        .get(`/api/v1/users/${user.id}`)
+        .set(as(adminToken))
+        .expect(404);
+      // Sessions end with the account.
+      await http().get('/api/v1/users/me').set(as(token)).expect(401);
+      expect(await prisma.userRole.count({ where: { userId: user.id } })).toBe(
+        0,
+      );
+      const mongo = createMongoClient(process.env.MONGO_URL!);
+      try {
+        const left = await mongo
+          .db()
+          .collection<{ _id: string; userId: string }>('chatbot_conversations')
+          .countDocuments({ $or: [{ _id: chatId }, { userId: user.id }] });
+        expect(left).toBe(0);
+      } finally {
+        await mongo.close();
+      }
+      const audit = await prisma.auditLog.findFirstOrThrow({
+        where: { action: 'user.deleted', entityId: user.id },
+      });
+      expect(audit).toMatchObject({ actorUserId: adminId, outcome: 'SUCCESS' });
+      expect(audit.details).toMatchObject({ roles: ['PATIENT'] });
+      // The email is free again.
+      await http()
+        .post('/api/v1/users')
+        .set(as(adminToken))
+        .send({
+          email: user.email,
+          displayName: 'SYNTHETIC Again',
+          roles: ['ADMIN'],
+        })
+        .expect(201);
+    });
+
+    it('refuses to delete an account with clinical history, and says to disable it', async () => {
+      const user = await createUser(prisma, 'CLINICIAN', facilityA);
+      await prisma.syncOperation.create({
+        data: {
+          idempotencyKey: randomUUID(),
+          userId: user.id,
+          deviceId: 'edge-test-phone',
+          entityType: 'patient',
+          operation: 'CREATE',
+          result: 'APPLIED',
+          clientTimestamp: new Date(),
+        },
+      });
+      const res = await http()
+        .delete(`/api/v1/users/${user.id}`)
+        .set(as(adminToken))
+        .expect(409);
+      const body = res.body as ErrorBody & {
+        error: { details: Record<string, number>; message: string };
+      };
+      expect(body.error.code).toBe('HAS_CLINICAL_HISTORY');
+      expect(body.error.details).toMatchObject({ phoneChangesSynced: 1 });
+      expect(body.error.message).toMatch(/Disable it instead/);
+      expect(await prisma.user.count({ where: { id: user.id } })).toBe(1);
+    });
+
+    it('refuses self-deletion, unknown accounts and non-administrators', async () => {
+      const self = await http()
+        .delete(`/api/v1/users/${adminId}`)
+        .set(as(adminToken))
+        .expect(400);
+      expect((self.body as ErrorBody).error.code).toBe('SELF_DELETE');
+      await http()
+        .delete(`/api/v1/users/${randomUUID()}`)
+        .set(as(adminToken))
+        .expect(404);
+      const other = await createUser(prisma, 'PATIENT', null);
+      await http()
+        .delete(`/api/v1/users/${other.id}`)
+        .set(as(clinicianA))
+        .expect(403);
     });
   });
 

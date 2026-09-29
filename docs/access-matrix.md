@@ -5,7 +5,7 @@ Generated from the code (`npm run access:matrix`); the quality gate fails if it 
 role's permissions, within the locks described in [security.md](security.md). Every route not marked public needs a
 valid access token, and the account must be active.
 
-72 routes.
+73 routes.
 
 | Method | Path | Rule | Default roles | Notes |
 |---|---|---|---|---|
@@ -77,6 +77,7 @@ valid access token, and the account must be active.
 | GET | `/api/v1/sync/changes` | `clinical:read` + `patient:read` | CLINICIAN, PATHOLOGIST |  |
 | GET | `/api/v1/users` | `user:manage` | ADMIN |  |
 | POST | `/api/v1/users` | `role:manage` + `user:manage` | ADMIN |  |
+| DELETE | `/api/v1/users/:id` | `user:manage` | ADMIN |  |
 | GET | `/api/v1/users/:id` | `user:manage` | ADMIN |  |
 | PATCH | `/api/v1/users/:id` | `user:manage` | ADMIN |  |
 | POST | `/api/v1/users/:id/reset-password` | `user:manage` | ADMIN |  |

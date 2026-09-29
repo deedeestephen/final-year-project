@@ -1114,3 +1114,24 @@ Recorded in [ADR-011](decisions/ADR-011-awareness-blue-and-modern-icons.md) and 
 **Security notes (in local-databases.md):**
 - PostgreSQL accepts connections only from this PC, with a password (SCRAM-SHA-256).
 - MongoDB listens only on 127.0.0.1, but its access control is off (the desktop default). That is acceptable for synthetic data only; the guide says how to switch it on before any real data.
+
+## 2026-09-29 (night): Delete accounts from the admin website (owner request)
+
+**Request:** "open the database so i can add account from and delete accounts from". Adding accounts already works on the admin website (Users › Add staff user; patients sign up in the app). The owner chose a **Delete** button on the website over editing tables in pgAdmin. In the database, passwords are hashes and phone and NRC numbers are encrypted, and hand edits bypass the audit log.
+
+**Built:**
+- **API:** `DELETE /api/v1/users/:id` (`user:manage`, administrators only).
+  - It refuses the administrator's own account (`SELF_DELETE`).
+  - It refuses any account the clinical record names (`HAS_CLINICAL_HISTORY`, 409): patients registered, screenings, consents, scans, slides uploaded or reviewed, AI requests, phone changes synced. The counts are in `details`, and the message says to disable the account instead. Those columns hold user ids without a foreign key, so deleting such an account would leave history pointing at nobody.
+  - Otherwise, the roles, sessions, password-reset links and notifications go with the account, and a linked patient record is only unlinked (the record stays). The account's assistant conversations are deleted from MongoDB.
+  - The deletion is audited as `user.deleted`, with the roles and no email. Older audit entries keep naming the account by id.
+- **Admin website:**
+  - **Delete account** in *Account actions* (not on your own account).
+  - A confirm dialog explains what goes and what cannot be deleted; **Cancel** has the focus.
+  - Afterwards the Users list says *"The account … was deleted."* A refusal shows the server's reason.
+- The OpenAPI document and `access-matrix.md` (73 routes, `DELETE /users/:id` admin-only) were regenerated.
+
+**Tests:**
+- 3 new database tests: a clean account is deleted with its chats and audited, and its email can be used again; an account with synced phone changes is refused with the counts; self, unknown and non-administrator are refused.
+- 3 new website tests (confirm and delete, cancel, the clinical-history refusal), plus a check that there is no Delete button on your own account.
+- Gates: backend (262 unit and 20 end-to-end tests, openapi and access matrix up to date) and admin-web (coverage 87.8%) pass.

@@ -265,8 +265,8 @@ The admin page is now a **website on your PC**, not part of the phone app. `dev-
 
 **How to get in:**
 1. Open **Chrome** or **Edge** on your PC and go to **http://localhost:5173**.
-2. Sign in with **`admin@demo.pca-mhealth.test`** and the **demo password** from Part 1.
-3. The first time, it asks you to **choose a new password** (12 or more letters). **Write it down.** If you lose it, run `dev-up.ps1 -ResetDemoPasswords`.
+2. Sign in with **`admin@demo.pca-mhealth.test`** and the **demo password**: the value of `SEED_DEMO_PASSWORD` in `.env` (not `.env.example`, whose line is empty).
+3. If it asks you to **choose a new password** (12 or more letters), **write it down.** If you lose it, run `dev-up.ps1 -ResetDemoPasswords`: the demo accounts go back to the password in `.env`.
 
 - [ ] **The look.** Clean white cards on a light grey page, dark text, **blue** buttons, a blue current page in the menu, and a thin blue-to-light-blue line under the top bar (the "Clinical Field Health" layout in awareness blue, ADR-011).
 - [ ] **No internet.** Turn off your PC's Wi-Fi for a moment.
@@ -281,6 +281,10 @@ The admin page is now a **website on your PC**, not part of the phone app. `dev-
   - Click a person to change their **roles**, their **facility** (a clinician only sees the patients of their own facility), or switch the **account off**.
   - **Unlock account** appears when someone typed a wrong password 5 times.
   - **Reset password** shows a one-time password. Give it to the person privately; they choose their own at their next sign-in.
+  - **Delete account** asks first ("Delete this account?", with **Cancel** selected). Then the account, its sessions, messages and assistant chats are gone, and the Users list says *"The account … was deleted."* The throwaway test accounts left by the end-to-end runs (`e2e-patient-…@demo.pca-mhealth.test`) are good ones to try.
+  - Try **Delete account** on `clinician@demo.pca-mhealth.test`.
+    → It refuses: *"This account has clinical history, so it cannot be deleted. Disable it instead…"* Accounts that registered patients, recorded screenings or consents, uploaded scans or asked for AI analyses are kept, so the medical history stays traceable. Untick **Account active** instead.
+  - Your own account has no **Delete account** button.
 - [ ] **Add staff user.** Click **Add staff user**. Enter an email and name, tick **Clinician**, choose the facility, and click **Create account**.
   → A one-time password appears. Staff accounts are only made here; patients sign up themselves in the app.
 - [ ] **Roles & permissions.** Click **Edit** next to a role, e.g. **Pathologist / Radiologist**.

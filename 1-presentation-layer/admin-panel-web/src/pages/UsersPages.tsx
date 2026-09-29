@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   adminApi,
   FACILITY_ROLES,
@@ -10,7 +10,12 @@ import {
   type User,
 } from '../api/admin';
 import { useSession } from '../auth/session-context';
-import { Notice, StatusBadge, TemporaryPasswordDialog } from '../components/ui';
+import {
+  Dialog,
+  Notice,
+  StatusBadge,
+  TemporaryPasswordDialog,
+} from '../components/ui';
 import { errorMessage } from '../components/messages';
 
 const PAGE_SIZE = 25;
@@ -18,6 +23,8 @@ const PAGE_SIZE = 25;
 /** All accounts: search, role filter and paging (server-side, for large numbers). */
 export function UsersPage() {
   const navigate = useNavigate();
+  // Set by the account page after a deletion.
+  const deleted = (useLocation().state as { deleted?: string } | null)?.deleted;
   const [q, setQ] = useState('');
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<Role | ''>('');
@@ -88,6 +95,9 @@ export function UsersPage() {
           Search
         </button>
       </form>
+      {deleted && (
+        <Notice kind="success">The account {deleted} was deleted.</Notice>
+      )}
       {users.isError && (
         <Notice kind="error">{errorMessage(users.error)}</Notice>
       )}
@@ -171,6 +181,8 @@ export function UserDetailPage() {
 
 function UserForm({ user }: { user: User }) {
   const client = useQueryClient();
+  const navigate = useNavigate();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const { session } = useSession();
   const isSelf = session.status === 'signedIn' && session.user.id === user.id;
   const facilities = useQuery({
@@ -227,6 +239,18 @@ function UserForm({ user }: { user: User }) {
       refresh();
     },
     onError: (e) => setMessage({ kind: 'error', text: errorMessage(e) }),
+  });
+  const remove = useMutation({
+    mutationFn: () => adminApi.deleteUser(user.id),
+    onSuccess: () => {
+      client.removeQueries({ queryKey: ['user', user.id] });
+      void client.invalidateQueries({ queryKey: ['users'] });
+      void navigate('/users', { state: { deleted: user.email } });
+    },
+    onError: (e) => {
+      setConfirmDelete(false);
+      setMessage({ kind: 'error', text: errorMessage(e) });
+    },
   });
 
   function submit(e: FormEvent) {
@@ -345,7 +369,8 @@ function UserForm({ user }: { user: User }) {
           <p className="card-title">Account actions</p>
           <p className="muted">
             A reset gives a one-time password and signs the person out
-            everywhere.
+            everywhere. Delete removes an account that has no clinical history;
+            other accounts can be switched off with Account active.
           </p>
           <div className="toolbar" style={{ marginBottom: 0 }}>
             {user.status === 'LOCKED' && (
@@ -365,8 +390,46 @@ function UserForm({ user }: { user: User }) {
                 Reset password
               </button>
             )}
+            {!isSelf && (
+              <button
+                className="danger"
+                onClick={() => setConfirmDelete(true)}
+                disabled={remove.isPending}
+              >
+                Delete account
+              </button>
+            )}
           </div>
         </div>
+      )}
+      {confirmDelete && (
+        <Dialog
+          title="Delete this account?"
+          onClose={() => setConfirmDelete(false)}
+          actions={
+            <>
+              <button onClick={() => setConfirmDelete(false)}>Cancel</button>
+              <button
+                className="danger"
+                disabled={remove.isPending}
+                onClick={() => remove.mutate()}
+              >
+                {remove.isPending ? 'Deleting…' : 'Delete account'}
+              </button>
+            </>
+          }
+        >
+          <p>
+            <strong>{user.email}</strong> will be deleted with their roles,
+            sessions, messages and assistant chats. This cannot be undone. A
+            linked patient record stays; only the sign-in goes.
+          </p>
+          <p className="muted">
+            Accounts that registered patients, recorded screenings or consents,
+            uploaded scans or asked for AI analyses cannot be deleted, so the
+            medical history stays traceable. Switch those off instead.
+          </p>
+        </Dialog>
       )}
       {temp && (
         <TemporaryPasswordDialog
