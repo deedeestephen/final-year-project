@@ -72,10 +72,19 @@ export const COLLECTIONS: readonly CollectionSpec[] = [
     validator: {
       $jsonSchema: {
         bsonType: 'object',
-        required: ['userId', 'language', 'messages', 'createdAt', 'updatedAt'],
+        required: [
+          'userId',
+          'language',
+          'audience',
+          'messages',
+          'createdAt',
+          'updatedAt',
+          'expiresAt',
+        ],
         properties: {
           userId: { bsonType: 'string' },
           language: { enum: [...CHAT_LANGUAGES] },
+          audience: { enum: ['patient', 'clinician'] },
           messages: {
             bsonType: 'array',
             items: {
@@ -91,10 +100,15 @@ export const COLLECTIONS: readonly CollectionSpec[] = [
           },
           createdAt: { bsonType: 'date' },
           updatedAt: { bsonType: 'date' },
+          expiresAt: { bsonType: 'date' },
         },
       },
     },
-    indexes: [{ key: { userId: 1, updatedAt: -1 }, name: 'user_recent' }],
+    indexes: [
+      { key: { userId: 1, updatedAt: -1 }, name: 'user_recent' },
+      // Deleted automatically after CHAT_RETENTION_DAYS without a message.
+      { key: { expiresAt: 1 }, name: 'retention_ttl', expireAfterSeconds: 0 },
+    ],
   },
   {
     name: 'ai_inference_logs',

@@ -99,3 +99,41 @@ export interface InferenceRequest {
     histopathology: { storageKey: string; stain?: string }[];
   };
 }
+
+/** POST /v1/chat/answer (contract v0.3): whole passages quoted, or no match. */
+export const chatAnswerResultSchema = z
+  .object({
+    mode: z.literal('EXTRACTIVE'),
+    matched: z.boolean(),
+    text: z.string().min(1).max(4000).nullable(),
+    passages: z
+      .array(
+        z.object({
+          articleId: z.string().min(1).max(100),
+          title: z.string().min(1).max(300),
+          heading: z.string().min(1).max(300),
+          score: z.number(),
+        }),
+      )
+      .max(5),
+    sources: z
+      .array(
+        z.object({
+          name: z.string().min(1).max(500),
+          url: z.string().max(500),
+        }),
+      )
+      .max(10),
+    knowledgeBase: z.object({
+      version: z.string().min(1).max(50),
+      reviewStatus: z.string().min(1).max(500),
+    }),
+  })
+  .refine(
+    (a) =>
+      a.matched ? a.text !== null && a.sources.length > 0 : a.text === null,
+    'a matched answer needs text and at least one source',
+  );
+
+export type ChatAnswerResult = z.infer<typeof chatAnswerResultSchema>;
+export type ChatAudience = 'patient' | 'clinician';

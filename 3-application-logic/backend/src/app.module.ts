@@ -31,6 +31,7 @@ import { ClinicalModule } from './services/clinical/clinical.module';
 import { FhirModule } from './services/fhir/fhir.module';
 import { HealthModule } from './gateway/health/health.module';
 import { NotificationsModule } from './services/notifications/notifications.module';
+import { ChatbotModule } from './services/chatbot/chatbot.module';
 import { PatientsModule } from './services/patients/patients.module';
 import { SyncModule } from './services/sync/sync.module';
 import { UsersModule } from './services/users/users.module';
@@ -74,6 +75,7 @@ import { UsersModule } from './services/users/users.module';
     PatientsModule,
     ClinicalModule,
     NotificationsModule,
+    ChatbotModule,
     AdminModule,
     SyncModule,
     ImagingModule,

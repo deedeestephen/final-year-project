@@ -105,6 +105,20 @@ const schema = z
       .max(300_000)
       .default(30_000),
     AI_MAX_CONCURRENT_JOBS: z.coerce.number().int().min(1).max(32).default(2),
+    // Chatbot (Phase 13): answers must come quickly (FR-07 target 2 s).
+    CHAT_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(500)
+      .max(30_000)
+      .default(5_000),
+    CHAT_MAX_QUESTIONS_PER_HOUR: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(30),
+    CHAT_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(180),
     // FHIR export (Phase 14). SmartCare Pro FHIR base URL; empty = sending is off.
     SMARTCARE_FHIR_URL: z
       .union([z.literal(''), z.url({ protocol: /^https?$/ })])
@@ -203,6 +217,12 @@ export interface AppConfig {
     timeoutMs: number;
     maxConcurrentJobs: number;
   };
+  chat: {
+    timeoutMs: number;
+    maxQuestionsPerHour: number;
+    /** Conversations are deleted this long after their last message. */
+    retentionDays: number;
+  };
   fhir: {
     /** SmartCare Pro FHIR base URL; empty means sending is switched off. */
     smartcareUrl: string;
@@ -281,6 +301,11 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
       serviceToken: e.AI_SERVICE_TOKEN,
       timeoutMs: e.AI_TIMEOUT_MS,
       maxConcurrentJobs: e.AI_MAX_CONCURRENT_JOBS,
+    },
+    chat: {
+      timeoutMs: e.CHAT_TIMEOUT_MS,
+      maxQuestionsPerHour: e.CHAT_MAX_QUESTIONS_PER_HOUR,
+      retentionDays: e.CHAT_RETENTION_DAYS,
     },
     fhir: {
       smartcareUrl: e.SMARTCARE_FHIR_URL.replace(/\/+$/, ''),

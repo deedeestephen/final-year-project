@@ -1,8 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { APP_CONFIG, type AppConfig } from '../../config/app-config';
 import {
+  chatAnswerResultSchema,
   inferenceResultSchema,
   modelInfoSchema,
+  type ChatAnswerResult,
+  type ChatAudience,
   type InferenceRequest,
   type InferenceResult,
   type ModelInfo,
@@ -21,6 +24,8 @@ export class AiServiceError extends Error {
   constructor(
     readonly kind: AiFailureKind,
     message: string,
+    /** The AI service's HTTP status, when it answered with an error. */
+    readonly status?: number,
   ) {
     super(message);
     this.name = 'AiServiceError';
@@ -54,6 +59,27 @@ export class AiBrokerService {
     return parsed.data;
   }
 
+  /** Quoted passages for a chat question (Phase 13), or no match. */
+  async chatAnswer(request: {
+    question: string;
+    audience: ChatAudience;
+    language: string;
+  }): Promise<ChatAnswerResult> {
+    const body = await this.call(
+      '/v1/chat/answer',
+      { method: 'POST', body: JSON.stringify(request) },
+      this.config.chat.timeoutMs,
+    );
+    const parsed = chatAnswerResultSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new AiServiceError(
+        'INVALID_RESPONSE',
+        'The AI service returned an invalid chat answer',
+      );
+    }
+    return parsed.data;
+  }
+
   async models(): Promise<ModelInfo[]> {
     const body = await this.call('/v1/models', { method: 'GET' });
     const parsed = modelInfoSchema.array().max(100).safeParse(body);
@@ -79,7 +105,11 @@ export class AiBrokerService {
     }
   }
 
-  private async call(path: string, init: RequestInit): Promise<unknown> {
+  private async call(
+    path: string,
+    init: RequestInit,
+    timeoutMs = this.config.ai.timeoutMs,
+  ): Promise<unknown> {
     if (!this.enabled) {
       throw new AiServiceError(
         'NOT_CONFIGURED',
@@ -95,13 +125,13 @@ export class AiBrokerService {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        signal: AbortSignal.timeout(this.config.ai.timeoutMs),
+        signal: AbortSignal.timeout(timeoutMs),
       });
     } catch (err) {
       if ((err as Error).name === 'TimeoutError') {
         throw new AiServiceError(
           'TIMED_OUT',
-          `The AI service did not answer within ${Math.round(this.config.ai.timeoutMs / 1000)} seconds`,
+          `The AI service did not answer within ${Math.round(timeoutMs / 1000)} seconds`,
         );
       }
       throw new AiServiceError(
@@ -119,6 +149,7 @@ export class AiBrokerService {
       throw new AiServiceError(
         'REJECTED',
         `The AI service refused the request (HTTP ${res.status})`,
+        res.status,
       );
     }
     try {

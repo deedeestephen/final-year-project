@@ -156,6 +156,12 @@ const CLINICAL_AREAS = [
   '/api/v1/sync',
 ];
 
+/**
+ * Areas a patient may use besides their own "me" routes: each item there
+ * belongs to one account and the service only ever shows the caller's own.
+ */
+const PATIENT_OWN_AREAS = ['/api/v1/notifications', '/api/v1/chat'];
+
 /** Everything the review rules object to; empty means the matrix passes. */
 export function accessProblems(routes: RouteAccess[]): string[] {
   const problems: string[] = [];
@@ -191,7 +197,7 @@ export function accessProblems(routes: RouteAccess[]): string[] {
       r.access === 'permission' &&
       r.defaultRoles.includes('PATIENT') &&
       !/\/me(\/|$)/.test(r.path) &&
-      !r.path.startsWith('/api/v1/notifications')
+      !PATIENT_OWN_AREAS.some((a) => r.path.startsWith(a))
     ) {
       problems.push(
         `${k} is open to patients but is not one of their own ("me") routes`,

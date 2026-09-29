@@ -5,7 +5,7 @@ Generated from the code (`npm run access:matrix`); the quality gate fails if it 
 role's permissions, within the locks described in [security.md](security.md). Every route not marked public needs a
 valid access token, and the account must be active.
 
-67 routes.
+72 routes.
 
 | Method | Path | Rule | Default roles | Notes |
 |---|---|---|---|---|
@@ -33,6 +33,11 @@ valid access token, and the account must be active.
 | POST | `/api/v1/auth/refresh` | public | – |  |
 | POST | `/api/v1/auth/register` | public | – | stricter sign-in rate limit |
 | POST | `/api/v1/auth/reset-password` | public | – | stricter sign-in rate limit |
+| GET | `/api/v1/chat/conversations` | `chatbot:use` | PATIENT, CLINICIAN |  |
+| POST | `/api/v1/chat/conversations` | `chatbot:use` | PATIENT, CLINICIAN |  |
+| DELETE | `/api/v1/chat/conversations/:id` | `chatbot:use` | PATIENT, CLINICIAN |  |
+| GET | `/api/v1/chat/conversations/:id` | `chatbot:use` | PATIENT, CLINICIAN |  |
+| POST | `/api/v1/chat/conversations/:id/messages` | `chatbot:use` | PATIENT, CLINICIAN |  |
 | GET | `/api/v1/clinical-records/:id` | `clinical:read` | CLINICIAN, PATHOLOGIST |  |
 | GET | `/api/v1/explanations/:id/content` | `ai:read` | CLINICIAN, PATHOLOGIST |  |
 | POST | `/api/v1/fhir/export` | `fhir:export` | ADMIN |  |

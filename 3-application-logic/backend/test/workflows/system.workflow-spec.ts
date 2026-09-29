@@ -668,6 +668,79 @@ describe('the whole system, end to end (Phase 16)', () => {
     });
   });
 
+  describe('7. Patients and clinicians ask the assistant (UC-07, Phase 13)', () => {
+    interface Asked {
+      answer: {
+        text: string;
+        safety: string;
+        mode: string;
+        sources: { name: string }[];
+        reviewStatus?: string;
+      };
+    }
+    const start = async (token: string) =>
+      (
+        (
+          await api()
+            .post('/api/v1/chat/conversations')
+            .set(as(token))
+            .send({ language: 'en' })
+            .expect(201)
+        ).body as { id: string }
+      ).id;
+    const askIt = async (token: string, id: string, text: string) => {
+      note(text);
+      return (
+        (
+          await api()
+            .post(`/api/v1/chat/conversations/${id}/messages`)
+            .set(as(token))
+            .send({ text })
+            .expect(200)
+        ).body as Asked
+      ).answer;
+    };
+
+    it('answers from the reviewed knowledge base through the real AI service, and keeps its safety rules', async () => {
+      const mine = await start(w1.token);
+      const psa = await askIt(
+        w1.token,
+        mine,
+        `What does a PSA test measure? (SYNTHETIC ${tag})`,
+      );
+      expect(psa).toMatchObject({ safety: 'OK', mode: 'EXTRACTIVE' });
+      expect(psa.text).toContain('PSA');
+      expect(psa.sources.map((x) => x.name).join()).toContain('NHS');
+      expect(psa.reviewStatus).toContain('Draft for review');
+      // Clinician content is not for patients.
+      expect(
+        (await askIt(w1.token, mine, `What is grade group 3? ${tag}`)).safety,
+      ).toBe('NO_SOURCE');
+      expect(
+        (await askIt(w1.token, mine, `Is my PSA bad? ${tag}`)).safety,
+      ).toBe('DECLINED');
+      expect(
+        (await askIt(w1.token, mine, `I cannot pass urine at all ${tag}`))
+          .safety,
+      ).toBe('URGENT_CARE');
+
+      const theirs = await start(clinicianToken);
+      const pirads = await askIt(
+        clinicianToken,
+        theirs,
+        `What does PI-RADS 4 mean? ${tag}`,
+      );
+      expect(pirads.text).toContain('PI-RADS 4: high');
+      expect(pirads.sources[0].name).toContain('Turkbey');
+      // A pathologist has no assistant.
+      await api()
+        .post('/api/v1/chat/conversations')
+        .set(as(pathologistToken))
+        .send({})
+        .expect(403);
+    });
+  });
+
   describe('Log review (Phase 15): the logs of the whole run', () => {
     it('hold no password, token or patient detail', async () => {
       await stack.stop();

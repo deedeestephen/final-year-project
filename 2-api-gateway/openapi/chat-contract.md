@@ -1,54 +1,31 @@
-# Chat API contract (PLANNED, not implemented)
+# Chat API (implemented in Phase 13)
 
-The planned endpoints for the chatbot (Phase 13; see [docs/chatbot-plan.md](../../docs/chatbot-plan.md)). They are written down now so the app and backend can be built against one agreed shape. When they are built, they will appear in `openapi.json` like every other endpoint, and this file will be retired.
+The chat endpoints are built. Their exact schemas are in [`openapi.json`](openapi.json) under the tag `chat`, like every other endpoint. This page keeps the rules in plain words. See also [docs/chatbot-plan.md](../../docs/chatbot-plan.md) and [ADR-009](../../docs/decisions/ADR-009-offline-extractive-chatbot.md).
 
-All routes need a signed-in user with the permission `chatbot:use` (patients and clinicians). The per-account rate limit applies, plus a chat limit.
+**Who may use it:** signed-in users with the permission `chatbot:use` (patients and clinicians). The per-account rate limit applies, plus a chat limit of `CHAT_MAX_QUESTIONS_PER_HOUR` (30 by default).
 
-## `POST /api/v1/chat/conversations`
-Starts a conversation.
-```json
-{ "language": "en" }                      // en | bem | nya (bem/nya only once verified content exists)
-```
-→ `201` `{ "id": "uuid", "language": "en", "audience": "patient", "createdAt": "…" }`
-The audience (`patient` or `clinician`) comes from the user's role, never from the request.
+| Route | What it does |
+|---|---|
+| `POST /api/v1/chat/conversations` | Starts a conversation: `{ "language": "en" }`. The audience (`patient` or `clinician`) comes from the role, never from the request. `bem` and `nya` answer `409 LANGUAGE_NOT_AVAILABLE` until human-verified content exists |
+| `POST /api/v1/chat/conversations/{id}/messages` | Asks a question: `{ "text": "…" }` (1–1000 characters, no markup). The answer comes back in the same response |
+| `GET /api/v1/chat/conversations` | The caller's own conversations, newest first (paged) |
+| `GET /api/v1/chat/conversations/{id}` | One conversation with its messages. Someone else's conversation answers `404` |
+| `DELETE /api/v1/chat/conversations/{id}` | The owner deletes it (`204`) |
 
-## `POST /api/v1/chat/conversations/{id}/messages`
-Asks a question. The answer comes back in the same response.
-```json
-{ "text": "What does a PSA test measure?" }   // 1-1000 characters
-```
-→ `200`
-```json
-{
-  "question": { "id": "uuid", "text": "…", "at": "…" },
-  "answer": {
-    "id": "uuid",
-    "text": "PSA is a protein made by the prostate…",
-    "sources": [
-      { "title": "PSA test", "publisher": "NHS", "url": "https://…", "reviewedOn": "2026-…" }
-    ],
-    "safety": "OK",                 // OK | URGENT_CARE | DECLINED
-    "disclaimer": "This is general information, not medical advice. Speak to your clinician about your own health.",
-    "mode": "EXTRACTIVE",           // EXTRACTIVE (offline, quotes sources) | GENERATED (LLM, cites sources)
-    "at": "…"
-  }
-}
-```
-- `safety: URGENT_CARE`: the question suggested an emergency. The text is the fixed urgent-care guidance, with no normal answer.
-- `safety: DECLINED`: a diagnosis or dosing request. The text is a polite refusal and says why.
-- An answer **always** has at least one source, or it is `DECLINED`.
+**Every answer carries:**
+- `safety`:
+  - `OK`: quoted from the knowledge base, with sources
+  - `URGENT_CARE`: the fixed urgent-care text; nothing was looked up
+  - `DECLINED`: medicines or doses (everyone), or the patient's own results or a diagnosis (patients). A fixed, polite text
+  - `NO_SOURCE`: nothing reviewed covers it
+- `mode`: `EXTRACTIVE` (quoted) or `FIXED` (a fixed safety text).
+- `sources` (at least one when `safety` is `OK`), a `disclaimer` for the audience, and the knowledge base's `reviewStatus`.
 
-## `GET /api/v1/chat/conversations`
-The caller's own conversations, newest first (paged).
+**Privacy:**
+- The audit log records `chat.asked` with the safety result and the number of sources, never the question or the answer.
+- Conversations are deleted by their owner, or automatically `CHAT_RETENTION_DAYS` (180) after the last message.
 
-## `GET /api/v1/chat/conversations/{id}`
-One conversation with its messages. Other users' conversations answer `404`.
-
-## `DELETE /api/v1/chat/conversations/{id}`
-The user deletes their own conversation (`204`).
-
-## Errors
-The usual envelope `{ "error": { "code", "message", "requestId" } }`. Chat-specific codes:
-- `CHAT_UNAVAILABLE` (503): the knowledge base is not loaded
-- `LANGUAGE_NOT_AVAILABLE` (409): no verified content in that language yet
-- `RATE_LIMITED` (429, with `Retry-After`)
+**Errors** use the usual envelope. Chat-specific codes:
+- `CHAT_UNAVAILABLE` (503): the AI service or its knowledge base is not available.
+- `LANGUAGE_NOT_AVAILABLE` (409): no verified content in that language.
+- `RATE_LIMITED` (429, with `Retry-After`).
