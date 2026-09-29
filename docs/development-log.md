@@ -1135,3 +1135,35 @@ Recorded in [ADR-011](decisions/ADR-011-awareness-blue-and-modern-icons.md) and 
 - 3 new database tests: a clean account is deleted with its chats and audited, and its email can be used again; an account with synced phone changes is refused with the counts; self, unknown and non-administrator are refused.
 - 3 new website tests (confirm and delete, cancel, the clinical-history refusal), plus a check that there is no Delete button on your own account.
 - Gates: backend (262 unit and 20 end-to-end tests, openapi and access matrix up to date) and admin-web (coverage 87.8%) pass.
+
+## 2026-09-29 (night): New chats, past chats, and casual conversation with the assistant (owner request)
+
+**Request:** "make sure the chatbot can add new chats for users and make sure users can use the chat bot to greet and ask casual things".
+
+**Built:**
+- **New chat and past chats** (app). The server already had the list and the conversation endpoints from Phase 13.
+  - The chat header has **Past chats** (🕘) and **New chat** (✎). *Your chats* lists every earlier chat with its first question, time or date, and number of questions. Tapping one opens it, and it can be continued.
+  - The empty chat shows up to three chats under *Continue a chat*.
+  - New chat keeps the old one; only *Delete conversation* deletes.
+  - `ChatController.open`, `chatHistoryProvider` (refreshed after each question and deletion), `ChatApi.list/messages`.
+- **Casual conversation** (server, `chat-safety.ts`). There are 18 small-talk intents with fixed replies for patients and clinicians:
+  - greetings, including Bemba and Nyanja, which get a note that answers are in English for now;
+  - "how are you" and its answers ("I'm fine, and you?");
+  - feeling worried, scared or unwell: a kind reply, talk to your clinician, go to a clinic if very unwell, and no diagnosis;
+  - name, who made it, "are you a robot / a doctor?";
+  - thanks, compliments and complaints;
+  - jokes (a different one each time);
+  - yes, no, ok and emoji;
+  - goodbyes;
+  - everyday things it cannot do (time, weather, songs).
+
+  Only a message that is nothing but small talk counts, and the safety rules always run first. The "no reviewed information" reply now says what the assistant can help with. No language model is used for small talk.
+
+**Found and fixed:**
+- **A crash waiting to happen.** The theme makes filled buttons full width, and the **New chat** button inside the sheet's header row would have failed to lay out. The widget test found it before any phone did.
+- **Riverpod 3 retries failing providers by itself.** Offline, the past-chats list would have shown a spinner for many seconds while it re-asked the server. It now says at once that the chats could not be loaded; opening the sheet again retries.
+
+**Tests:**
+- Backend: 89 chatbot unit tests (40 casual phrases; real questions still go to the knowledge base; safety first; varied jokes and greetings) and 11 chatbot database tests.
+- App: 6 new past-chat tests; 280 app tests in all.
+- The renders of the history sheet, the empty chat with *Continue a chat*, and a casual conversation were checked by eye.

@@ -77,6 +77,47 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  Future<void> _scrollToEnd() async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (_scroll.hasClients) {
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    }
+  }
+
+  /// A new, empty chat (the current one stays in Past chats).
+  Future<void> _newChat() async {
+    await _reader.stop(prefix: 'chat:');
+    await ref.read(chatControllerProvider.notifier).startOver();
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  Future<void> _openChat(String id) async {
+    await _reader.stop(prefix: 'chat:');
+    await ref.read(chatControllerProvider.notifier).open(id);
+    await _scrollToEnd();
+  }
+
+  Future<void> _showHistory() async {
+    ref.invalidate(chatHistoryProvider);
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+      ),
+      builder: (_) => _ChatHistorySheet(
+        currentId: ref.read(chatControllerProvider).conversationId,
+      ),
+    );
+    if (!mounted || chosen == null) return;
+    if (chosen == _ChatHistorySheet.newChat) {
+      await _newChat();
+    } else {
+      await _openChat(chosen);
+    }
+  }
+
   Future<void> _delete() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -114,7 +155,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final theme = Theme.of(context);
     final p = context.colors;
     final suggestions = clinician ? _clinicianSuggestions : _patientSuggestions;
-    final canAsk = online && !state.sending;
+    final canAsk = online && !state.sending && !state.loading;
 
     return Scaffold(
       appBar: AppBar(
@@ -153,6 +194,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            key: const Key('chat.history'),
+            tooltip: 'Past chats',
+            onPressed: _showHistory,
+            icon: const Icon(Symbols.history_rounded),
+          ),
+          IconButton(
+            key: const Key('chat.newChat'),
+            tooltip: 'New chat',
+            onPressed: state.messages.isEmpty && state.conversationId == null
+                ? null
+                : _newChat,
+            icon: const Icon(Symbols.edit_square_rounded),
+          ),
           PopupMenuButton<String>(
             key: const Key('chat.menu'),
             tooltip: 'More',
@@ -189,12 +244,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               controller: _scroll,
               padding: const EdgeInsets.all(AppSizes.md),
               children: [
-                if (state.messages.isEmpty)
+                if (state.loading)
+                  const Padding(
+                    padding: EdgeInsets.all(AppSizes.xl),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        semanticsLabel: 'Opening the chat',
+                      ),
+                    ),
+                  )
+                else if (state.messages.isEmpty) ...[
                   _Welcome(
                     clinician: clinician,
                     suggestions: suggestions,
                     onPick: canAsk ? _send : null,
                   ),
+                  _RecentChats(onOpen: _openChat, onSeeAll: _showHistory),
+                ],
                 _Intro(clinician: clinician),
                 for (final (i, m) in state.messages.indexed)
                   Padding(
@@ -337,6 +403,208 @@ class _Welcome extends StatelessWidget {
                 ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "14:05" today, "Yesterday", otherwise "28 Sep" (no locale data needed).
+String chatWhen(DateTime at, {DateTime? now}) {
+  final local = at.toLocal();
+  final today = now ?? DateTime.now();
+  final days = DateTime(
+    today.year,
+    today.month,
+    today.day,
+  ).difference(DateTime(local.year, local.month, local.day)).inDays;
+  if (days == 0) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(local.hour)}:${two(local.minute)}';
+  }
+  if (days == 1) return 'Yesterday';
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${local.day} ${months[local.month - 1]}';
+}
+
+String _questions(int messageCount) {
+  final n = (messageCount + 1) ~/ 2;
+  return n == 1 ? '1 question' : '$n questions';
+}
+
+/// Earlier chats, to pick one up again, on the empty chat screen.
+class _RecentChats extends ConsumerWidget {
+  const _RecentChats({required this.onOpen, required this.onSeeAll});
+
+  final void Function(String id) onOpen;
+  final VoidCallback onSeeAll;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chats = ref.watch(chatHistoryProvider).value ?? const [];
+    if (chats.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final p = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Continue a chat', style: theme.textTheme.titleSmall),
+          const SizedBox(height: AppSizes.sm),
+          for (final c in chats.take(3))
+            Card(
+              margin: const EdgeInsets.only(bottom: AppSizes.sm),
+              child: ListTile(
+                key: Key('chat.recent.${c.id}'),
+                leading: Icon(Symbols.forum_rounded, color: p.linkText),
+                title: Text(
+                  c.preview ?? 'Chat',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  '${chatWhen(c.updatedAt)} · ${_questions(c.messageCount)}',
+                ),
+                trailing: const Icon(Symbols.chevron_right_rounded),
+                onTap: () => onOpen(c.id),
+              ),
+            ),
+          if (chats.length > 3)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('chat.recent.all'),
+                onPressed: onSeeAll,
+                child: const Text('See all your chats'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// All earlier chats, most recent first; tapping one opens it.
+class _ChatHistorySheet extends ConsumerWidget {
+  const _ChatHistorySheet({required this.currentId});
+
+  final String? currentId;
+
+  /// Returned instead of a conversation id when "New chat" is tapped.
+  static const newChat = '__new__';
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final p = context.colors;
+    final history = ref.watch(chatHistoryProvider);
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.md,
+              0,
+              AppSizes.md,
+              AppSizes.sm,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      'Your chats',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                  ),
+                ),
+                FilledButton.icon(
+                  key: const Key('chat.history.new'),
+                  // The theme's buttons are full width; this one sits in a row.
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, AppSizes.minTouchTarget),
+                  ),
+                  onPressed: () => Navigator.pop(context, newChat),
+                  icon: const Icon(Symbols.edit_square_rounded),
+                  label: const Text('New chat'),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: switch (history) {
+              AsyncData(:final value) when value.isEmpty => Padding(
+                padding: const EdgeInsets.all(AppSizes.md),
+                child: Text(
+                  'No earlier chats yet. They appear here after your first '
+                  'question.',
+                  style: theme.textTheme.bodyLarge,
+                ),
+              ),
+              AsyncData(:final value) => ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final c in value)
+                    ListTile(
+                      key: Key('chat.past.${c.id}'),
+                      selected: c.id == currentId,
+                      leading: Icon(
+                        Symbols.forum_rounded,
+                        color: p.linkText,
+                        fill: c.id == currentId ? 1 : 0,
+                      ),
+                      title: Text(
+                        c.preview ?? 'Chat',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        c.id == currentId
+                            ? 'Open now · ${_questions(c.messageCount)}'
+                            : '${chatWhen(c.updatedAt)} · '
+                                  '${_questions(c.messageCount)}',
+                      ),
+                      onTap: () => Navigator.pop(context, c.id),
+                    ),
+                ],
+              ),
+              AsyncError() => Padding(
+                padding: const EdgeInsets.all(AppSizes.md),
+                child: Text(
+                  'Your earlier chats could not be loaded. The assistant '
+                  'needs the internet; try again when you are online.',
+                  key: const Key('chat.history.error'),
+                  style: theme.textTheme.bodyLarge,
+                ),
+              ),
+              _ => const Padding(
+                padding: EdgeInsets.all(AppSizes.lg),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    semanticsLabel: 'Loading your chats',
+                  ),
+                ),
+              ),
+            },
+          ),
+          const SizedBox(height: AppSizes.md),
         ],
       ),
     );

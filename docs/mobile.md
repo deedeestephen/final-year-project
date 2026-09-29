@@ -169,7 +169,13 @@ These screens talk to the server directly. They need the patient's **server id**
   - Answers show their sources, the knowledge base's review status and the disclaimer.
   - Urgent care, declined and "no reviewed information" answers carry an icon and a word label.
   - Nothing is stored on the phone. The chat is online only: it shows an offline notice, and the send button is off while offline.
-- **Menu:** "New conversation" and "Delete conversation" (asks first, then deletes it on the server).
+- **New chat and past chats** (owner request, 2026-09-29):
+  - **New chat** (✎ in the header) starts an empty chat. The old one is kept.
+  - **Past chats** (🕘) opens a sheet, *Your chats*, with every earlier chat (the first question, the time or date, the number of questions). Tapping one opens it, and it can be continued. The sheet also has a **New chat** button.
+  - The empty chat shows up to three chats under *Continue a chat*.
+  - The list comes from `GET /chat/conversations`, and a chat opens with `GET /chat/conversations/{id}`. Nothing is kept on the phone. Offline, the sheet says the chats could not be loaded (no automatic retries).
+- **Chatting casually:** greetings (also *Muli bwanji*, *Mwashibukeni*), "how are you", "I'm fine", feeling worried or scared, "what's your name", "who made you", "are you a robot?", thanks, compliments, "tell me a joke", yes/no/ok and goodbyes all get friendly fixed replies from the server (`chat-safety.ts`). No medical content and no language model are involved. Anything that is not only small talk goes through the safety rules and the knowledge base as before.
+- **Menu (⋮):** "New conversation" and "Delete conversation" (asks first, then deletes it on the server).
 
 ## Appearance: light and dark mode
 

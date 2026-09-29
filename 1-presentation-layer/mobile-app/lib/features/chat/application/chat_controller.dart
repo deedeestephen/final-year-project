@@ -13,12 +13,16 @@ class ChatState {
     this.conversationId,
     this.messages = const [],
     this.sending = false,
+    this.loading = false,
     this.error,
   });
 
   final String? conversationId;
   final List<ChatMessage> messages;
   final bool sending;
+
+  /// True while an earlier conversation is being opened.
+  final bool loading;
 
   /// Plain words about the last failure, shown above the input.
   final String? error;
@@ -27,12 +31,14 @@ class ChatState {
     String? conversationId,
     List<ChatMessage>? messages,
     bool? sending,
+    bool? loading,
     String? error,
     bool clearError = false,
   }) => ChatState(
     conversationId: conversationId ?? this.conversationId,
     messages: messages ?? this.messages,
     sending: sending ?? this.sending,
+    loading: loading ?? this.loading,
     error: clearError ? null : error ?? this.error,
   );
 }
@@ -51,6 +57,7 @@ String chatErrorText(Object error) {
       'The assistant is not available right now. Please try again later.',
     'LANGUAGE_NOT_AVAILABLE' =>
       'The assistant is only available in English for now.',
+    'NOT_FOUND' => 'That chat is no longer there. It may have been deleted.',
     _ => error.message,
   };
 }
@@ -61,15 +68,24 @@ String _later(Duration? wait) {
   return minutes <= 1 ? 'in a minute' : 'in $minutes minutes';
 }
 
-/// One conversation at a time: it starts with the first question, and
-/// "New conversation" starts again. Nothing is kept on the phone.
+/// The person's earlier chats, most recent first (from the server; nothing
+/// is kept on the phone). Refreshed after every question and deletion.
+final chatHistoryProvider = FutureProvider.autoDispose<List<ChatSummary>>(
+  (ref) => ref.watch(chatApiProvider).list(),
+  // No automatic retries: offline, the list says so at once, and opening
+  // Past chats again is the retry.
+  retry: (_, _) => null,
+);
+
+/// The open conversation. It starts with the first question; "New chat"
+/// starts again, and an earlier chat can be opened and continued.
 class ChatController extends Notifier<ChatState> {
   @override
   ChatState build() => const ChatState();
 
   Future<void> ask(String text) async {
     final question = text.trim();
-    if (question.isEmpty || state.sending) return;
+    if (question.isEmpty || state.sending || state.loading) return;
     state = state.copyWith(sending: true, clearError: true);
     final api = ref.read(chatApiProvider);
     try {
@@ -80,18 +96,35 @@ class ChatController extends Notifier<ChatState> {
         messages: [...state.messages, asked, answer],
         sending: false,
       );
+      ref.invalidate(chatHistoryProvider);
     } catch (e) {
       state = state.copyWith(sending: false, error: chatErrorText(e));
     }
   }
 
-  /// Deletes the conversation on the server (if any) and starts afresh.
+  /// Opens an earlier conversation so it can be read and continued.
+  Future<void> open(String conversationId) async {
+    if (state.sending || conversationId == state.conversationId) return;
+    state = ChatState(conversationId: conversationId, loading: true);
+    try {
+      final messages = await ref.read(chatApiProvider).messages(conversationId);
+      if (state.conversationId != conversationId) return;
+      state = ChatState(conversationId: conversationId, messages: messages);
+    } catch (e) {
+      if (state.conversationId != conversationId) return;
+      state = ChatState(error: chatErrorText(e));
+    }
+  }
+
+  /// A new, empty chat. With [delete], the current conversation is deleted
+  /// on the server first.
   Future<void> startOver({bool delete = false}) async {
     final id = state.conversationId;
     state = const ChatState();
     if (delete && id != null) {
       try {
         await ref.read(chatApiProvider).delete(id);
+        ref.invalidate(chatHistoryProvider);
       } catch (e) {
         state = state.copyWith(error: chatErrorText(e));
       }

@@ -290,7 +290,13 @@ export class ChatbotService {
     if (decision.safety !== 'OK') {
       return fixed(decision.safety, decision.text!, decision.reason);
     }
-    const friendly = smallTalk(text, audience);
+    // The number of earlier questions varies repeated replies ("Hi again!",
+    // another joke).
+    const friendly = smallTalk(
+      text,
+      audience,
+      earlier.filter((m) => m.role === 'user').length,
+    );
     if (friendly) return fixed('OK', friendly, 'small-talk');
     const noSource =
       audience === 'patient'

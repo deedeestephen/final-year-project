@@ -413,6 +413,20 @@ First, restart everything so the new chat is loaded: close the server windows an
   → A blue note explains how to allow it. You can still type.
 - [ ] **Listen to an answer.** Under an answer, tap **Listen**.
   → The phone reads the answer and the disclaimer aloud (not the web links). Tap **Stop reading** to stop.
+- [ ] **Chat casually.** Type each of these and read the reply:
+  - **How are you?** → *"I am doing well, thank you for asking!…"*
+  - **I'm fine, and you?** → *"Glad to hear it…"*
+  - **I'm scared about the test** → a kind reply: it is normal to worry, talk to your clinician, and go to a clinic if you feel very unwell.
+  - **What's your name?**, **Who made you?**, **Are you a robot?**
+  - **Tell me a joke** (ask twice: a different joke)
+  - **Muli bwanji** → a greeting, and that it answers in English for now
+  - **👍** or **ok**
+  - **Bye**
+  → None of these give medical advice. **Hello, is my PSA bad?** is still answered with *"I cannot help with that"* (the safety rules come first).
+- [ ] **New chat.** After a few questions, tap **✎** (New chat) at the top.
+  → An empty chat with the big robot. Under *Continue a chat* you see the chat you just left.
+- [ ] **Past chats.** Tap **🕘** (Past chats).
+  → *Your chats* lists every earlier chat with its first question, time and number of questions. Tap one: it opens, and you can carry on asking in it.
 - [ ] **Learn for people who cannot read.** Open **Learn**. Each article has a big **▶ Listen** button. Tap it on **What is a PSA test?**
   → The article opens and the phone starts reading. The part being read is tinted blue and scrolls into view; the bottom shows **Pause**, **■** and *Part 1 of 5*.
   → **Pause**, then **Resume**: it starts that part again. **Slower voice** slows it down from the next part.

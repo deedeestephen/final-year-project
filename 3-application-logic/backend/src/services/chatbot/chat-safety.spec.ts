@@ -3,6 +3,7 @@ import {
   checkAnswer,
   checkQuestion,
   smallTalk,
+  smallTalkIntent,
 } from './chat-safety';
 
 /**
@@ -155,6 +156,98 @@ describe('smallTalk', () => {
     // The safety rules still see the mixed message.
     expect(checkQuestion('hello, is my PSA bad?', 'patient').safety).toBe(
       'DECLINED',
+    );
+  });
+
+  // Owner request 2026-09-29: greet the assistant and chat casually.
+  it.each([
+    ['hi', 'greeting'],
+    ['Hey there!', 'greeting'],
+    ['Good evening', 'greeting'],
+    ['Mwashibukeni', 'local-greeting'],
+    ['Muli bwanji?', 'local-greeting'],
+    ['How are you?', 'how-are-you'],
+    ['hi, how are you doing today?', 'how-are-you'],
+    ["what's up", 'how-are-you'],
+    ["I'm fine, thanks. And you?", 'feeling-well'],
+    ['I am good', 'feeling-well'],
+    ['not bad', 'feeling-well'],
+    ["I'm scared", 'feeling-worried'],
+    ['I am so worried about the test', 'feeling-worried'],
+    ['i feel anxious about my results', 'feeling-worried'],
+    ["I'm scared that I have cancer", 'feeling-worried'],
+    ["what's your name?", 'name'],
+    ['Who made you?', 'creator'],
+    ['are you a robot?', 'what-are-you'],
+    ['Are you a doctor', 'what-are-you'],
+    ['thx', 'thanks'],
+    ['Zikomo kwambiri', 'thanks'],
+    ['thank you so much assistant 🙏', 'thanks'],
+    ['you are very helpful', 'compliment'],
+    ['good bot', 'compliment'],
+    ['you are useless', 'complaint'],
+    ['tell me a joke', 'joke'],
+    ['Make me laugh', 'joke'],
+    ['see you later', 'goodbye'],
+    ['Tsalani bwino', 'goodbye'],
+    ['have a nice day', 'goodbye'],
+    ['yes please', 'yes'],
+    ['nope', 'no'],
+    ["that's all", 'no'],
+    ['ok', 'acknowledgement'],
+    ['cool', 'acknowledgement'],
+    ['haha', 'acknowledgement'],
+    ['👍', 'acknowledgement'],
+    ['what can I ask you?', 'about'],
+    ["what's the weather today", 'off-topic'],
+    ['sing me a song', 'off-topic'],
+  ])('"%s" is small talk (%s)', (text, intent) => {
+    expect(smallTalkIntent(text)).toBe(intent);
+    expect(smallTalk(text, 'patient')).toBeTruthy();
+    expect(smallTalk(text, 'clinician')).toBeTruthy();
+  });
+
+  it('leaves real questions to the knowledge base', () => {
+    for (const text of [
+      'How are PSA levels measured?',
+      'What is the prostate?',
+      'Is a DRE painful?',
+      'ok what is a biopsy',
+      'thanks! and what does PI-RADS 4 mean?',
+      'I am worried, what are the symptoms of prostate cancer?',
+      'tell me about screening',
+    ]) {
+      expect(smallTalkIntent(text)).toBeNull();
+    }
+  });
+
+  it('points worried or unwell people to their clinician and to urgent care', () => {
+    const reply = smallTalk('I feel very sick', 'patient')!;
+    expect(reply).toContain('clinic or hospital now');
+    expect(reply).not.toMatch(/you (have|do not have) cancer/i);
+  });
+
+  it('the safety rules still come first', () => {
+    expect(checkQuestion('I want to die', 'patient').safety).toBe(
+      'URGENT_CARE',
+    );
+    expect(
+      checkQuestion('I am scared, I cannot breathe', 'patient').safety,
+    ).toBe('URGENT_CARE');
+  });
+
+  it('varies a repeated greeting and tells a different joke next time', () => {
+    expect(smallTalk('hello', 'patient', 0)).toMatch(/^Hello!/);
+    expect(smallTalk('hello', 'patient', 1)).toMatch(/^Hi again!/);
+    const jokes = new Set(
+      [0, 1, 2].map((turn) => smallTalk('tell me a joke', 'patient', turn)),
+    );
+    expect(jokes.size).toBe(3);
+  });
+
+  it('says it answers in English when greeted in Bemba or Nyanja', () => {
+    expect(smallTalk('Muli bwanji', 'patient')).toContain(
+      'only answer in English',
     );
   });
 });

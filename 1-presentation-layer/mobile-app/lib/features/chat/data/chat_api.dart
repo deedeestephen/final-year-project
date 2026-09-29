@@ -71,6 +71,30 @@ class ChatMessage {
   final String? writtenBy;
 }
 
+/// One of the person's earlier conversations, for the list of past chats.
+class ChatSummary {
+  const ChatSummary({
+    required this.id,
+    required this.preview,
+    required this.messageCount,
+    required this.updatedAt,
+  });
+
+  factory ChatSummary.fromJson(Map<String, dynamic> j) => ChatSummary(
+    id: j['id'] as String,
+    preview: j['preview'] as String?,
+    messageCount: (j['messageCount'] as num?)?.toInt() ?? 0,
+    updatedAt: DateTime.parse(j['updatedAt'] as String),
+  );
+
+  final String id;
+
+  /// The first question, shortened by the server.
+  final String? preview;
+  final int messageCount;
+  final DateTime updatedAt;
+}
+
 /// The assistant (Phase 13). Online only: answers come from the server.
 class ChatApi {
   ChatApi(this._api);
@@ -102,4 +126,27 @@ class ChatApi {
 
   Future<void> delete(String conversationId) =>
       _api.delete<void>('/chat/conversations/$conversationId');
+
+  /// The person's own conversations, most recent first.
+  Future<List<ChatSummary>> list({int pageSize = 50}) async {
+    final body = await _api.get<Map<String, dynamic>>(
+      '/chat/conversations',
+      query: {'page': 1, 'pageSize': pageSize},
+    );
+    return [
+      for (final item in body['items'] as List<dynamic>)
+        ChatSummary.fromJson(item as Map<String, dynamic>),
+    ];
+  }
+
+  /// One earlier conversation with all its messages.
+  Future<List<ChatMessage>> messages(String conversationId) async {
+    final body = await _api.get<Map<String, dynamic>>(
+      '/chat/conversations/$conversationId',
+    );
+    return [
+      for (final m in body['messages'] as List<dynamic>)
+        ChatMessage.fromJson(m as Map<String, dynamic>),
+    ];
+  }
 }
