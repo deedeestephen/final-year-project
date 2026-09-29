@@ -49,6 +49,9 @@ const ACTIONS: Record<string, string> = {
   'ai_job.requested': 'Asked for an AI analysis',
   'ai_report.read': 'Opened an AI report',
   'sync.pull': 'Downloaded updates',
+  'chat.conversation.created': 'Started a chat with the assistant',
+  'chat.asked': 'Asked the assistant a question',
+  'chat.conversation.deleted': 'Deleted a chat',
   'access.denied': 'Was refused access',
 };
 
