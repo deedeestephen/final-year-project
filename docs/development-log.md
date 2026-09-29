@@ -1084,3 +1084,33 @@ Recorded in [ADR-011](decisions/ADR-011-awareness-blue-and-modern-icons.md) and 
 - **Stopping:** changing tab stopped the voice.
 - **Voice:** the microphone permission was granted and the listening bar appeared. The emulator hears silence unless its host microphone is on, so it ended with "I did not hear anything", as designed.
 - **Not yet checked:** real speech recognition needs a microphone. It is switched on for the emulator (`adb emu avd hostmicon`), or use the USB phone (how-to-test.md).
+
+## 2026-09-29 (evening): The project moves onto the PC's own PostgreSQL 18 and MongoDB 8.3 (owner request)
+
+**Request:** "open mongo db on my laptop and run the database and create all the files there as well as using my postgre db that are installed on this laptop … so i can add account from and delete accounts from". The owner was also told "password wrong" on the admin website.
+
+**Found:**
+- The project had never used the installed servers. It ran its own PostgreSQL 16 (port 5433) and MongoDB 7 (port 27018) in Docker. So pgAdmin and Compass showed nothing.
+- The installed servers are PostgreSQL 18.6 (service `postgresql-x64-18`, with pgAdmin 4) and MongoDB 8.3 (service `MongoDB`, with Compass).
+- **"Password wrong":**
+  - The owner had opened `.env.example`, whose demo-password line is empty. The real `.env` sits next to it.
+  - After the demo accounts were reset, the owner typed a new password into the demo-password line of `.env` in Notepad. The database still had the old one.
+
+**Done** (all steps and commands in [local-databases.md](local-databases.md)):
+- **PostgreSQL 18:**
+  - A `pca` login (not a superuser; `CREATEDB` for the tests' throwaway databases) and a `pca_mhealth` database it owns.
+  - The data was copied with the PostgreSQL 18 `pg_dump`/`pg_restore`. All 20 tables have the same row counts on both servers (788 rows).
+  - The audit log's hash chain verifies (347 entries, intact), and `prisma migrate status` says *up to date*.
+- **MongoDB 8.3:** a `pca` login (`readWriteAnyDatabase`, `dbAdminAnyDatabase`). The new `tools/copy-mongo.ts` copied the 4 collections with their validation rules and indexes (17 documents).
+- **Settings and scripts:**
+  - `.env` now points at ports 5432 and 27017. `.env.example` describes the installed servers and the new `LOCAL_POSTGRES_ADMIN_PASSWORD`.
+  - Docker's PostgreSQL and MongoDB moved to an optional compose profile, `docker-db`. They are stopped, and their volumes are kept as a backup.
+  - `dev-up.ps1` checks, and starts if needed, the two Windows services. `-DockerDatabases` switches back to Docker.
+- **Passwords changed:** new passwords for the `pca` logins (on the installed servers and on the Docker backups), Redis and MinIO. My checks had shown them in the chat by mistake. The Redis and MinIO containers were recreated to pick up the new values.
+- **Admin sign-in:** the four synthetic demo accounts were reset to the password the owner chose. The administrator account no longer has to change it at first sign-in, because the owner chose it themselves. Sign-in was verified through the API.
+
+**Tests:** all 227 database integration tests (16 suites) pass on the installed servers. The docs link check passes.
+
+**Security notes (in local-databases.md):**
+- PostgreSQL accepts connections only from this PC, with a password (SCRAM-SHA-256).
+- MongoDB listens only on 127.0.0.1, but its access control is off (the desktop default). That is acceptable for synthetic data only; the guide says how to switch it on before any real data.

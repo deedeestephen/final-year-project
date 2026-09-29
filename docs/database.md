@@ -52,17 +52,18 @@ Keys are generated server-side (`imaging/2026/09/<uuid>.dcm`) and validated agai
 | Task | Command |
 |---|---|
 | Create `.env` with random secrets | `node ../6-infrastructure/scripts/gen-keys.mjs --init-env` |
-| Start services | `docker compose -f ../6-infrastructure/docker/docker-compose.yml --env-file ../.env up -d` |
+| Start Redis, MinIO and Qdrant (PostgreSQL and MongoDB are the PC's own services) | `docker compose -f ../6-infrastructure/docker/docker-compose.yml --env-file ../.env up -d` |
+| Copy MongoDB data between servers | `npx ts-node --transpile-only tools/copy-mongo.ts <from-url> <to-url>` |
 | Apply migrations | `npm run db:migrate` |
 | New migration during development | `npm run db:migrate:dev -- --name <change>` |
 | Seed synthetic demo data | `npm run db:seed` (demo password = `SEED_DEMO_PASSWORD` in `.env`) |
 | Mongo validators + indexes | `npm run db:mongo:migrate` |
 | Integration tests | `npm run test:db` |
 
-Local ports: **Postgres 5433**, **Mongo 27018** (5432 and 27017 are left free for the locally installed PostgreSQL and MongoDB services), Redis 6379, MinIO 9000/9001, Qdrant 6333. To browse the project database with MongoDB Compass, use the `MONGO_URL` in `.env`.
+Local ports: **PostgreSQL 18 on 5432** and **MongoDB 8.3 on 27017**, the database servers installed on the PC (since 2026-09-29, owner request; see [local-databases.md](local-databases.md) for how they were set up, how to open them in pgAdmin and MongoDB Compass, backups, and how to switch back to Docker). Redis 6379, MinIO 9000/9001 and Qdrant 6333 stay in Docker. The earlier Docker PostgreSQL (5433) and MongoDB (27018) are kept, stopped, as a backup, in the optional `docker-db` profile.
 
 ## Test isolation
 `npm run test:db` creates a brand-new database per run (`pca_mhealth_<runId>_test`), applies all migrations with `prisma migrate deploy` (proving the schema builds from clean), and removes only that database afterwards (`KEEP_TEST_DB=1` keeps it). The development database is never reset. `prisma migrate reset` is deliberately not used by automation.
 
 ## Seed data
-`src/persistence/seed.ts` is idempotent and **synthetic only**: 4 demo users (`admin|clinician|pathologist|patient@demo.pca-mhealth.test`, all `must_change_password`), 1 demo facility, 3 demo patients with encrypted names, and 1 clinical record each. Every row has `is_synthetic = true` and says "SYNTHETIC".
+`src/persistence/seed.ts` is idempotent and **synthetic only**: 4 demo users (`admin|clinician|pathologist|patient@demo.pca-mhealth.test`, all `must_change_password` when first created), 1 demo facility, 3 demo patients with encrypted names, and 1 clinical record each. Every row has `is_synthetic = true` and says "SYNTHETIC".

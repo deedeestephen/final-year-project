@@ -1,6 +1,6 @@
 # Starts everything the app needs on this PC, in one go:
-#   1. Docker Desktop (if it is not running yet)
-#   2. the databases (PostgreSQL, MongoDB, MinIO, Qdrant, Redis) in Docker
+#   1. the PostgreSQL 18 and MongoDB installed on this PC (Windows services; docs/local-databases.md)
+#   2. Docker Desktop (if it is not running yet) with Redis, MinIO and Qdrant
 #   3. the backend API on http://localhost:3000 (in its own window)
 #   4. the admin website on http://localhost:5173 (in its own window)
 #   5. the AI service (development mock models) on http://127.0.0.1:8000 (in its own window)
@@ -9,7 +9,9 @@
 #   powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1
 #
 # Add -ResetDemoPasswords to put the demo accounts back to the password in .env.
-param([switch]$ResetDemoPasswords)
+# Add -DockerDatabases to run PostgreSQL and MongoDB in Docker instead (then
+# DATABASE_URL and MONGO_URL in .env must use ports 5433 and 27018).
+param([switch]$ResetDemoPasswords, [switch]$DockerDatabases)
 
 $ErrorActionPreference = 'Stop'
 # This script lives in 6-infrastructure\scripts; the repository root is two levels up.
@@ -23,6 +25,21 @@ function Fail($text) { Write-Host "!! $text" -ForegroundColor Red; exit 1 }
 
 if (-not (Test-Path (Join-Path $root '.env'))) {
   Fail "The .env file is missing. Run: node 6-infrastructure\scripts\gen-keys.mjs --init-env"
+}
+
+# The databases installed on this PC. Both services start with Windows; this
+# starts them if they were stopped (that needs an administrator PowerShell).
+if (-not $DockerDatabases) {
+  foreach ($name in @('postgresql-x64-18', 'MongoDB')) {
+    $service = Get-Service -Name $name -ErrorAction SilentlyContinue
+    if (-not $service) { Fail "The $name service is not installed. See docs\local-databases.md, or add -DockerDatabases." }
+    if ($service.Status -ne 'Running') {
+      Say "Starting the $name service..."
+      try { Start-Service -Name $name } catch {
+        Fail "Could not start $name. Open PowerShell as administrator and run: Start-Service $name"
+      }
+    }
+  }
 }
 
 # Docker
@@ -43,8 +60,14 @@ if ($LASTEXITCODE -ne 0) {
   if (-not $ready) { Fail 'Docker Desktop did not start. Open it by hand, wait for "Engine running", then run this again.' }
 }
 
-Say 'Starting the databases in Docker...'
-& $docker compose -f (Join-Path $root '6-infrastructure\docker\docker-compose.yml') --env-file (Join-Path $root '.env') up -d
+$compose = @('compose', '-f', (Join-Path $root '6-infrastructure\docker\docker-compose.yml'), '--env-file', (Join-Path $root '.env'))
+if ($DockerDatabases) {
+  Say 'Starting PostgreSQL, MongoDB, Redis, MinIO and Qdrant in Docker...'
+  & $docker @compose --profile docker-db up -d
+} else {
+  Say 'Starting Redis, MinIO and Qdrant in Docker...'
+  & $docker @compose up -d
+}
 if ($LASTEXITCODE -ne 0) { Fail 'docker compose failed (see the messages above).' }
 
 # An old backend still running would block port 3000.
@@ -64,7 +87,7 @@ try {
   }
   Say 'Preparing the database (migrations and synthetic demo data)...'
   npx prisma migrate deploy
-  if ($LASTEXITCODE -ne 0) { Fail 'Database migration failed. Is Docker running?' }
+  if ($LASTEXITCODE -ne 0) { Fail 'Database migration failed. Is PostgreSQL running, and does DATABASE_URL in .env match it? (docs\local-databases.md)' }
   npm run -s db:seed
   if ($ResetDemoPasswords) { npm run -s db:reset-demo }
   Say 'Building the backend...'

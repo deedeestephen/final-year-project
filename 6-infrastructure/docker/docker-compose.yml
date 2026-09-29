@@ -1,9 +1,15 @@
 # Development data stores for PCa mHealth. Not a production deployment.
 # Usage (from the repository root): docker compose -f 6-infrastructure/docker/docker-compose.yml --env-file .env up -d
+#
+# PostgreSQL and MongoDB normally run as the services installed on the PC
+# (PostgreSQL 18 on 5432, MongoDB on 27017; docs/local-databases.md), so here
+# they are in the optional "docker-db" profile. To use Docker for them instead,
+# add --profile docker-db and point DATABASE_URL / MONGO_URL at 5433 / 27018.
 name: pca-mhealth
 
 services:
   postgres:
+    profiles: [docker-db]
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-pca}
@@ -18,6 +24,7 @@ services:
     restart: unless-stopped
 
   mongo:
+    profiles: [docker-db]
     image: mongo:7
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-pca}

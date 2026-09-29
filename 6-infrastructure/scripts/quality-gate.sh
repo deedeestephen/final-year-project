@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
 # Usage: scripts/quality-gate.sh [backend|db|workflows|ai|mobile|admin-web|fhir|tls|docs|secrets|all]   (default: all)
-# The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
+# The db target needs PostgreSQL and MongoDB (DATABASE_URL, MONGO_URL in .env) and the docker-compose
+# services (Redis, MinIO) running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
 # This script lives in 6-infrastructure/scripts; the repository root is two levels up.
