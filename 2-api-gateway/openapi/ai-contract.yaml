@@ -1,13 +1,15 @@
 openapi: 3.0.3
 info:
   title: PCa mHealth AI Services contract (Layer 4)
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Internal contract between the backend AI broker (Layer 3) and ai-services (Layer 4).
     Frozen at v0 in Phase 3; implemented in Phases 11-13.
     v0.2 (Phase 12, additive): `Explanation.artifact` carries an explanation image inline,
     because the AI service cannot write to the backend's storage; the backend validates it
-    (PNG, at most 2 MB) and stores it. Only the backend may call it
+    (PNG, at most 2 MB) and stores it.
+    v0.3 (Phase 13, additive): `POST /v1/chat/answer` quotes reviewed knowledge-base passages
+    (offline, extractive; ADR-009). Only the backend may call it
     (internal network + `Authorization: Bearer <AI_SERVICE_TOKEN>`).
 
     Rules that every implementation must follow:
@@ -67,6 +69,28 @@ paths:
               schema: { $ref: '#/components/schemas/InferenceResult' }
         '422':
           description: Inputs insufficient for any module
+  /v1/chat/answer:
+    post:
+      summary: Quote the reviewed passages that answer a question (UC-07)
+      description: |
+        Extractive only: the text is whole knowledge-base passages, never generated. When no
+        passage matches well enough, `matched` is false and `text` is null. Safety checks,
+        storage, the disclaimer and the audit belong to the backend.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatAnswerRequest' }
+      responses:
+        '200':
+          description: The quoted answer, or no match
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatAnswerResult' }
+        '409':
+          description: LANGUAGE_NOT_AVAILABLE (no verified content in that language)
+        '503':
+          description: CHAT_UNAVAILABLE (the knowledge base is not loaded)
 components:
   securitySchemes:
     serviceToken: { type: http, scheme: bearer }
@@ -177,3 +201,43 @@ components:
           items: { $ref: '#/components/schemas/Explanation' }
 security:
   - serviceToken: []
+    ChatAnswerRequest:
+      type: object
+      additionalProperties: false
+      required: [question, audience]
+      properties:
+        question: { type: string, minLength: 1, maxLength: 1000 }
+        audience: { type: string, enum: [patient, clinician] }
+        language: { type: string, enum: [en, bem, nya], default: en }
+    ChatAnswerResult:
+      type: object
+      additionalProperties: false
+      required: [mode, matched, text, passages, sources, knowledgeBase]
+      properties:
+        mode: { type: string, enum: [EXTRACTIVE] }
+        matched: { type: boolean }
+        text: { type: string, nullable: true }
+        passages:
+          type: array
+          items:
+            type: object
+            required: [articleId, title, heading, score]
+            properties:
+              articleId: { type: string }
+              title: { type: string }
+              heading: { type: string }
+              score: { type: number }
+        sources:
+          type: array
+          items:
+            type: object
+            required: [name, url]
+            properties:
+              name: { type: string }
+              url: { type: string }
+        knowledgeBase:
+          type: object
+          required: [version, reviewStatus]
+          properties:
+            version: { type: string }
+            reviewStatus: { type: string }

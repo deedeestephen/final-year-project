@@ -3,6 +3,13 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, status
 
 from app.auth import require_service_token
+from app.chat.answer import (
+    ChatAnswerRequest,
+    ChatAnswerResult,
+    LanguageNotAvailableError,
+    answer,
+)
+from app.chat.kb import KnowledgeBase, KnowledgeBaseError, default_knowledge_base
 from app.contract import InferenceRequest, InferenceResult, ModelInfo
 from app.router import InsufficientInputsError, ModelRouter, default_router
 
@@ -25,6 +32,19 @@ def get_router() -> ModelRouter:
 
 
 Router = Annotated[ModelRouter, Depends(get_router)]
+
+
+def get_knowledge_base() -> KnowledgeBase:
+    try:
+        return default_knowledge_base()
+    except (KnowledgeBaseError, OSError, ValueError) as err:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "CHAT_UNAVAILABLE", "message": "The knowledge base is not loaded"},
+        ) from err
+
+
+Knowledge = Annotated[KnowledgeBase, Depends(get_knowledge_base)]
 
 
 @app.get("/v1/health")
@@ -54,5 +74,21 @@ def infer(request: InferenceRequest, router: Router) -> InferenceResult:
             detail={
                 "message": str(err),
                 "modulesSkipped": [s.model_dump() for s in err.skipped],
+            },
+        ) from err
+
+
+@app.post("/v1/chat/answer", dependencies=[Depends(require_service_token)])
+def chat_answer(request: ChatAnswerRequest, kb: Knowledge) -> ChatAnswerResult:
+    """Quotes the best-matching reviewed passages (Phase 13). Safety checks,
+    storage and the disclaimer are the backend's job."""
+    try:
+        return answer(kb, request)
+    except LanguageNotAvailableError as err:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "LANGUAGE_NOT_AVAILABLE",
+                "message": "There is no verified content in this language yet",
             },
         ) from err

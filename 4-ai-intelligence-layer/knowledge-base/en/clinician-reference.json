@@ -1,0 +1,127 @@
+{
+  "audience": "clinician",
+  "language": "en",
+  "reviewStatus": "Draft for review by a qualified clinician before use (research prototype content).",
+  "articles": [
+    {
+      "id": "isup-grade-groups",
+      "title": "ISUP grade groups and the Gleason score",
+      "sections": [
+        {
+          "heading": "What a grade group is",
+          "body": "The International Society of Urological Pathology (ISUP) grade group summarises the Gleason grading of prostate cancer in five groups, from grade group 1 (lowest grade) to grade group 5 (highest grade). The system was agreed at the 2014 ISUP consensus conference. It is used together with the Gleason score, for example Gleason score 3+3=6 (grade group 1)."
+        },
+        {
+          "heading": "How Gleason scores map to grade groups",
+          "body": "Grade group 1: Gleason score 6 or less (3+3). Grade group 2: Gleason score 3+4=7. Grade group 3: Gleason score 4+3=7. Grade group 4: Gleason score 8 (4+4, 3+5 or 5+3). Grade group 5: Gleason score 9 or 10."
+        },
+        {
+          "heading": "Grade groups in this app",
+          "body": "When a pathologist records a slide review, the server works out the grade group from the primary and secondary Gleason patterns using this table. An AI grade group, once a trained model provides one, is decision support only and never replaces the pathologist's review."
+        }
+      ],
+      "sources": [
+        {
+          "name": "Epstein JI et al. The 2014 ISUP Consensus Conference on Gleason Grading of Prostatic Carcinoma. Am J Surg Pathol. 2016;40(2):244-252.",
+          "url": "https://doi.org/10.1097/PAS.0000000000000530"
+        }
+      ]
+    },
+    {
+      "id": "pi-rads",
+      "title": "PI-RADS version 2.1 assessment categories",
+      "sections": [
+        {
+          "heading": "What PI-RADS is",
+          "body": "PI-RADS (Prostate Imaging Reporting and Data System) version 2.1 is the standard way to report multiparametric prostate MRI. Each lesion is given an assessment category from 1 to 5 for the likelihood of clinically significant cancer."
+        },
+        {
+          "heading": "The five categories",
+          "body": "PI-RADS 1: very low (clinically significant cancer is highly unlikely). PI-RADS 2: low (clinically significant cancer is unlikely). PI-RADS 3: intermediate (the presence of clinically significant cancer is equivocal). PI-RADS 4: high (clinically significant cancer is likely). PI-RADS 5: very high (clinically significant cancer is highly likely)."
+        },
+        {
+          "heading": "PI-RADS in this app",
+          "body": "The PI-RADS category is entered with the screening record and is one of the clinical values sent to the AI analysis. It is the radiologist's category, not an AI output."
+        }
+      ],
+      "sources": [
+        {
+          "name": "Turkbey B et al. Prostate Imaging Reporting and Data System Version 2.1: 2019 Update of PI-RADS Version 2. Eur Urol. 2019;76(3):340-351.",
+          "url": "https://doi.org/10.1016/j.eururo.2019.02.033"
+        }
+      ]
+    },
+    {
+      "id": "psa-density-free-psa",
+      "title": "PSA density and the free-to-total PSA ratio",
+      "sections": [
+        {
+          "heading": "PSA density",
+          "body": "PSA density is the serum PSA (ng/mL) divided by the prostate volume (mL), with the volume usually measured on MRI or transrectal ultrasound. It adjusts PSA for the size of the gland, because a larger prostate releases more PSA. When both values are recorded, the server calculates it. Decision thresholds differ between guidelines, so follow the local protocol."
+        },
+        {
+          "heading": "Free-to-total PSA ratio",
+          "body": "The free-to-total PSA ratio (percentage of free PSA) is free PSA divided by total PSA. In men with a total PSA between 4 and 10 ng/mL and a benign-feeling prostate, a lower percentage of free PSA was associated with a higher risk of prostate cancer. When both values are recorded, the server calculates the ratio. Cut-offs differ between laboratories and guidelines."
+        }
+      ],
+      "sources": [
+        {
+          "name": "Benson MC et al. Prostate specific antigen density: a means of distinguishing benign prostatic hypertrophy and prostate cancer. J Urol. 1992;147(3 Pt 2):815-816.",
+          "url": "https://doi.org/10.1016/s0022-5347(17)37393-7"
+        },
+        {
+          "name": "Catalona WJ et al. Use of the percentage of free prostate-specific antigen to enhance differentiation of prostate cancer from benign prostatic disease. JAMA. 1998;279(19):1542-1547.",
+          "url": "https://doi.org/10.1001/jama.279.19.1542"
+        }
+      ]
+    },
+    {
+      "id": "dre-findings",
+      "title": "Digital rectal examination (DRE) findings",
+      "sections": [
+        {
+          "heading": "DRE findings recorded in this app",
+          "body": "The screening record uses these DRE findings: normal; enlarged, smooth; nodular; hard (indurated); not performed."
+        },
+        {
+          "heading": "What the findings mean for assessment",
+          "body": "A nodular or hard (indurated) prostate raises the suspicion of cancer and is usually a reason for further evaluation. An enlarged, smooth prostate is common with benign enlargement. A normal DRE does not rule out cancer, so the finding is interpreted together with PSA and imaging."
+        }
+      ],
+      "sources": [
+        {
+          "name": "European Association of Urology: EAU Guidelines on Prostate Cancer",
+          "url": "https://uroweb.org/guidelines/prostate-cancer"
+        },
+        {
+          "name": "US National Cancer Institute: Prostate Cancer Screening (PDQ), health professional version",
+          "url": "https://www.cancer.gov/types/prostate/hp/prostate-screening-pdq"
+        }
+      ]
+    },
+    {
+      "id": "ai-report",
+      "title": "Reading the AI report in this app",
+      "sections": [
+        {
+          "heading": "What the AI report is",
+          "body": "The AI report is decision support for a qualified clinician, not a diagnosis. It combines the modules that could run for the patient (clinical values, MRI, slides) into a probability with a range, and a grade group when slides were analysed. Modules that could not run are listed with the reason."
+        },
+        {
+          "heading": "Development mock data",
+          "body": "Until the trained models are added, every report is labelled \"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT.\" Its numbers are practice output and must not be used for patient care."
+        },
+        {
+          "heading": "Explanations and accuracy figures",
+          "body": "Explanations (Grad-CAM heatmaps for images and SHAP values for clinical values) appear only when a real model produces them; otherwise the report says why they are not available. Accuracy and fairness figures appear only from stored evaluation runs; until then the report says that evaluation data is not yet available."
+        }
+      ],
+      "sources": [
+        {
+          "name": "PCa mHealth project documentation: AI model integration guide",
+          "url": ""
+        }
+      ]
+    }
+  ]
+}

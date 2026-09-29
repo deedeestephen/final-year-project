@@ -9,3 +9,5 @@ af0dbbbb907c5d4947cab2bfbc6683c19c03e030:backend/test/db/auth.int-spec.ts:generi
 c03e70d9a5f1dadbe536cd843d8e5ce0b4f636cc:mobile/test/features/admin/admin_test.dart:generic-api-key:92
 # Public CircleCI badge placeholder ("abc123def456") from the NestJS starter README:
 6520784f2fc9dc5e1f97bf6aba7f8ce0d510a991:backend/README.md:generic-api-key:5
+# Made-up one-time password in a fake server answer, admin website test (2026-09-29):
+6968791c556a7c99c24fc0909fb021166b96b25f:1-presentation-layer/admin-panel-web/src/pages/UsersPages.test.tsx:generic-api-key:148

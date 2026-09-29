@@ -139,6 +139,9 @@ secrets() {
     # Scans the whole git history. Reviewed false positives are listed,
     # one exact finding per line, in .gitleaksignore.
     run "gitleaks (full history)" "$gl" git --no-banner --redact .
+    # And what is staged for the next commit, so a finding is caught before it
+    # enters the history.
+    run "gitleaks (staged changes)" "$gl" git --staged --no-banner --redact .
   else
     echo "    SKIP: gitleaks not installed (runs in CI)"
   fi
