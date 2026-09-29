@@ -884,3 +884,33 @@ Edge screenshots at 1440, 820 and 375 px against the live backend: every page, t
 - The pathologist flow searched for "SYNTHETIC Slide …", but the list writes "Slide …, SYNTHETIC". A `textContaining` finder also matched the search box, so the exact list text is used.
 
 The device run signs out whoever was signed in on the emulator.
+
+## 2026-09-29: Phase 17: Performance and reliability
+
+**Objective:** measure the whole system against the research targets and report measured against target, as in [performance.md](performance.md).
+
+**Built:**
+- **`test/performance/load.ts`:** a small load generator. Virtual users with think time, client-side latency up to the last byte, nearest-rank percentiles, and a batch runner.
+- **`test/performance/system.perf-spec.ts` (`npm run perf`):** reuses the Phase 16 live stack. The backend runs in production mode as its own process, with the AI service using mock models and a fresh database. The run then:
+  - creates 10 synthetic facilities, 500 clinicians (one password hash) and 300 patients through the API
+  - measures sign-in, a 25-user baseline, 500 users with a clinician's traffic mix while one AI analysis a second runs, a stress stage, a burst of 20 AI analyses, and 100 phones × 20 changes sent twice
+  It fails only on wrong answers, never on speed. `PERF_ONLY` selects stages. Results go to `var/perf/`.
+- **`test/performance/report.ts` (`npm run perf:report`)** prints the Markdown tables from a results file, so the document quotes the measurement exactly.
+- **`live-stack.ts`** now records how long the backend and the AI service take to become ready.
+
+**Measured** (development laptop, 4 cores; the emulator, Docker and Android Studio running):
+- 500 users at about 98 requests/s: 0 errors, P95 156 ms (baseline 41 ms). Saturation at about 133 requests/s.
+- AI end to end: P95 545 ms under load, and 1,027 ms for a burst of 20 (mock models).
+- Sign-in: 500 in 39.5 s at 25 at a time (Argon2id).
+- Start-up: backend 3.8 s, AI service 1.4 s, phone app 1.7 s median (emulator, profile build).
+
+**Found:** bulk sync was slow. 100 phones × 20 changes took 14–18 s each, all finishing together.
+- **Cause:** a sampler over `pg_stat_activity` showed 79% of busy-session time waiting on `Lock/advisory`. That is the audit log's hash-chain lock, held until commit, so all audited writes take turns.
+- **Fix:** screening-record transactions now write the audit row last, after the notification, which shortens the time the lock is held. Result: 14.4 s → 11.3 s and 12.2 s per phone, 15–22% faster.
+- **What is left:** batch chaining, or one chain per facility, is recorded as future work for national scale. About 170 audited changes/s is far above the proposal's load.
+
+**Test runs that died at start-up:** some Jest runs exited at once with no output. The shell reported code 127, but npm's debug log shows the real code: -1073740791 (`0xC0000409`). On Windows that is how a hard abort inside Node appears, for example when V8 cannot get memory. It was not a test failure, and it was not about background jobs; it also happened in the foreground.
+- **When:** each time, it came soon after a Gradle build (the phone test and the profile APK). That build leaves Gradle and Kotlin daemons holding about 3 GB, while the laptop's commit charge was near its limit.
+- **After freeing memory:** once the daemons from that build were stopped (`gradlew --stop`), the same database suite passed (449 tests).
+- **How sure:** memory pressure is the most likely cause, not a proven one.
+- **Practical rule:** stop the Gradle daemons (or close the emulator) before the big test runs on this laptop.

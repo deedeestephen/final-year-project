@@ -143,6 +143,12 @@ export class ClinicalService {
           clientUuid: dto.clientUuid ?? null,
         },
       });
+      await this.notifications.notifyPatient(
+        patient.id,
+        NOTIFICATION_TEXT.recordAdded,
+        tx,
+      );
+      // Last: the audit row takes the chain lock until commit (Phase 17).
       await this.audit.record(
         {
           action: 'clinical_record.created',
@@ -154,11 +160,6 @@ export class ClinicalService {
           details: { patientId: patient.id, offline: Boolean(dto.clientUuid) },
           ...ctx,
         },
-        tx,
-      );
-      await this.notifications.notifyPatient(
-        patient.id,
-        NOTIFICATION_TEXT.recordAdded,
         tx,
       );
       return created;

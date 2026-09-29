@@ -36,6 +36,8 @@ export interface LiveStack {
   aiLog: string;
   storageRoot: string;
   secrets: { aiToken: string; smartcareToken: string };
+  /** From starting each process until it answered ready (Phase 17). */
+  timings: { aiReadyMs: number; backendReadyMs: number };
   stop(): Promise<void>;
 }
 
@@ -177,6 +179,7 @@ export async function startLiveStack(
 
   const aiPort = await freePort();
   const aiLog = path.join(work, 'ai-service.log');
+  const aiStart = performance.now();
   const ai: ChildProcess = spawn(
     pythonOf(aiDir),
     [
@@ -199,10 +202,12 @@ export async function startLiveStack(
   ai.stderr?.pipe(aiOut);
   const aiUrl = `http://127.0.0.1:${aiPort}`;
   await waitFor(`${aiUrl}/v1/health`, (s) => s === 200, 60_000);
+  const aiReadyMs = Math.round(performance.now() - aiStart);
 
   const port = await freePort();
   const storageRoot = path.join(work, 'objects');
   const backendLog = path.join(work, 'backend.log');
+  const backendStart = performance.now();
   const backend: ChildProcess = spawn(process.execPath, ['dist/main.js'], {
     cwd: backendDir,
     env: {
@@ -235,6 +240,7 @@ export async function startLiveStack(
     (s, body) => s === 200 && body.includes('"ai":"up"'),
     90_000,
   );
+  const backendReadyMs = Math.round(performance.now() - backendStart);
 
   let stopped: Promise<void> | undefined;
   const stop = () => (stopped ??= stopAll());
@@ -265,6 +271,7 @@ export async function startLiveStack(
     aiLog,
     storageRoot,
     secrets: { aiToken, smartcareToken },
+    timings: { aiReadyMs, backendReadyMs },
     stop,
   };
 }

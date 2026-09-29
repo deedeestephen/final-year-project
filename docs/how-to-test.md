@@ -365,6 +365,14 @@ The AI service now runs in its own window, *PCa mHealth AI service (mock models)
   ```
   → The browser opens tables like `patients` and `users`. Names show as scrambled bytes, because patient names are **encrypted** in the database. That is on purpose.
 
+### Phase 17: how fast is it? (the robot measures it)
+
+- [ ] With `dev-up.ps1` running and nothing heavy open, open Git Bash in `3-application-logic/backend` and type `npm run perf`.
+  → It takes about 6 minutes and ends with **7 passed**. It pretends to be 500 clinicians using the app at the same time, asks for AI analyses while they work, and sends a burst of changes from 100 phones.
+- [ ] Type `npm run perf:report`.
+  → Tables of how long the answers took. Compare them with [performance.md](performance.md). Your numbers will differ a little from run to run, and more on another computer.
+- For a quicker look: `PERF_USERS=100 PERF_MEASURE_S=20 npm run perf`.
+
 ### Phase 16: the whole system tested end to end (the robot does it)
 
 These checks start the real system and use it the way people would. They use made-up data only.

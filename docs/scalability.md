@@ -57,6 +57,8 @@ This page describes how the system is built to cope with many users, what was me
 
 ## 3. Measured on the development PC (2026-09-24)
 
+> These were the first, preliminary measurements. The Phase 17 measurements on the whole live system are in [performance.md](performance.md): 500 signed-in users with a realistic traffic mix, AI analyses under load, sync stress and start-up times.
+
 **Set-up:** a single API instance (`node dist/main`, production build, Pino request logging on). PostgreSQL 16 in Docker Desktop (WSL2), on the same Windows laptop:
 - 4 cores / 8 threads
 - the Android emulator, Android Studio and Docker all running
