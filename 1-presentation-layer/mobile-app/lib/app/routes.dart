@@ -13,6 +13,9 @@ abstract final class Routes {
   static const sync = '/sync';
   static const settings = '/settings';
 
+  /// The assistant (Phase 13): patients and clinicians.
+  static const chat = '/chat';
+
   // Clinician and pathologist server features (Phase 9).
   static const aiResults = '/ai-jobs';
   static const review = '/review';
@@ -80,6 +83,7 @@ String? resolveRedirect(SessionState session, String location) {
       final home = Routes.home(user.primaryRole);
       // Phone settings (appearance) are for every signed-in account.
       if (location == Routes.settings) return null;
+      if (location == Routes.chat) return user.canUseChat ? null : home;
       if (_isClinicalRoute(location)) {
         if (!user.canSync) return home;
         if (_isEditRoute(location) && !user.canEditPatients) return home;

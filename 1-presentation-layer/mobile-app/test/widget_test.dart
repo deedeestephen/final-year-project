@@ -80,7 +80,8 @@ void main() {
     expect(find.text('Clinician'), findsOneWidget);
     expect(find.text('Welcome, Demo Clinician'), findsOneWidget);
     expect(find.text('Patients'), findsOneWidget);
-    expect(find.textContaining('Coming in build phase'), findsWidgets);
+    // The assistant is available now (Phase 13).
+    expect(find.text('Ask the assistant'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Open navigation menu'));
     await settle(tester);

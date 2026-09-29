@@ -151,12 +151,13 @@ void main() {
     expect(find.text('Latest screening: 2026-09-01'), findsOneWidget);
     expect(find.text('2 unread messages'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Ask a question (assistant)'),
+      find.text('Symptom check'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Symptom check'), findsOneWidget);
-    expect(find.text('Coming in build phase 13'), findsWidgets);
+    // The assistant is available (Phase 13); the rest is planned for later.
+    expect(find.byKey(const Key('home.chat')), findsOneWidget);
+    expect(find.text('Planned for a later version'), findsWidgets);
   });
 
   testWidgets(

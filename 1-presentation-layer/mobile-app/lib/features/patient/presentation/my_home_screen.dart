@@ -138,18 +138,27 @@ class MyHomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  // The assistant is planned in docs/chatbot-plan.md (Phase 13).
+                  const SizedBox(height: AppSizes.sm + 4),
+                  // The assistant (Phase 13, docs/chatbot-plan.md).
+                  ActionTile(
+                    key: const Key('home.chat'),
+                    icon: Icons.chat_outlined,
+                    title: 'Ask a question',
+                    description:
+                        'Answers from reviewed health information, with sources',
+                    tone: AccentTone.teal,
+                    onTap: () => context.push(Routes.chat),
+                  ),
                   const SectionTitle('Coming later'),
                   for (final (title, icon) in const [
                     ('Symptom check', Icons.checklist_outlined),
                     ('Appointments and reminders', Icons.event_outlined),
-                    ('Ask a question (assistant)', Icons.chat_outlined),
                   ]) ...[
                     ActionTile(
                       icon: icon,
                       title: title,
                       tone: AccentTone.grey,
-                      badge: 'Coming in build phase 13',
+                      badge: 'Planned for a later version',
                     ),
                     const SizedBox(height: AppSizes.sm + 4),
                   ],

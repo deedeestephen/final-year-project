@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/chat/presentation/chat_screen.dart';
 import '../features/auth/application/session_controller.dart';
 import '../features/auth/domain/current_user.dart';
 import '../features/auth/presentation/change_password_screen.dart';
@@ -56,6 +57,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: Routes.sync, builder: (_, _) => const SyncScreen()),
       GoRoute(path: Routes.settings, builder: (_, _) => const SettingsScreen()),
+      GoRoute(path: Routes.chat, builder: (_, _) => const ChatScreen()),
       GoRoute(
         path: Routes.patients,
         builder: (_, _) => const PatientsScreen(),

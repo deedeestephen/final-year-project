@@ -56,6 +56,10 @@ class CurrentUser {
   /// Only clinicians register patients and add screening records.
   bool get canEditPatients => roles.contains(UserRole.clinician);
 
+  /// The assistant is for patients and clinicians (permission chatbot:use).
+  bool get canUseChat =>
+      roles.contains(UserRole.patient) || roles.contains(UserRole.clinician);
+
   CurrentUser copyWith({bool? mustChangePassword}) => CurrentUser(
     id: id,
     email: email,

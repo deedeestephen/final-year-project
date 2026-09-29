@@ -70,12 +70,12 @@ const roleDestinations = <UserRole, List<HomeDestination>>{
       route: Routes.aiResults,
       tone: AccentTone.purple,
     ),
-    // The assistant is planned in docs/chatbot-plan.md.
+    // The assistant (Phase 13, docs/chatbot-plan.md).
     HomeDestination(
       'Ask the assistant',
-      'Guidelines and references for clinicians',
+      'Reference cards with their sources: PI-RADS, grade groups, PSA density',
       Icons.chat_outlined,
-      phase: 13,
+      route: Routes.chat,
       tone: AccentTone.teal,
     ),
     HomeDestination(

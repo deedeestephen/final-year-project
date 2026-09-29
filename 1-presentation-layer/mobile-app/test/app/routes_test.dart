@@ -184,4 +184,15 @@ void main() {
       Routes.changePassword,
     );
   });
+
+  test('the assistant is for patients and clinicians only', () {
+    expect(resolveRedirect(signedIn(['PATIENT']), Routes.chat), isNull);
+    expect(resolveRedirect(signedIn(['CLINICIAN']), Routes.chat), isNull);
+    expect(
+      resolveRedirect(signedIn(['PATHOLOGIST']), Routes.chat),
+      '/home/pathologist',
+    );
+    expect(resolveRedirect(signedIn(['ADMIN']), Routes.chat), '/home/admin');
+    expect(resolveRedirect(const SignedOut(), Routes.chat), Routes.login);
+  });
 }

@@ -62,6 +62,8 @@ class ApiClient {
   Future<T> put<T>(String path, {Object? data}) =>
       _send(() => dio.put<T>(path, data: data));
 
+  Future<T> delete<T>(String path) => _send(() => dio.delete<T>(path));
+
   /// Sends one file as multipart/form-data. The server reads the form fields
   /// first and the file last, so [fields] are added before the file.
   Future<T> upload<T>(
