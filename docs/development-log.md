@@ -988,3 +988,31 @@ The device run signs out whoever was signed in on the emulator.
 - Human-verified Bemba and Nyanja.
 - An optional language model, only with the owner's approval.
 - A check on the S9+ after restarting the development servers.
+
+## 2026-09-29: The assistant chats, and Claude can write its answers (owner request)
+
+**Request:** "with my chatbot make sure it can chat with patients and can you use the claude api to run the chatbot". This is the owner's approval of the optional language-model step. Recorded in [ADR-010](decisions/ADR-010-claude-for-chat-answers.md).
+
+**Built:**
+- **Chatting:**
+  - Greetings, thanks, goodbyes and "what can you do?" get friendly fixed replies without a look-up. They count only when the whole message is small talk, so "hello, is my PSA bad?" still meets every safety rule.
+  - The server now sends the last three questions and answers with each question. Short follow-ups such as "does it hurt?" are searched together with the previous question.
+- **Claude** (`ai-services/app/chat/generate.py`):
+  - When `ANTHROPIC_API_KEY` is set, Claude (default `claude-haiku-4-5-20251001`) writes the answer from the three best passages only, through a forced `give_answer` tool call (`covered`, `answer`, `citations`). Only the cited passages become sources.
+  - Personal details are removed before sending. There is an 8 s timeout, no retries and a daily cap.
+  - Anything unusable falls back to quoting.
+  - The model is stored with the answer and audited. The app labels such answers *"Written by AI (Claude) from the sources below"*, and the intro asks people not to type personal details.
+- AI contract v0.4 (`history`, `GENERATED`, `model`; health reports `chat_writer`); `.env.example` has the new settings with an empty key; the server's chat timeout is now 12 s.
+
+**Found:**
+- **Chat schemas in the wrong place.** Milestone 1 had appended the chat schemas after the contract's root `security:` block, so they were nested in the wrong place; the earlier "it parses" check did not catch it. They are now under `components.schemas`.
+- **Doubled content status.** On the phone, "Content status" repeated both documents' review notes. Answers now name only the status of the documents they used.
+
+**Tests:**
+- AI service: 64 tests, including 17 new ones with a fake Anthropic client. They cover the request sent, cited sources only, "not covered", five kinds of unusable reply, the daily cap and follow-ups.
+- Backend: 11 chat integration tests (small talk without a look-up, history sent, `GENERATED` stored and audited) and 44 safety unit tests (small talk included).
+- App: 9 chat widget tests.
+
+**Checked on the phone:** the Galaxy S9+ emulator ran against the restarted development server and AI service, signed in as a synthetic patient. "What does a PSA test measure?" was answered with two sources, "Hello" got the greeting, and "Does it hurt?" after the DRE question was answered from the DRE passage.
+
+**Not yet measured:** Claude's speed and cost. That needs the owner's API key in `.env`; then run `PERF_ONLY=chat npm run perf`, and the live test with `ANTHROPIC_API_KEY_LIVE_TEST=1`.

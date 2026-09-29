@@ -86,6 +86,62 @@ export function checkQuestion(
   return { safety: 'OK', reason: 'ok' };
 }
 
+/*
+ * Small talk: greetings, thanks, goodbyes and "what can you do?" get a
+ * friendly fixed reply, so the assistant feels like a conversation. Only a
+ * message that is nothing but small talk counts ("hello, is my PSA bad?"
+ * still goes through every rule above).
+ */
+const GREETING =
+  /^\s*(hi|hello|hey|hallo|good (morning|afternoon|evening|day)|muli shani|muli bwanji)( there)?[\s!.,]*$/i;
+const THANKS =
+  /^\s*((ok(ay)?|great|good),?\s*)?(thanks|thank you( (very|so) much)?|thank u|cheers|zikomo|natotela)[\s!.,]*$/i;
+const GOODBYE =
+  /^\s*(bye|goodbye|good bye|see you( later)?|good night)[\s!.,]*$/i;
+const ABOUT =
+  /^\s*(who are you|what are you|what can you do|how can you help( me)?|what do you do|help)\s*[?!.]*\s*$/i;
+
+const SMALL_TALK_TEXT: Record<
+  'greeting' | 'thanks' | 'goodbye' | 'about',
+  Record<ChatAudience, string>
+> = {
+  greeting: {
+    patient:
+      'Hello! I can answer questions about the prostate, PSA tests, the rectal exam (DRE), screening, and when to get help quickly. What would you like to know?',
+    clinician:
+      'Hello. I can look up reference information: PI-RADS categories, ISUP grade groups, PSA density and free PSA, DRE findings, and how to read the AI report. What do you need?',
+  },
+  thanks: {
+    patient: 'You are welcome. Is there anything else you would like to know?',
+    clinician: 'You are welcome. Anything else to look up?',
+  },
+  goodbye: {
+    patient:
+      'Goodbye, and take care. Speak to your clinician if anything worries you.',
+    clinician: 'Goodbye.',
+  },
+  about: {
+    patient:
+      'I am the PCa mHealth assistant. I answer questions using reviewed health information and show where each answer comes from. I cannot see your records or tell you what your results mean: your clinician will do that. I am not for emergencies.',
+    clinician:
+      'I am the PCa mHealth reference assistant. I answer from reviewed reference cards and show their sources. I support, but do not replace, clinical judgement or the local protocol.',
+  },
+};
+
+/** A friendly fixed reply when the whole message is small talk, else null. */
+export function smallTalk(text: string, audience: ChatAudience): string | null {
+  const kind = GREETING.test(text)
+    ? 'greeting'
+    : THANKS.test(text)
+      ? 'thanks'
+      : GOODBYE.test(text)
+        ? 'goodbye'
+        : ABOUT.test(text)
+          ? 'about'
+          : null;
+  return kind ? SMALL_TALK_TEXT[kind][audience] : null;
+}
+
 const DOSE_IN_ANSWER =
   /\b\d+(\.\d+)?\s?(mg|mcg|µg|milligrams?|micrograms?|tablets?|capsules?)\b/i;
 

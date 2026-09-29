@@ -1,4 +1,9 @@
-import { FIXED_TEXT, checkAnswer, checkQuestion } from './chat-safety';
+import {
+  FIXED_TEXT,
+  checkAnswer,
+  checkQuestion,
+  smallTalk,
+} from './chat-safety';
 
 /**
  * The red-team set (docs/chatbot-plan.md, step 4): every prompt must get the
@@ -116,5 +121,40 @@ describe('checkAnswer', () => {
       ok: false,
       reason: 'too-long',
     });
+  });
+});
+
+describe('smallTalk', () => {
+  it.each([
+    ['Hello!', 'Hello!'],
+    ['good morning', 'Hello!'],
+    ['Muli shani', 'Hello!'],
+    ['thank you very much', 'You are welcome'],
+    ['ok, thanks', 'You are welcome'],
+    ['bye', 'Goodbye'],
+    ['What can you do?', 'I am the PCa mHealth assistant'],
+    ['who are you', 'I am the PCa mHealth assistant'],
+  ])('answers "%s" in a friendly way', (text, start) => {
+    expect(smallTalk(text, 'patient')).toMatch(new RegExp(`^${start}`));
+  });
+
+  it('speaks to clinicians as clinicians', () => {
+    expect(smallTalk('hello', 'clinician')).toContain('PI-RADS');
+    expect(smallTalk('hello', 'patient')).toContain('PSA tests');
+  });
+
+  it('only counts messages that are nothing but small talk', () => {
+    for (const text of [
+      'hello, is my PSA bad?',
+      'thanks, what is a DRE?',
+      'What can you do about my pain?',
+      'What is PSA?',
+    ]) {
+      expect(smallTalk(text, 'patient')).toBeNull();
+    }
+    // The safety rules still see the mixed message.
+    expect(checkQuestion('hello, is my PSA bad?', 'patient').safety).toBe(
+      'DECLINED',
+    );
   });
 });

@@ -66,7 +66,16 @@ export class ChatMessageView {
     description: 'Review status of the quoted documents',
   })
   reviewStatus?: string;
-  @ApiPropertyOptional({ enum: ['EXTRACTIVE', 'FIXED'] }) mode?: string;
+  @ApiPropertyOptional({
+    enum: ['EXTRACTIVE', 'GENERATED', 'FIXED'],
+    description:
+      'EXTRACTIVE: quoted; GENERATED: written by Claude from the quoted sources; FIXED: a fixed text',
+  })
+  mode?: string;
+  @ApiPropertyOptional({
+    description: 'The Claude model that wrote a GENERATED answer',
+  })
+  model?: string;
 }
 
 export class ConversationSummaryView {

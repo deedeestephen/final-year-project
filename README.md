@@ -36,7 +36,7 @@ The folders follow the six layers of the architecture ([docs/architecture.md](do
 | 2–5 | Database, API gateway, sign-in and roles, patients and consent | Done (`f70dafe`, `c32a729`, `af0dbbb`, `d3bf0be`) |
 | 6–9 | Offline sync, phone app foundation, patient app, clinician and pathologist screens | Done (`5f77bd6`, `d726503`, `7c3aa00`, `e85f15a`) |
 | 10–12 | Imaging and slides, AI service (mock models), explanations and evaluation | Done (`e1959f4`, `f379c26`, `0fd06c1`) |
-| 13 | Chatbot: offline, quoted answers from a reviewed knowledge base ([ADR-009](docs/decisions/ADR-009-offline-extractive-chatbot.md)) | Done for English (`21b9634`, `2841f7b`, `5f3624f`, and the docs commit); the knowledge base awaits clinician sign-off |
+| 13 | Chatbot: answers from a reviewed knowledge base, quoted ([ADR-009](docs/decisions/ADR-009-offline-extractive-chatbot.md)) or written by Claude from it ([ADR-010](docs/decisions/ADR-010-claude-for-chat-answers.md)) | Done for English (`21b9634`, `2841f7b`, `5f3624f`, and the docs commit); the knowledge base awaits clinician sign-off |
 | 14 | FHIR R4 export and SmartCare Pro mock | Done (`dae7661`) |
 | 15 | Security and compliance review | Done (`3bbb4ec`) |
 | 16 | End-to-end workflows on the live system | Done (`763f1a8`) |

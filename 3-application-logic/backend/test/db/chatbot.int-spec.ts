@@ -36,12 +36,24 @@ interface ErrorBody {
 }
 
 /** What the fake AI service answers, by question. */
-type Reply = 'answer' | 'no-match' | 'dose' | 'language' | 'down' | 'invalid';
+type Reply =
+  | 'answer'
+  | 'generated'
+  | 'no-match'
+  | 'dose'
+  | 'language'
+  | 'down'
+  | 'invalid';
 
 describe('the chatbot (real database, fake AI service)', () => {
   let fakeAi: Server;
   let reply: Reply = 'answer';
-  const asked: { question: string; audience: string; language: string }[] = [];
+  const asked: {
+    question: string;
+    audience: string;
+    language: string;
+    history: { role: string; text: string }[];
+  }[] = [];
   let app: NestExpressApplication;
   let patient: string;
   let patientId: string;
@@ -66,6 +78,10 @@ describe('the chatbot (real database, fake AI service)', () => {
       .post(`/api/v1/chat/conversations/${id}/messages`)
       .set(as(token))
       .send({ text });
+
+  /** A new patient account, so each test has its own hourly chat limit. */
+  const freshPatient = async () =>
+    loginAs(app, (await createUser(prisma, 'PATIENT', null)).email);
 
   beforeAll(async () => {
     fakeAi = createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -112,6 +128,23 @@ describe('the chatbot (real database, fake AI service)', () => {
             return send(409, { detail: { code: 'LANGUAGE_NOT_AVAILABLE' } });
           case 'down':
             return send(503, { detail: { code: 'CHAT_UNAVAILABLE' } });
+          case 'generated':
+            return send(200, {
+              mode: 'GENERATED',
+              matched: true,
+              text: 'PSA is a protein your prostate makes. The test measures how much is in your blood.',
+              passages: [
+                {
+                  articleId: 'psa-test',
+                  title: 'What is a PSA test?',
+                  heading: 'What PSA is',
+                  score: 6.4,
+                },
+              ],
+              sources: [{ name: 'NHS: PSA testing', url: '' }],
+              knowledgeBase: kb,
+              model: 'claude-haiku-4-5-20251001',
+            });
           case 'invalid':
             return send(200, { mode: 'GENERATED', matched: true, text: 'x' });
           default:
@@ -226,6 +259,7 @@ describe('the chatbot (real database, fake AI service)', () => {
         question: 'What does a PSA test measure?',
         audience: 'patient',
         language: 'en',
+        history: [],
       },
     ]);
 
@@ -235,6 +269,55 @@ describe('the chatbot (real database, fake AI service)', () => {
       .body as AskBody;
     expect(clin.answer.disclaimer).toContain('clinical judgement');
     expect(asked.at(-1)?.audience).toBe('clinician');
+  });
+
+  it('chats: small talk is answered without a look-up, and follow-ups carry the conversation', async () => {
+    const me = await freshPatient();
+    const c = await start(me);
+    const hello = (await ask(me, c.id, 'Hello!').expect(200)).body as AskBody;
+    expect(hello.answer).toMatchObject({ safety: 'OK', mode: 'FIXED' });
+    expect(hello.answer.text).toContain('What would you like to know?');
+    expect(asked).toEqual([]);
+
+    await ask(me, c.id, 'What does a PSA test measure?').expect(200);
+    await ask(me, c.id, 'Is it painful?').expect(200);
+    // The follow-up is sent with the conversation so far (oldest first),
+    // including the small talk.
+    const history = asked.at(-1)?.history ?? [];
+    expect(history.map((t) => t.role)).toEqual([
+      'user',
+      'assistant',
+      'user',
+      'assistant',
+    ]);
+    expect(history[2].text).toBe('What does a PSA test measure?');
+  });
+
+  it('keeps answers written by Claude labelled with the model, and audits it', async () => {
+    reply = 'generated';
+    const me = await freshPatient();
+    const c = await start(me);
+    const body = (
+      await ask(me, c.id, 'What does a PSA test measure?').expect(200)
+    ).body as AskBody & { answer: { model?: string } };
+    expect(body.answer).toMatchObject({
+      safety: 'OK',
+      mode: 'GENERATED',
+      model: 'claude-haiku-4-5-20251001',
+      sources: [{ name: 'NHS: PSA testing' }],
+    });
+    const stored = await http()
+      .get(`/api/v1/chat/conversations/${c.id}`)
+      .set(as(me))
+      .expect(200);
+    expect(JSON.stringify(stored.body)).toContain('claude-haiku-4-5-20251001');
+    const row = await prisma.auditLog.findFirst({
+      where: { action: 'chat.asked', entityId: c.id },
+    });
+    expect(row?.details).toMatchObject({
+      mode: 'GENERATED',
+      model: 'claude-haiku-4-5-20251001',
+    });
   });
 
   it('never looks anything up for emergencies, medicines or own results', async () => {
@@ -269,8 +352,9 @@ describe('the chatbot (real database, fake AI service)', () => {
   it('says so when nothing matches, and never shows an answer that fails the output check', async () => {
     const c = await start(patient);
     reply = 'no-match';
-    const none = (await ask(patient, c.id, 'hello').expect(200))
-      .body as AskBody;
+    const none = (
+      await ask(patient, c.id, 'Will it rain tomorrow?').expect(200)
+    ).body as AskBody;
     expect(none.answer).toMatchObject({
       safety: 'NO_SOURCE',
       text: FIXED_TEXT.noSourcePatient,

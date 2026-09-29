@@ -70,10 +70,16 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
   - Emergency and self-harm wording gets the fixed urgent-care text. Doses (everyone) and a patient's own results or diagnosis (patients) are declined before anything is looked up.
   - An answer without a source, or with a dose in it, is never shown.
   - Patients never get clinician content.
+- **Claude (when `ANTHROPIC_API_KEY` is set, ADR-010):**
+  - Claude only gets the reviewed passages found for the question, the last three turns and the question, after e-mail addresses, NRC numbers, phone numbers and long digit strings are removed.
+  - It answers through a forced tool call. Safety rules run before it, and the output check runs after it.
+  - Every such answer is labelled "Written by AI (Claude)".
+  - The key is only in the git-ignored `.env`.
+  - Real use needs a data-protection review, because questions are sent to Anthropic in the United States.
 - **Chat privacy:**
   - Conversations belong to one account (others get 404) and can be deleted by the owner. MongoDB deletes them automatically after `CHAT_RETENTION_DAYS` (180).
   - The audit log records `chat.asked` with the safety result and the number of sources, never the text.
-  - Questions never leave the system: no external service is called.
+  - Without a Claude key, questions never leave the system. With one, they go to Anthropic as described above.
   - A limit of `CHAT_MAX_QUESTIONS_PER_HOUR` (30) applies per account, with `Retry-After`.
 
 ## Dependency hygiene

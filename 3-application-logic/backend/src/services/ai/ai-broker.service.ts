@@ -6,6 +6,7 @@ import {
   modelInfoSchema,
   type ChatAnswerResult,
   type ChatAudience,
+  type ChatTurn,
   type InferenceRequest,
   type InferenceResult,
   type ModelInfo,
@@ -64,6 +65,7 @@ export class AiBrokerService {
     question: string;
     audience: ChatAudience;
     language: string;
+    history: ChatTurn[];
   }): Promise<ChatAnswerResult> {
     const body = await this.call(
       '/v1/chat/answer',

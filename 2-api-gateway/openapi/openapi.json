@@ -4251,8 +4251,14 @@
             "type": "string",
             "enum": [
               "EXTRACTIVE",
+              "GENERATED",
               "FIXED"
-            ]
+            ],
+            "description": "EXTRACTIVE: quoted; GENERATED: written by Claude from the quoted sources; FIXED: a fixed text"
+          },
+          "model": {
+            "type": "string",
+            "description": "The Claude model that wrote a GENERATED answer"
           }
         },
         "required": [

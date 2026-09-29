@@ -23,6 +23,14 @@ class Settings:
     #: Shared secret the backend sends as `Authorization: Bearer <token>`.
     #: When empty, every protected endpoint refuses to work (fail closed).
     service_token: str
+    #: Anthropic API key: when set, Claude writes chat answers from the
+    #: retrieved passages (ADR-010). Empty: quoted answers only (ADR-009).
+    anthropic_api_key: str = ""
+    #: A fast model keeps answers within the 2 s target (FR-07).
+    chat_model: str = "claude-haiku-4-5-20251001"
+    chat_llm_timeout_s: float = 8.0
+    #: At most this many Claude calls per day (UTC), to cap the cost.
+    chat_llm_daily_limit: int = 2000
 
 
 def _from_env_file(path: Path, key: str) -> str:
@@ -38,10 +46,20 @@ def _from_env_file(path: Path, key: str) -> str:
 
 
 def load_settings(env_file: Path = _DEV_ENV_FILE) -> Settings:
-    token = os.environ.get("AI_SERVICE_TOKEN", "").strip()
-    if not token:
-        token = _from_env_file(env_file, "AI_SERVICE_TOKEN")
-    return Settings(service_token=token)
+    def setting(key: str) -> str:
+        # The environment wins over .env, even when empty: tests switch Claude
+        # off with ANTHROPIC_API_KEY="" although .env holds a key.
+        if key in os.environ:
+            return os.environ[key].strip()
+        return _from_env_file(env_file, key)
+
+    return Settings(
+        service_token=setting("AI_SERVICE_TOKEN"),
+        anthropic_api_key=setting("ANTHROPIC_API_KEY"),
+        chat_model=setting("CHAT_LLM_MODEL") or Settings.chat_model,
+        chat_llm_timeout_s=float(setting("CHAT_LLM_TIMEOUT_S") or Settings.chat_llm_timeout_s),
+        chat_llm_daily_limit=int(setting("CHAT_LLM_DAILY_LIMIT") or Settings.chat_llm_daily_limit),
+    )
 
 
 @lru_cache

@@ -210,3 +210,12 @@ def test_the_endpoint_says_when_the_knowledge_base_is_missing(
         monkeypatch.delenv("KNOWLEDGE_BASE_DIR")
         default_knowledge_base.cache_clear()
     assert get_knowledge_base().passages
+
+
+def test_an_answer_names_only_the_status_of_the_documents_it_used(kb: KnowledgeBase) -> None:
+    patient = ask(kb, "What does a PSA test measure?")
+    status = patient.knowledgeBase.reviewStatus  # type: ignore[attr-defined]
+    assert status.count("Draft for review") == 1
+    assert "with patients" in status
+    clinician = ask(kb, "What does PI-RADS 4 mean?", "clinician")
+    assert "with patients" not in clinician.knowledgeBase.reviewStatus  # type: ignore[attr-defined]

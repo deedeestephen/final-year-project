@@ -36,6 +36,7 @@ class ChatMessage {
     this.safety = ChatSafety.ok,
     this.disclaimer,
     this.reviewStatus,
+    this.writtenBy,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> j) => ChatMessage(
@@ -50,6 +51,10 @@ class ChatMessage {
     safety: ChatSafety.parse(j['safety'] as String?),
     disclaimer: j['disclaimer'] as String?,
     reviewStatus: j['reviewStatus'] as String?,
+    // Set only when Claude wrote the answer from the sources (ADR-010).
+    writtenBy: j['mode'] == 'GENERATED'
+        ? (j['model'] as String? ?? 'AI')
+        : null,
   );
 
   final String id;
@@ -60,6 +65,10 @@ class ChatMessage {
   final ChatSafety safety;
   final String? disclaimer;
   final String? reviewStatus;
+
+  /// The AI model that wrote the answer from the sources, or null when the
+  /// sources were quoted or a fixed text was shown.
+  final String? writtenBy;
 }
 
 /// The assistant (Phase 13). Online only: answers come from the server.

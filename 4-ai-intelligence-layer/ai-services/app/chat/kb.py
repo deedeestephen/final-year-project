@@ -33,6 +33,8 @@ class Passage:
     audience: Audience
     language: str
     sources: tuple[Source, ...]
+    #: The review status of the document the passage comes from.
+    review_status: str = ""
 
 
 @dataclass(frozen=True)
@@ -73,7 +75,8 @@ def load(directory: Path) -> KnowledgeBase:
         if audience not in ("patient", "clinician"):
             raise KnowledgeBaseError(f"{file.name}: audience must be patient or clinician")
         language = _require(doc.get("language"), f"{file.name}: language")
-        statuses.add(str(_require(doc.get("reviewStatus"), f"{file.name}: reviewStatus")))
+        status = str(_require(doc.get("reviewStatus"), f"{file.name}: reviewStatus"))
+        statuses.add(status)
         for article in _require(doc.get("articles"), f"{file.name}: articles"):
             article_id = _require(article.get("id"), f"{file.name}: article id")
             sources = tuple(
@@ -90,6 +93,7 @@ def load(directory: Path) -> KnowledgeBase:
                         audience=audience,
                         language=str(language),
                         sources=sources,
+                        review_status=status,
                     )
                 )
     return KnowledgeBase(

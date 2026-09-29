@@ -6,6 +6,7 @@ import '../../support/fakes.dart';
 
 Map<String, dynamic> _answer({
   String safety = 'OK',
+  String? model,
   String text =
       'PSA (prostate-specific antigen) is a protein made by the prostate.',
   List<Map<String, String>> sources = const [
@@ -28,7 +29,12 @@ Map<String, dynamic> _answer({
     'at': '2026-09-29T08:00:01.000Z',
     'sources': sources,
     'safety': safety,
-    'mode': safety == 'OK' ? 'EXTRACTIVE' : 'FIXED',
+    'mode': model != null
+        ? 'GENERATED'
+        : safety == 'OK'
+        ? 'EXTRACTIVE'
+        : 'FIXED',
+    'model': ?model,
     'disclaimer':
         'This is general information, not medical advice. Speak to your clinician about your own health.',
     if (safety == 'OK')
@@ -236,5 +242,35 @@ void main() {
       find.textContaining('do not replace clinical judgement'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('answers written by Claude say so, and still show the sources', (
+    tester,
+  ) async {
+    await openChat(tester);
+    backend.on(
+      'POST /chat/conversations/c-1/messages',
+      FakeResponse(
+        200,
+        _answer(
+          model: 'claude-haiku-4-5-20251001',
+          text: 'PSA is a protein your prostate makes.',
+        ),
+      ),
+    );
+    await tester.tapKey('chat.suggestion.0');
+    expect(
+      find.text('Written by AI (Claude) from the sources below'),
+      findsOneWidget,
+    );
+    expect(find.text('PSA is a protein your prostate makes.'), findsOneWidget);
+    expect(find.textContaining('NHS: PSA testing'), findsOneWidget);
+  });
+
+  testWidgets('quoted answers carry no AI label', (tester) async {
+    await openChat(tester);
+    await tester.tapKey('chat.suggestion.0');
+    expect(find.textContaining('Written by AI'), findsNothing);
+    expect(find.textContaining('Do not type your name'), findsOneWidget);
   });
 }

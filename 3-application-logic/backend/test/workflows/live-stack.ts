@@ -193,7 +193,15 @@ export async function startLiveStack(
     ],
     {
       cwd: aiDir,
-      env: { ...process.env, AI_SERVICE_TOKEN: aiToken },
+      env: {
+        ...process.env,
+        AI_SERVICE_TOKEN: aiToken,
+        // Claude costs money and varies: off unless LIVE_CLAUDE=1 (ADR-010).
+        ANTHROPIC_API_KEY:
+          process.env.LIVE_CLAUDE === '1'
+            ? (process.env.ANTHROPIC_API_KEY ?? '')
+            : '',
+      },
       stdio: ['ignore', 'pipe', 'pipe'],
     },
   );

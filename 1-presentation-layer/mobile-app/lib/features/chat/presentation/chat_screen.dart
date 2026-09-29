@@ -268,14 +268,17 @@ class _Intro extends StatelessWidget {
             Expanded(
               child: Text(
                 clinician
-                    ? 'Answers are quoted from reviewed reference cards, with '
-                          'their sources. They do not replace clinical judgement '
-                          'or the local protocol.'
-                    : 'Answers are quoted from reviewed health information, '
-                          'with their sources. The assistant cannot see your '
-                          'records and never tells you what your results mean. '
-                          'Not for emergencies: if you feel very unwell, go to '
-                          'a clinic or hospital now.',
+                    ? 'Answers come only from reviewed reference cards, with '
+                          'their sources; an AI may help word them. They do not '
+                          'replace clinical judgement or the local protocol. '
+                          'Do not type patient names or numbers.'
+                    : 'Answers come only from reviewed health information, '
+                          'with their sources; an AI may help word them. The '
+                          'assistant cannot see your records and never tells '
+                          'you what your results mean. Do not type your name, '
+                          'NRC, phone number or results. Not for emergencies: '
+                          'if you feel very unwell, go to a clinic or hospital '
+                          'now.',
                 key: const Key('chat.intro'),
                 style: theme.textTheme.bodyMedium,
               ),
@@ -390,6 +393,26 @@ class _AnswerCard extends StatelessWidget {
                   ],
                 ),
               ),
+            if (message.writtenBy != null)
+              Padding(
+                key: Key('chat.writtenBy.${message.id}'),
+                padding: const EdgeInsets.only(bottom: AppSizes.sm),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 18, color: p.textSecondary),
+                    const SizedBox(width: AppSizes.xs + 2),
+                    Expanded(
+                      child: Text(
+                        'Written by AI (${_modelName(message.writtenBy!)}) '
+                        'from the sources below',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: p.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Text(message.text, style: theme.textTheme.bodyLarge),
             if (message.sources.isNotEmpty) ...[
               const SizedBox(height: AppSizes.sm + 4),
@@ -436,3 +459,7 @@ class _AnswerCard extends StatelessWidget {
     );
   }
 }
+
+/// "claude-haiku-4-5-20251001" -> "Claude"; other names are shown as they are.
+String _modelName(String model) =>
+    model.toLowerCase().startsWith('claude') ? 'Claude' : model;

@@ -103,7 +103,7 @@ export interface InferenceRequest {
 /** POST /v1/chat/answer (contract v0.3): whole passages quoted, or no match. */
 export const chatAnswerResultSchema = z
   .object({
-    mode: z.literal('EXTRACTIVE'),
+    mode: z.enum(['EXTRACTIVE', 'GENERATED']),
     matched: z.boolean(),
     text: z.string().min(1).max(4000).nullable(),
     passages: z
@@ -128,6 +128,8 @@ export const chatAnswerResultSchema = z
       version: z.string().min(1).max(50),
       reviewStatus: z.string().min(1).max(500),
     }),
+    /** The Claude model that wrote a GENERATED answer (ADR-010). */
+    model: z.string().min(1).max(100).nullable().optional(),
   })
   .refine(
     (a) =>
@@ -137,3 +139,9 @@ export const chatAnswerResultSchema = z
 
 export type ChatAnswerResult = z.infer<typeof chatAnswerResultSchema>;
 export type ChatAudience = 'patient' | 'clinician';
+
+/** Earlier messages sent with a question, oldest first (at most 6). */
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  text: string;
+}

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: PCa mHealth AI Services contract (Layer 4)
-  version: 0.3.0
+  version: 0.4.0
   description: |
     Internal contract between the backend AI broker (Layer 3) and ai-services (Layer 4).
     Frozen at v0 in Phase 3; implemented in Phases 11-13.
@@ -9,7 +9,10 @@ info:
     because the AI service cannot write to the backend's storage; the backend validates it
     (PNG, at most 2 MB) and stores it.
     v0.3 (Phase 13, additive): `POST /v1/chat/answer` quotes reviewed knowledge-base passages
-    (offline, extractive; ADR-009). Only the backend may call it
+    (offline, extractive; ADR-009).
+    v0.4 (additive): the request carries the last messages (`history`); when an Anthropic API key
+    is configured, Claude writes the answer from the retrieved passages only (`mode: GENERATED`,
+    `model`), falling back to quoting (ADR-010). Health reports `chat_writer`. Only the backend may call it
     (internal network + `Authorization: Bearer <AI_SERVICE_TOKEN>`).
 
     Rules that every implementation must follow:
@@ -41,6 +44,7 @@ paths:
                   service: { type: string, enum: [pca-mhealth-ai-services] }
                   mode: { type: string, enum: [development-mock, research-model] }
                   clinical_models_loaded: { type: boolean }
+                  chat_writer: { type: string, description: 'claude:<model> or quotes' }
   /v1/models:
     get:
       summary: Registered model versions
@@ -73,8 +77,9 @@ paths:
     post:
       summary: Quote the reviewed passages that answer a question (UC-07)
       description: |
-        Extractive only: the text is whole knowledge-base passages, never generated. When no
-        passage matches well enough, `matched` is false and `text` is null. Safety checks,
+        EXTRACTIVE: the text is whole knowledge-base passages. GENERATED: Claude wrote the text
+        from the retrieved passages only and `passages`/`sources` are the ones it cited. When no
+        passage covers the question, `matched` is false and `text` is null. Safety checks,
         storage, the disclaimer and the audit belong to the backend.
       requestBody:
         required: true
@@ -199,8 +204,6 @@ components:
         explanations:
           type: array
           items: { $ref: '#/components/schemas/Explanation' }
-security:
-  - serviceToken: []
     ChatAnswerRequest:
       type: object
       additionalProperties: false
@@ -209,12 +212,23 @@ security:
         question: { type: string, minLength: 1, maxLength: 1000 }
         audience: { type: string, enum: [patient, clinician] }
         language: { type: string, enum: [en, bem, nya], default: en }
+        history:
+          type: array
+          maxItems: 6
+          description: The last messages of the conversation, oldest first.
+          items:
+            type: object
+            required: [role, text]
+            properties:
+              role: { type: string, enum: [user, assistant] }
+              text: { type: string, minLength: 1, maxLength: 4000 }
     ChatAnswerResult:
       type: object
       additionalProperties: false
       required: [mode, matched, text, passages, sources, knowledgeBase]
       properties:
-        mode: { type: string, enum: [EXTRACTIVE] }
+        mode: { type: string, enum: [EXTRACTIVE, GENERATED] }
+        model: { type: string, nullable: true, description: The Claude model (GENERATED only) }
         matched: { type: boolean }
         text: { type: string, nullable: true }
         passages:
@@ -241,3 +255,5 @@ security:
           properties:
             version: { type: string }
             reviewStatus: { type: string }
+security:
+  - serviceToken: []

@@ -7,6 +7,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "pydantic>=2.8",
+    # Claude-written chat answers (ADR-010); used only when ANTHROPIC_API_KEY is set.
+    "anthropic>=0.40",
 ]
 
 [project.optional-dependencies]

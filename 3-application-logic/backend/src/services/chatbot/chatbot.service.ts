@@ -20,6 +20,7 @@ import {
   FIXED_TEXT,
   checkAnswer,
   checkQuestion,
+  smallTalk,
   type ChatSafety,
 } from './chat-safety';
 import type {
@@ -41,9 +42,11 @@ interface StoredMessage {
   at: Date;
   sources?: { name: string; url: string }[];
   safety?: ChatSafety;
-  mode?: 'EXTRACTIVE' | 'FIXED';
+  mode?: 'EXTRACTIVE' | 'GENERATED' | 'FIXED';
   reviewStatus?: string;
   kbVersion?: string;
+  /** The Claude model that wrote a GENERATED answer. */
+  model?: string;
 }
 
 interface StoredConversation {
@@ -230,6 +233,7 @@ export class ChatbotService {
       text,
       conversation.audience,
       conversation.language,
+      conversation.messages,
     );
     await (
       await this.collection()
@@ -253,6 +257,7 @@ export class ChatbotService {
         mode: answer.mode,
         sources: answer.sources?.length ?? 0,
         ...(answer.kbVersion ? { knowledgeBase: answer.kbVersion } : {}),
+        ...(answer.model ? { model: answer.model } : {}),
       },
       ...ctx,
     });
@@ -267,6 +272,7 @@ export class ChatbotService {
     text: string,
     audience: ChatAudience,
     language: string,
+    earlier: StoredMessage[],
   ): Promise<{ answer: StoredMessage; reason: string }> {
     const fixed = (safety: ChatSafety, fixedText: string, reason: string) => ({
       answer: {
@@ -284,13 +290,21 @@ export class ChatbotService {
     if (decision.safety !== 'OK') {
       return fixed(decision.safety, decision.text!, decision.reason);
     }
+    const friendly = smallTalk(text, audience);
+    if (friendly) return fixed('OK', friendly, 'small-talk');
     const noSource =
       audience === 'patient'
         ? FIXED_TEXT.noSourcePatient
         : FIXED_TEXT.noSourceClinician;
     let result;
     try {
-      result = await this.ai.chatAnswer({ question: text, audience, language });
+      result = await this.ai.chatAnswer({
+        question: text,
+        audience,
+        language,
+        // The last three questions and answers, for follow-ups.
+        history: earlier.slice(-6).map((m) => ({ role: m.role, text: m.text })),
+      });
     } catch (err) {
       if (err instanceof AiServiceError && err.status === 409) {
         throw new ConflictException({
@@ -314,9 +328,10 @@ export class ChatbotService {
         at: new Date(),
         sources: result.sources,
         safety: 'OK',
-        mode: 'EXTRACTIVE',
+        mode: result.mode,
         reviewStatus: result.knowledgeBase.reviewStatus,
         kbVersion: result.knowledgeBase.version,
+        ...(result.model ? { model: result.model } : {}),
       },
       reason: 'answered',
     };
@@ -383,6 +398,7 @@ function messageView(
     view.mode = m.mode;
     view.disclaimer = DISCLAIMER[audience];
     if (m.reviewStatus) view.reviewStatus = m.reviewStatus;
+    if (m.model) view.model = m.model;
   }
   return view;
 }

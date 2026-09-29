@@ -105,13 +105,14 @@ const schema = z
       .max(300_000)
       .default(30_000),
     AI_MAX_CONCURRENT_JOBS: z.coerce.number().int().min(1).max(32).default(2),
-    // Chatbot (Phase 13): answers must come quickly (FR-07 target 2 s).
+    // Chatbot (Phase 13). Room for Claude to write an answer (ADR-010); the AI
+    // service itself gives up on Claude after 8 s and quotes instead.
     CHAT_TIMEOUT_MS: z.coerce
       .number()
       .int()
       .min(500)
       .max(30_000)
-      .default(5_000),
+      .default(12_000),
     CHAT_MAX_QUESTIONS_PER_HOUR: z.coerce
       .number()
       .int()

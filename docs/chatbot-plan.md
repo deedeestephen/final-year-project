@@ -61,7 +61,7 @@ Once the trained models are integrated (see [ai-model-integration-guide.md](ai-m
 | 4 | Safety filter and output check | a red-team test set (emergency, diagnosis, dosing and injection prompts) passes 100% | **Done:** 34 prompts, 100% |
 | 5 | Extractive answering (free, offline) | answers cite sources; the retrieval quality set reaches the agreed score | **Done:** 18 questions, ≥ 90% right at the first passage, all within the first two |
 | 6 | App screens: patient "Ask a question", clinician "Ask the assistant"; chat bubbles, sources, disclaimer, offline message | widget tests; tested on the S9+ | **Widget tests done;** on-device check after the development servers are restarted |
-| 7 | (Optional, needs the owner's approval of cost) LLM provider | same tests pass; cost per 1,000 questions measured | Not started (needs the owner's approval) |
+| 7 | (Optional, needs the owner's approval of cost) LLM provider | same tests pass; cost per 1,000 questions measured | **Built (owner approved Claude, [ADR-010](decisions/ADR-010-claude-for-chat-answers.md)):** Claude writes from the retrieved passages, with quotes as the fallback; switched on by adding `ANTHROPIC_API_KEY` to `.env`. Cost and speed to be measured with the real key |
 | 8 | Bemba and Nyanja content after human verification | reviewer sign-off recorded | Waiting for translators and reviewers |
 | 9 | Measure the ≤ 2 s answer target (FR-07) and report honestly | results in `docs/scalability.md` | **Done:** P95 43 ms with 100 users, in [performance.md](performance.md) |
 

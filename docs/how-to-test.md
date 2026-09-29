@@ -381,6 +381,15 @@ First, restart everything so the new chat is loaded: close the server windows an
   → *No reviewed information*, and a suggestion to ask your clinician.
 - [ ] **As the clinician**, tap **Ask the assistant**, then **What does PI-RADS 4 mean?**
   → The five PI-RADS categories, with the Turkbey 2019 article as the source.
+- [ ] **Chatting.** Type **Hello**.
+  → A friendly greeting that says what it can help with. Then ask **What happens during a DRE?**, then just **Does it hurt?**
+  → The second answer understands you still mean the DRE.
+- [ ] **Answers written by Claude (optional, costs money).**
+  1. Create an API key at console.anthropic.com.
+  2. Open the `.env` file in the project folder and put it after `ANTHROPIC_API_KEY=`. Never paste it into a chat, e-mail or the code.
+  3. Restart everything with `dev-up.ps1`.
+  → Answers now read more naturally and carry the label *Written by AI (Claude) from the sources below*, still with their sources.
+  → If Claude is slow or not reachable, the assistant quotes the sources instead.
 - [ ] Turn off Wi-Fi.
   → The send button is greyed out, and a line says the assistant needs the internet.
 - [ ] Tap **⋮** → **Delete conversation** → **Delete**.
