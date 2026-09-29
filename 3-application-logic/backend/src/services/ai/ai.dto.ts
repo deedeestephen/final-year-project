@@ -125,6 +125,40 @@ export class AiModelView {
   evaluationAvailable!: boolean;
 }
 
+export class FairnessGroupView {
+  @ApiProperty({ example: 'rural' }) name!: string;
+  @ApiPropertyOptional({ nullable: true, type: Number }) auc!: number | null;
+  @ApiPropertyOptional({ nullable: true, type: Number }) cases!: number | null;
+  @ApiProperty({
+    description: 'False when the group has too few test cases or figures',
+  })
+  compared!: boolean;
+  @ApiPropertyOptional({ nullable: true, type: String }) reason!: string | null;
+}
+
+export class FairnessDimensionView {
+  @ApiProperty({ example: 'region' }) name!: string;
+  @ApiProperty({ type: [FairnessGroupView] }) groups!: FairnessGroupView[];
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Highest minus lowest AUC of the compared groups',
+  })
+  aucGap!: number | null;
+  @ApiProperty({ description: 'AUC gap above the threshold (0.05)' })
+  flagged!: boolean;
+  @ApiPropertyOptional({ nullable: true, type: String }) note!: string | null;
+}
+
+/** Proposal §3.7: disaggregated AUC, gap above 0.05 flagged. */
+export class FairnessView {
+  @ApiProperty({ example: 0.05 }) threshold!: number;
+  @ApiProperty({ example: 30 }) minCases!: number;
+  @ApiProperty({ type: [FairnessDimensionView] })
+  dimensions!: FairnessDimensionView[];
+  @ApiProperty() flagged!: boolean;
+}
+
 export class EvaluationView {
   @ApiProperty({ format: 'uuid' }) modelId!: string;
   @ApiProperty({
@@ -145,4 +179,11 @@ export class EvaluationView {
       'The stored evaluation (metrics, including per-group fairness figures)',
   })
   evaluation!: Record<string, unknown> | null;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: FairnessView,
+    description:
+      'Computed from the stored per-group figures only; null without them',
+  })
+  fairness!: FairnessView | null;
 }

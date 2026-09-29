@@ -700,6 +700,7 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
         available: false,
         message: 'Evaluation data not yet available.',
         evaluation: null,
+        fairness: null,
       });
 
       // A stored run (test data, clearly not a real result) is returned as is.
@@ -720,6 +721,38 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
         available: true,
         message: null,
         evaluation: { source: 'integration test fixture' },
+        // No per-group figures stored, so no fairness comparison.
+        fairness: null,
+      });
+
+      // Per-group figures (test data) are compared: a gap above 0.05 is flagged.
+      const grouped = await prisma.aiModel.create({
+        data: {
+          name: `test_model_${randomUUID().slice(0, 6)}`,
+          architecture: 'ANN',
+          version: 'test-2',
+          provenance: 'RESEARCH_MODEL',
+          evaluation: {
+            source: 'integration test fixture',
+            byGroup: {
+              region: {
+                urban: { auc: 0.9, cases: 100 },
+                rural: { auc: 0.8, cases: 100 },
+              },
+            },
+          },
+        },
+      });
+      const fairness = await http()
+        .get(`/api/v1/ai/models/${grouped.id}/evaluation`)
+        .set(as(clinician))
+        .expect(200);
+      expect(fairness.body).toMatchObject({
+        fairness: {
+          threshold: 0.05,
+          flagged: true,
+          dimensions: [{ name: 'region', aucGap: 0.1, flagged: true }],
+        },
       });
       await http()
         .get(`/api/v1/ai/models/${randomUUID()}/evaluation`)

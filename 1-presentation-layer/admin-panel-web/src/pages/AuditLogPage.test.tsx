@@ -117,4 +117,38 @@ describe('audit log page', () => {
       'Broken at entry 77: row content does not match row_hash',
     );
   });
+
+  it('filters by dates and pages through long results', async () => {
+    const { calls } = renderAt({
+      'GET /admin/audit-logs': (c) =>
+        json(200, {
+          items: [entry({ seq: c.path.includes('page=2') ? '2' : '1' })],
+          page: c.path.includes('page=2') ? 2 : 1,
+          pageSize: 50,
+          total: 120,
+        }),
+    });
+    const user = userEvent.setup();
+    const next = await screen.findByRole('button', { name: 'Next' });
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    expect(screen.getByText(/Page/)).toHaveTextContent('Page 1 of 3');
+    await user.click(next);
+    await vi.waitFor(() =>
+      expect(calls.some((c) => c.path.includes('page=2'))).toBe(true),
+    );
+    await user.click(screen.getByRole('button', { name: 'Previous' }));
+
+    await user.type(screen.getByLabelText('From'), '2026-09-01');
+    await user.type(screen.getByLabelText('Until'), '2026-09-28');
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    await vi.waitFor(() =>
+      expect(
+        calls.some(
+          (c) =>
+            c.path.includes('from=2026-09-01') &&
+            c.path.includes('to=2026-09-28'),
+        ),
+      ).toBe(true),
+    );
+  });
 });

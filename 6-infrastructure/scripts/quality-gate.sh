@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quality gate: format -> lint -> type-check -> tests -> build -> audits, for every package.
-# Usage: scripts/quality-gate.sh [backend|db|workflows|ai|mobile|admin-web|fhir|tls|secrets|all]   (default: all)
+# Usage: scripts/quality-gate.sh [backend|db|workflows|ai|mobile|admin-web|fhir|tls|docs|secrets|all]   (default: all)
 # The db target needs the docker-compose services running; set SKIP_DB=1 to leave it out of "all".
 set -euo pipefail
 
@@ -59,6 +59,12 @@ workflows() {
   run "six workflows and the log review" npx jest --config test/jest-workflows.json --runInBand
 }
 
+docs() {
+  step "docs"
+  cd "$ROOT"
+  run "docs link check (relative links resolve)" python 6-infrastructure/scripts/link-check.py
+}
+
 ai() {
   step "ai-services"
   cd "$AI"
@@ -75,6 +81,7 @@ mobile() {
   run "mobile format" dart format --output=none --set-exit-if-changed lib test
   run "mobile analyze" flutter analyze
   run "mobile tests" flutter test --coverage
+  run "mobile line coverage >= 80%" py "$ROOT/6-infrastructure/scripts/lcov-check.py" coverage/lcov.info 80
   if [ "${SKIP_APK:-0}" != "1" ]; then run "mobile build apk" flutter build apk --debug; fi
   # Known vulnerabilities in the Dart/Flutter packages (OSV); skipped when offline.
   local status=0
@@ -90,7 +97,7 @@ admin_web() {
   run "admin-web format" npm run -s format:check
   run "admin-web lint" npx oxlint --deny-warnings src
   run "admin-web typecheck" npm run -s typecheck
-  run "admin-web tests" npm run -s test
+  run "admin-web tests (coverage >= 80%)" npm run -s test:cov
   run "admin-web build" npm run -s build
   run "admin-web npm audit" npm audit --audit-level=high --omit=dev
 }
@@ -141,13 +148,14 @@ case "$TARGET" in
   backend) backend ;;
   db) db ;;
   workflows) workflows ;;
+  docs) docs ;;
   ai) ai ;;
   mobile) mobile ;;
   admin-web) admin_web ;;
   secrets) secrets ;;
   fhir) fhir ;;
   tls) tls ;;
-  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; workflows; fi; ai; mobile; admin_web; fhir; tls; secrets ;;
+  all) backend; if [ "${SKIP_DB:-0}" != "1" ]; then db; workflows; fi; ai; mobile; admin_web; fhir; tls; docs; secrets ;;
   *) echo "unknown target $TARGET"; exit 2 ;;
 esac
 

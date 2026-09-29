@@ -57,7 +57,7 @@ fixtures and screenshots.
 ## Quality gate (run at the end of every phase)
 
 `6-infrastructure/scripts/quality-gate.ps1` / `6-infrastructure/scripts/quality-gate.sh` run format → lint → type-check → unit → integration → build for each
-package, the end-to-end workflows against the live system, plus `npm audit --audit-level=high`, `pip-audit`, a secret scan (gitleaks, full history), the HL7 FHIR
+package with at least 80% coverage per package (NFR-07), the end-to-end workflows against the live system, a docs link check, plus `npm audit --audit-level=high`, `pip-audit`, a secret scan (gitleaks, full history), the HL7 FHIR
 validator on a sample export, the access-matrix review rules, the TLS 1.3 check of the reverse proxy (nginx in Docker)
 and an OSV check of the Dart/Flutter packages. gitleaks and the validator are kept outside the repository in `D:\Final Year Project\tools`
 (checksums verified); the gate skips them if they are missing. CI (GitHub Actions) runs the same

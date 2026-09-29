@@ -89,6 +89,10 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
 
 ## Accessibility (NFR-11)
 
+- `test/app/accessibility_test.dart` (Phase 18) runs Flutter's accessibility guidelines on six main screens: sign-in, the clinician, pathologist and patient homes, the patient list and Settings.
+  - It checks tap targets of at least 48 dp, labels on everything tappable, and the text contrast of the rendered screen, in light and dark mode.
+  - It also lays each screen out at 200% text size (the WCAG "resize text" rule), which found and fixed an overflow in the sign-in header.
+
 - Every text/background pair in `tokens.dart` is tested at a WCAG AA contrast of 4.5:1 or more.
 - Body text is 15 px or larger, touch targets are 48 dp or larger, and inputs are 52 px tall.
 - Severity and sync states are always written in words, never shown by colour alone.

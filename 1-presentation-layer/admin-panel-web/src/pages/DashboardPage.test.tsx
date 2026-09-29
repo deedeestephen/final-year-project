@@ -226,3 +226,41 @@ describe('chart helpers', () => {
     expect(shortDate('2026-01-01')).toBe('1 Jan');
   });
 });
+
+describe('session edges', () => {
+  it('signs out locally even when the server refuses the sign-out', async () => {
+    renderAt({
+      'GET /admin/activity': () => json(200, sampleActivity),
+      'POST /auth/logout': () => apiError(401, 'UNAUTHENTICATED'),
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }));
+    expect(
+      await screen.findByRole('button', { name: 'Sign in' }),
+    ).toBeVisible();
+  });
+
+  it('says so when the server cannot be reached at start', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    );
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <SessionProvider>
+          <MemoryRouter initialEntries={['/']}>
+            <App />
+          </MemoryRouter>
+        </SessionProvider>
+      </QueryClientProvider>,
+    );
+    expect(
+      await screen.findByText(
+        'Cannot reach the server. Check your connection.',
+      ),
+    ).toBeVisible();
+  });
+});

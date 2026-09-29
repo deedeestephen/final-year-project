@@ -153,10 +153,14 @@ class _AuthHeader extends StatelessWidget {
                             children: [
                               const AppMark(),
                               const SizedBox(width: AppSizes.md - 4),
-                              Text(
-                                'PCa mHealth',
-                                style: text.titleLarge?.copyWith(
-                                  color: p.onPrimary,
+                              // Flexible: wraps instead of overflowing with
+                              // very large text (WCAG resize text).
+                              Flexible(
+                                child: Text(
+                                  'PCa mHealth',
+                                  style: text.titleLarge?.copyWith(
+                                    color: p.onPrimary,
+                                  ),
                                 ),
                               ),
                             ],

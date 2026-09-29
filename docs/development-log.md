@@ -914,3 +914,39 @@ The device run signs out whoever was signed in on the emulator.
 - **After freeing memory:** once the daemons from that build were stopped (`gradlew --stop`), the same database suite passed (449 tests).
 - **How sure:** memory pressure is the most likely cause, not a proven one.
 - **Practical rule:** stop the Gradle daemons (or close the emulator) before the big test runs on this laptop.
+
+## 2026-09-29: Phase 18: Final quality audit
+
+**Objective:** audit everything against the proposal and the plan, close the gaps that can be closed without outside input, and leave an honest record of what is still open.
+
+**Checked and fixed:**
+- **Traceability:** every row was reread. These now point to their tests and phases:
+  - FR-02, FR-04, FR-05, FR-10, NFR-07 and NFR-11
+  - the ethics rows: data minimisation, no fabricated results, and fairness
+  - the two Phase 3 rows (JWT and RBAC, TLS 1.3), which still said "Planned"
+- **Fairness monitoring (proposal §3.7, FR-11):** `src/services/ai/fairness.ts`.
+  - It compares the AUC of the stored per-group figures (age < 50 / 50–64 / ≥ 65, region, disease stage, equipment) and flags a gap above 0.05.
+  - Groups with fewer than 30 test cases, or missing figures, are listed with the reason instead of being compared.
+  - The result is returned by `GET /ai/models/{id}/evaluation` as `fairness`. It is computed only from stored runs, so today it is null.
+  - A floating-point trap was caught by a test: 0.90 − 0.85 is 0.05000000000000004 in JavaScript. The gap is rounded to the 3 decimals shown before comparing.
+  - The model guide's age groups now follow the proposal.
+- **Coverage (NFR-07):** every package now has an 80% minimum that fails the gate.
+  - The admin website was below it (78.6% statements, 73.4% branches). 11 new tests bring it to 87.7% / 80.4% / 83.0% / 89.3%:
+    - the user detail page (roles, facility, status, unlock, one-time password, own-account locks)
+    - adding a staff user with every validation message
+    - audit-log paging and dates
+    - sign-out when the server refuses, and an unreachable server at start
+  - The phone app is 91.3% of lines, checked by `lcov-check.py`.
+  - The backend is 94.4% statements / 80.6% branches (454 tests); the AI service is 99%.
+- **Accessibility (NFR-11):** `accessibility_test.dart` (18 tests).
+  - Flutter's tap-target, label and contrast guidelines pass on six main screens in both modes.
+  - The 200% text check found a real overflow: "PCa mHealth" next to the app mark in the sign-in header needed 396 px of 307. It now wraps.
+- **Docs:**
+  - The README is rewritten, with links to every document and a status table for all phases.
+  - `6-infrastructure/scripts/link-check.py` checks all relative links (100, all resolve). It runs in the gate (`docs`) and in CI.
+
+**Still open (needs outside input, recorded in the README):**
+- Phase 13, the chatbot.
+- Trained models, with their evaluations and fairness figures.
+- A user acceptance test (SUS, screen-reader users).
+- Paid delivery services, and the deployment items R-1 to R-8.

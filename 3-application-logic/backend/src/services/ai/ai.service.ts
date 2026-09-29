@@ -1,3 +1,4 @@
+import { fairnessFrom } from './fairness';
 import {
   ConflictException,
   Inject,
@@ -567,6 +568,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         available: false,
         message: 'Evaluation data not yet available.',
         evaluation: null,
+        fairness: null,
       };
     }
     return {
@@ -574,6 +576,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
       available: true,
       message: null,
       evaluation: model.evaluation as Record<string, unknown>,
+      fairness: fairnessFrom(model.evaluation),
     };
   }
 

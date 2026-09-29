@@ -4920,6 +4920,96 @@
           "evaluationAvailable"
         ]
       },
+      "FairnessGroupView": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "rural"
+          },
+          "auc": {
+            "type": "number",
+            "nullable": true
+          },
+          "cases": {
+            "type": "number",
+            "nullable": true
+          },
+          "compared": {
+            "type": "boolean",
+            "description": "False when the group has too few test cases or figures"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "compared"
+        ]
+      },
+      "FairnessDimensionView": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "region"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FairnessGroupView"
+            }
+          },
+          "aucGap": {
+            "type": "number",
+            "nullable": true,
+            "description": "Highest minus lowest AUC of the compared groups"
+          },
+          "flagged": {
+            "type": "boolean",
+            "description": "AUC gap above the threshold (0.05)"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "groups",
+          "flagged"
+        ]
+      },
+      "FairnessView": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "number",
+            "example": 0.05
+          },
+          "minCases": {
+            "type": "number",
+            "example": 30
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FairnessDimensionView"
+            }
+          },
+          "flagged": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "threshold",
+          "minCases",
+          "dimensions",
+          "flagged"
+        ]
+      },
       "EvaluationView": {
         "type": "object",
         "properties": {
@@ -4941,6 +5031,16 @@
             "nullable": true,
             "additionalProperties": true,
             "description": "The stored evaluation (metrics, including per-group fairness figures)"
+          },
+          "fairness": {
+            "nullable": true,
+            "description": "Computed from the stored per-group figures only; null without them",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FairnessView"
+              }
+            ]
           }
         },
         "required": [

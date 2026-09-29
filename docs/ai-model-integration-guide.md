@@ -44,14 +44,21 @@ The app says **"Evaluation data not yet available."** until a stored evaluation 
   "testSet": { "name": "…", "cases": 0, "positives": 0, "source": "…", "date": "2026-…" },
   "overall": { "auc": 0.0, "auc95ci": [0.0, 0.0], "sensitivity": 0.0, "specificity": 0.0, "threshold": 0.5 },
   "byGroup": {
-    "age": { "<60": { "auc": 0.0, "cases": 0 }, "60-69": {}, "70+": {} },
-    "region": { "urban": {}, "rural": {} },
-    "stage": { "…": {} }
+    "age": { "<50": { "auc": 0.0, "cases": 0 }, "50-64": {}, ">=65": {} },
+    "region": { "urban": {}, "peri-urban": {}, "rural": {} },
+    "stage": { "…": {} },
+    "equipment": { "…": {} }
   },
   "notes": "calibration, known failure cases"
 }
 ```
-The `byGroup` figures feed the fairness endpoint (FR-11). If a group has very few cases, say so rather than reporting a number.
+The groups follow the proposal (§3.7): age < 50, 50–64 and ≥ 65; urban, peri-urban and rural; disease stage; imaging equipment.
+
+The `byGroup` figures feed the fairness check (FR-11) in `GET /api/v1/ai/models/{id}/evaluation` (`src/services/ai/fairness.ts`):
+- For each dimension it compares the AUC of the groups and **flags a gap above 0.05**, the proposal's threshold for remediation.
+- A group with fewer than **30 test cases**, or with a missing AUC or case count, is listed with the reason and left out of the comparison. So always store `cases`, and if a group has very few cases, store the count rather than leaving the group out.
+
+**When the first real evaluation is stored:** the app's AI report still shows a fixed "Evaluation data not yet available." line. It should then fetch each model's evaluation and show the figures and any fairness flag. This is part of switching off the mocks.
 
 ## 4. How it plugs in (developer steps)
 1. Add the model folder under `ai-services/models/<module>/<version>/`. Large weights stay out of git (use git LFS or a download step). A model file is never committed with patient data inside.
