@@ -1202,3 +1202,22 @@ A PDF version (48 pages) is in `docs/report/`.
 - admin website: 81.
 
 The docs link check passes (198 links).
+
+## 2026-09-30 (afternoon): First start after a restart, and the checks left open
+
+The laptop had been restarted, so the backend, the AI service and the admin website were stopped and Docker Desktop was not running. That made it the first real test of `dev-up.ps1` from a cold start since the databases moved.
+
+**Found and fixed:**
+- **`dev-up.ps1` could not start when Docker Desktop was not running.** The script asks Docker whether it is up with `docker info`. When Docker is down, that command writes an error message, and with `$ErrorActionPreference = 'Stop'` Windows PowerShell turned the message into a fatal error. The script ended before it reached its own "Starting Docker Desktop" step. It had gone unnoticed because Docker was always running already. The check now runs through `cmd` and only looks at the exit code (`DockerReady`).
+
+**Checked after the fix:**
+- **Cold start:** `dev-up.ps1` started Docker Desktop itself, then Redis, MinIO and Qdrant (the Docker PostgreSQL and MongoDB stayed off, as intended), applied the migrations, built the backend, and started the three windows. It ended with READY, and all three health checks answered.
+- **The chatbot through the real server** (a throwaway synthetic patient, over the API):
+  - The casual messages got their replies: hello, how are you, "I'm fine, and you?", "I'm scared about the test", the name, a Nyanja greeting and a thumbs-up. Two jokes in a row were different.
+  - A real question was answered from the knowledge base with two sources.
+  - "Hello, is my PSA bad?" was declined, and "I cannot pass urine at all" got the urgent-care text.
+  - The conversation appeared in the past-chats list and reopened with all 26 messages.
+- **The owner's phone** (Samsung SM-G965U, Android 10, by USB): `phone-usb.ps1`, then `flutter run` with `API_BASE_URL=http://localhost:3000` built and installed the app. From the phone, `curl http://localhost:3000/api/v1/health` answered 200. The phone was locked, so nothing was tapped on it.
+- **The web page of the manual:** the Copy button no longer covers the command at phone width.
+
+**Still to be done by a person:** speaking to the assistant on the phone, to confirm that real speech becomes text.

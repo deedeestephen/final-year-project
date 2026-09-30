@@ -47,15 +47,21 @@ $docker = 'docker'
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   $docker = 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
 }
-& $docker info *> $null
-if ($LASTEXITCODE -ne 0) {
+# Is the Docker engine answering? When it is not, docker.exe writes an error
+# message; with $ErrorActionPreference = 'Stop' Windows PowerShell would turn
+# that message into a fatal error and end the script, so the check runs
+# through cmd, which only hands back the exit code.
+function DockerReady {
+  cmd /c "`"$docker`" info >nul 2>&1"
+  return $LASTEXITCODE -eq 0
+}
+if (-not (DockerReady)) {
   Say 'Starting Docker Desktop (this can take a minute)...'
   Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'
   $ready = $false
   for ($i = 0; $i -lt 60; $i++) {
     Start-Sleep -Seconds 3
-    & $docker info *> $null
-    if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+    if (DockerReady) { $ready = $true; break }
   }
   if (-not $ready) { Fail 'Docker Desktop did not start. Open it by hand, wait for "Engine running", then run this again.' }
 }
