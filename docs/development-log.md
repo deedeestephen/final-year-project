@@ -1221,3 +1221,17 @@ The laptop had been restarted, so the backend, the AI service and the admin webs
 - **The web page of the manual:** the Copy button no longer covers the command at phone width.
 
 **Still to be done by a person:** speaking to the assistant on the phone, to confirm that real speech becomes text.
+
+**Later the same afternoon, on the Galaxy S9+ emulator** (started with `flutter emulators --launch Galaxy_S9_Plus_API_29`, as the manual says; the synthetic patient's session had survived the move to the installed databases):
+
+- **Chat features through the real server, by tapping the screens:**
+  - Typing "How are you?" and sending it showed the friendly reply.
+  - After leaving the chat, it was listed under *Continue a chat* ("How are you? · 14:19 · 1 question") and reopened with its messages.
+  - **Listen** played speech (Android reported a speech track playing) and **Stop reading** ended it.
+  - **New chat** gave the empty welcome screen.
+  - **Past chats** listed four chats with their times and question counts, and opening the 13-question one loaded all of it.
+- **Voice, not confirmed.**
+  - Each tap on the microphone started Google's speech service, which opened the microphone (Windows also recorded the emulator using the laptop's microphone).
+  - The test question was played through the laptop's own speakers with Windows text-to-speech, at 15% and then at 60% volume. The service recognised nothing, and the app said "I did not hear anything", as it should when nothing is recognised.
+  - Why the speaker sound was not recognised is not known. Laptop microphone arrays often filter out the laptop's own speaker sound.
+  - So the path up to the recogniser works on the emulator, but **speech becoming text still has to be confirmed by a person speaking**, on the emulator or on the phone.
