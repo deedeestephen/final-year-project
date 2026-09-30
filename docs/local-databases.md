@@ -6,9 +6,10 @@ Since 2026-09-29 (owner request), the project keeps its data in the database ser
 |---|---|---|---|---|
 | Accounts, patients, screenings, consents, AI jobs, audit log (20 tables) | PostgreSQL 18 (Windows service `postgresql-x64-18`) | 5432 | `pca_mhealth` | `pca` |
 | AI reports, AI logs, scan details, chats (4 collections) | MongoDB 8.3 (Windows service `MongoDB`) | 27017 | `pca_mhealth` | `pca` |
-| Uploaded scan and slide files | MinIO in Docker | 9000 (console 9001) | bucket `pca-mhealth` | from `.env` |
+| Uploaded scan and slide files | A folder on this PC: `3-application-logic/backend/var/objects` (`STORAGE_DRIVER=local` in `.env`) | | | |
+| The same files when `STORAGE_DRIVER=s3` (also used by the database tests) | MinIO in Docker | 9000 (console 9001) | bucket `pca-mhealth` | from `.env` |
 | Rate limits shared between API copies | Redis in Docker | 6379 | 0 | from `.env` |
-| Vector search (planned) | Qdrant in Docker | 6333 | | none |
+| Vector search (planned; not used while `VECTOR_STORE=memory`) | Qdrant in Docker | 6333 | | none |
 
 All passwords are in the project's `.env` file, which is never committed:
 - `POSTGRES_PASSWORD` and `MONGO_PASSWORD` are for the `pca` logins.
@@ -123,7 +124,7 @@ Restore it into an empty `pca_mhealth` with `pg_restore` as in step 2. pgAdmin c
 - Without them, `tools/copy-mongo.ts` can copy the database to another server or database name.
 - Compass can also export a collection to JSON or CSV (**Export Data**).
 
-**Files:** the uploaded scans stay in MinIO's Docker volume `pca-mhealth_miniodata`.
+**Files:** the uploaded scans and slides are in the folder `3-application-logic/backend/var/objects`. Copy that folder to back them up. (With `STORAGE_DRIVER=s3` they would be in MinIO's Docker volume `pca-mhealth_miniodata` instead.)
 
 ## Switching back to the Docker databases
 

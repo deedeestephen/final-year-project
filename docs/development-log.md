@@ -1167,3 +1167,38 @@ Recorded in [ADR-011](decisions/ADR-011-awareness-blue-and-modern-icons.md) and 
 - Backend: 89 chatbot unit tests (40 casual phrases; real questions still go to the knowledge base; safety first; varied jokes and greetings) and 11 chatbot database tests.
 - App: 6 new past-chat tests; 280 app tests in all.
 - The renders of the history sheet, the empty chat with *Continue a chat*, and a casual conversation were checked by eye.
+
+## 2026-09-30: The operations manual (owner request)
+
+**Request:** "a full email that explain how the backend the databases where made and how to operate them without using claude including docker as well as the chatbot and the mobile app in full detail give a full report including screenshot of codes and all".
+
+**Written:** [operations-manual.md](operations-manual.md), in 16 sections:
+- the system on one page, and what is installed on this PC;
+- starting and stopping, by script and by hand, and setting up a new PC;
+- the `.env` settings;
+- the backend, the databases and Docker;
+- the AI service, and the chatbot from end to end;
+- the phone app and the admin website;
+- tests and the quality gate, Git, and troubleshooting;
+- what is still needed before real patients, and where to read more.
+
+A PDF version (48 pages) is in `docs/report/`.
+
+**Screenshots** (in `docs/report/img/`, 43 images, 2.3 MB):
+- **Code:** 25 excerpts, cut from the files on disk at commit `3fae63c` with their file names and line numbers. They were highlighted with Pygments and photographed with headless Chrome.
+- **Terminal:** 5 captures of real command output: the table list, `docker compose ps`, the health checks, `prisma migrate status` and the backend gate.
+- **Phone app:** 10 screens (renders with synthetic data, and two from the emulator).
+- **Admin website:** 3 screens, with synthetic API answers.
+
+**Found while checking the facts:**
+- **Uploaded files are not in MinIO on this PC.** `STORAGE_DRIVER=local` puts them in `backend/var/objects`. `local-databases.md` said MinIO; it is corrected. Qdrant is not used either (`VECTOR_STORE=memory`).
+- **Docker printed part of a password.** Compose reads `$name` inside `.env` values as a variable, so it warned about the owner's chosen password and showed most of it. Values that contain `$` are now in single quotes. Node, Prisma and the seed read them unchanged; this was verified against the stored hash. The manual says so.
+- **Claude is off** on this PC (`chat_writer: quotes`, no API key). The manual explains how to switch it on.
+
+**Test counts on this day:**
+- backend: 307 unit, 20 end-to-end and 230 database tests;
+- AI service: 65, and 1 skipped (the live Claude call);
+- phone app: 280;
+- admin website: 81.
+
+The docs link check passes (198 links).

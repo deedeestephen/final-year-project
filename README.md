@@ -3,6 +3,7 @@
 Final-year research prototype (ZCAS University, CCS4801). **Not a medical device. No output of this system is a clinical
 diagnosis.** Any AI output labelled `MOCK` is development data. All data in this repository is **synthetic**.
 
+- **Run it yourself:** [docs/operations-manual.md](docs/operations-manual.md) explains how every part was built and how to start, check, change and repair it, with screenshots of the code ([PDF](docs/report/PCa-mHealth-operations-manual.pdf)).
 - **Try it:** [docs/how-to-test.md](docs/how-to-test.md) has plain step-by-step checks for every phase.
 - **Design:** [architecture](docs/architecture.md) · [decisions (ADRs)](docs/decisions/) · [development plan](docs/development-plan.md) · [development log](docs/development-log.md)
 - **Requirements:** [requirements traceability](docs/requirements-traceability.md) (every requirement, use case and ethics item, with its test and status)
