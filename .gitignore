@@ -23,3 +23,5 @@ var/
 local.properties
 .claude/settings.local.json
 coverage-db/
+# MedCPT models for the chat's meaning search (about 880 MB; ADR-013).
+4-ai-intelligence-layer/ai-services/models/

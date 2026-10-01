@@ -464,6 +464,21 @@ describe('performance on the live system (Phase 17)', () => {
         'Why does the AI report say mock data?',
         'What does a PSA test measure?',
       ];
+      // How the AI service finds passages (ADR-013). Its meaning search loads
+      // in the background: wait for it, so one run measures one mode only.
+      const aiHealth = async () =>
+        (await (await fetch(`${stack.aiUrl}/v1/health`)).json()) as {
+          chat_retrieval?: string;
+          chat_meaning_busy?: number;
+        };
+      let retrieval = '';
+      for (let tries = 0; tries < 120; tries++) {
+        retrieval = (await aiHealth()).chat_retrieval ?? 'keywords';
+        if (!retrieval.includes('loading')) break;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      const busyBefore = (await aiHealth()).chat_meaning_busy ?? 0;
+      let asked = 0;
       // Each asks about every 5 s: far under the 30-an-hour chat limit
       // over this short window.
       const { samples, windowMs } = await runVirtualUsers({
@@ -473,17 +488,31 @@ describe('performance on the live system (Phase 17)', () => {
         thinkMs: [2_000, 8_000],
         nextStep: (i) => ({
           name: 'POST /chat/conversations/:id/messages',
-          run: () =>
-            timed(url(`/chat/conversations/${conversations[i]}/messages`), {
-              method: 'POST',
-              headers: auth(askers[i]),
-              body: JSON.stringify({
-                text: questions[Math.floor(Math.random() * questions.length)],
-              }),
-            }),
+          run: () => {
+            asked++;
+            return timed(
+              url(`/chat/conversations/${conversations[i]}/messages`),
+              {
+                method: 'POST',
+                headers: auth(askers[i]),
+                body: JSON.stringify({
+                  text: questions[Math.floor(Math.random() * questions.length)],
+                }),
+              },
+            );
+          },
         }),
       });
-      results.chat = summarise(samples, windowMs, askers.length);
+      results.chat = {
+        ...summarise(samples, windowMs, askers.length),
+        retrieval,
+        // Of all questions asked (the ramp-up too), those the AI service
+        // answered with keywords only because every slot of its meaning
+        // search was taken.
+        asked,
+        keywordsOnlyBusy:
+          ((await aiHealth()).chat_meaning_busy ?? 0) - busyBefore,
+      };
       expect(samples.filter((x) => x.status !== 200)).toEqual([]);
     },
   );

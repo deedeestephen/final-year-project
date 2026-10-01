@@ -1,9 +1,16 @@
+import logging
+import os
+import threading
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, status
 
 from app.auth import require_service_token
+from app.chat import embeddings
 from app.chat.answer import (
     ChatAnswerRequest,
     ChatAnswerResult,
@@ -12,11 +19,51 @@ from app.chat.answer import (
 )
 from app.chat.generate import ClaudeWriter
 from app.chat.kb import KnowledgeBase, KnowledgeBaseError, default_knowledge_base
+from app.chat.meaning import MeaningIndex, MeaningLoader
 from app.config import Settings, get_settings
 from app.contract import InferenceRequest, InferenceResult, ModelInfo
 from app.router import InsufficientInputsError, ModelRouter, default_router
 
 SERVICE_NAME = "pca-mhealth-ai-services"
+log = logging.getLogger("uvicorn.error")
+
+#: The meaning search's index, built in the background (ADR-013).
+meaning_loader = MeaningLoader()
+
+
+def start_meaning_search(settings: Settings) -> threading.Thread | None:
+    """Starts building the meaning index, unless it is switched off or the
+    models are not downloaded (then the chat uses keywords only)."""
+    if settings.chat_retrieval == "keywords":
+        return None
+    base = Path(settings.chat_models_dir) if settings.chat_models_dir else embeddings.MODELS_DIR
+    if not embeddings.is_installed(base):
+        meaning_loader.state = "models not downloaded"
+        if settings.chat_retrieval == "meaning":
+            log.warning(
+                "Meaning search is off: the MedCPT models are not in %s. "
+                "Download them with: python -m app.chat.embeddings download",
+                base,
+            )
+        return None
+    slots = settings.chat_meaning_slots or max(1, (os.cpu_count() or 1) * 3 // 4)
+
+    def build(kb: KnowledgeBase) -> MeaningIndex:
+        index = MeaningIndex.build(
+            kb, base, slots=slots, wait_s=settings.chat_meaning_wait_ms / 1000
+        )
+        # The index file is built with every thread; questions then use one each.
+        embeddings.one_thread_per_question()
+        return index
+
+    return meaning_loader.start(default_knowledge_base, build)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    start_meaning_search(get_settings())
+    yield
+
 
 app = FastAPI(
     title="PCa mHealth AI Services",
@@ -25,6 +72,7 @@ app = FastAPI(
         "AI Intelligence Layer (L4). Research prototype. No output is a clinical diagnosis. "
         "Only the backend may call it (service token)."
     ),
+    lifespan=lifespan,
 )
 
 _router = default_router()
@@ -74,6 +122,22 @@ def get_writer(settings: Annotated[Settings, Depends(get_settings)]) -> ClaudeWr
 Writer = Annotated[ClaudeWriter | None, Depends(get_writer)]
 
 
+def get_meaning(kb: Knowledge) -> MeaningIndex | None:
+    """The meaning search when its index is ready for this knowledge base."""
+    return meaning_loader.get(kb.version)
+
+
+Meaning = Annotated[MeaningIndex | None, Depends(get_meaning)]
+
+
+def retrieval_mode() -> str:
+    if meaning_loader.state == "ready":
+        return "keywords+meaning (MedCPT)"
+    if meaning_loader.state == "off":
+        return "keywords"
+    return f"keywords (meaning search: {meaning_loader.state})"
+
+
 @app.get("/v1/health")
 def health(router: Router, writer: Writer) -> dict[str, object]:
     # Until trained and evaluated models are registered, report mock mode honestly.
@@ -85,6 +149,11 @@ def health(router: Router, writer: Writer) -> dict[str, object]:
         "clinical_models_loaded": real,
         # Who words chat answers: Claude (from the passages) or plain quotes.
         "chat_writer": f"claude:{writer.model}" if writer else "quotes",
+        # How passages are found: keywords, and their order by meaning (ADR-013).
+        "chat_retrieval": retrieval_mode(),
+        # Questions since start-up answered with keywords only because every
+        # slot of the meaning search was taken.
+        "chat_meaning_busy": meaning_loader.busy,
     }
 
 
@@ -108,12 +177,15 @@ def infer(request: InferenceRequest, router: Router) -> InferenceResult:
 
 
 @app.post("/v1/chat/answer", dependencies=[Depends(require_service_token)])
-def chat_answer(request: ChatAnswerRequest, kb: Knowledge, writer: Writer) -> ChatAnswerResult:
-    """Answers from the best-matching reviewed passages: written by Claude from
-    them when configured, else quoted (Phase 13). Safety checks, storage and
-    the disclaimer are the backend's job."""
+def chat_answer(
+    request: ChatAnswerRequest, kb: Knowledge, writer: Writer, meaning: Meaning
+) -> ChatAnswerResult:
+    """Answers from the best-matching reviewed passages, found by their words and
+    ordered by meaning when the meaning search is on (ADR-013): written by Claude
+    from them when configured, else quoted (Phase 13). Safety checks, storage
+    and the disclaimer are the backend's job."""
     try:
-        return answer(kb, request, writer)
+        return answer(kb, request, writer, meaning)
     except LanguageNotAvailableError as err:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

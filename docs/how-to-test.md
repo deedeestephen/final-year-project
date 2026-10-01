@@ -400,6 +400,21 @@ First, restart everything so the new chat is loaded: close the server windows an
   → The conversation is gone, from the server too.
 - [ ] **As the pathologist or administrator** there is no assistant tile.
 
+### The assistant understands meaning, not just words (ADR-013)
+
+- [ ] **Download the meaning-search models (once, about 880 MB).** Open PowerShell in `4-ai-intelligence-layer\ai-services` and type `.venv\Scripts\python -m app.chat.embeddings download`.
+  → Each file says *downloading*, then *Done. Restart the AI service…*. Running it again says *already here*.
+- [ ] Restart everything with `dev-up.ps1`, wait 10 seconds, and open http://127.0.0.1:8000/v1/health.
+  → `"chat_retrieval":"keywords+meaning (MedCPT)"`. Without the models it says `keywords (meaning search: models not downloaded)`, and the assistant still works, with keywords only.
+- [ ] **As the patient**, ask **Are African men more likely to get it?**
+  → The answer about who is at higher risk. With keywords only, it was the article about the gland.
+- [ ] Ask **What is the treatment for malaria?**, then **How much does a bus ticket to Ndola cost?**
+  → *No reviewed information* for both. With keywords only, both got a passage (screening, and the PSA test) because one word matched.
+- [ ] Ask **What happens during a DRE?**, then **Does it hurt?**
+  → The second answer is still about the DRE. Then ask **What is the treatment for malaria?**: *No reviewed information*, not another DRE passage.
+- [ ] **Measure it.** In the same PowerShell window: `.venv\Scripts\python -m app.chat.evaluate`.
+  → A table: keywords 18/18, 18/24 and 9/12; keywords + meaning 18/18, 20/24 and 11/12. Then the questions whose answer changed, follow-ups 6/7 → 7/7, and the meaning scores next to the floor (52.0).
+
 ### The blue look, the assistant bot, voice and read-aloud (ADR-011, ADR-012)
 
 - [ ] **Colours and icons.** Everything is blue now, with no green or flag colours; icons are soft and rounded; the selected tab's icon is filled. Try **Profile › Settings › Dark**: dark navy, still easy to read.

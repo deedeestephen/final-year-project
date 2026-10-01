@@ -124,7 +124,7 @@ footer { max-width: 78rem; margin-inline: auto; padding-inline: 1rem; padding-bl
   <h1>PCa mHealth: how it was built, and how to run it yourself</h1>
   <p>The backend, the databases, Docker, the AI service, the chatbot, the phone app and the admin website:
   how each was made, and how to start, check, change and repair it without an AI assistant.</p>
-  <div class="meta"><span>Made on 1 October 2026</span><span>Code pictures from commit dd1813e</span><span>Synthetic data only</span><span>Not a medical device</span></div>
+  <div class="meta"><span>Made on 1 October 2026</span><span>Code pictures from commit 9104c32 with uncommitted changes</span><span>Synthetic data only</span><span>Not a medical device</span></div>
 </header>
 <div class="rule"></div>
 
@@ -342,7 +342,7 @@ powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1
 </tr>
 <tr>
 <td>http://127.0.0.1:8000/v1/health</td>
-<td><code>"status":"ok"</code>, and <code>chat_writer</code> says <code>quotes</code> (or <code>claude:…</code> when Claude is switched on)</td>
+<td><code>"status":"ok"</code>; <code>chat_writer</code> says <code>quotes</code> (or <code>claude:…</code> when Claude is switched on); <code>chat_retrieval</code> says <code>keywords+meaning (MedCPT)</code> a few seconds after start-up (section 9.4)</td>
 </tr>
 <tr>
 <td>http://localhost:5173</td>
@@ -497,6 +497,11 @@ npm run dev     # then open http://localhost:5173
 <td>AI</td>
 <td><code>AI_SERVICE_URL</code>, <code>AI_SERVICE_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>CHAT_LLM_MODEL</code>, <code>CHAT_LLM_DAILY_LIMIT</code></td>
 <td>where the AI service is; the shared token; Claude is off while the key is empty</td>
+</tr>
+<tr>
+<td>Chatbot search</td>
+<td><code>CHAT_RETRIEVAL</code>, <code>CHAT_MODELS_DIR</code>, <code>CHAT_MEANING_SLOTS</code>, <code>CHAT_MEANING_WAIT_MS</code></td>
+<td><code>auto</code>: the meaning search is used when its models are downloaded (<code>keywords</code> switches it off); where the models are; how many questions it handles at once, and how long one waits before keywords alone answer (section 9.4)</td>
 </tr>
 <tr>
 <td>Demo</td>
@@ -852,7 +857,7 @@ docker compose -f $compose --env-file .env stop         # stop, keep the data
 <tbody>
 <tr>
 <td><code>GET /v1/health</code></td>
-<td>says it is up, that the models are <strong>development mocks</strong>, and whether Claude writes chat answers</td>
+<td>says it is up, that the models are <strong>development mocks</strong>, whether Claude writes chat answers, and how chat passages are found</td>
 </tr>
 <tr>
 <td><code>GET /v1/models</code></td>
@@ -894,6 +899,14 @@ docker compose -f $compose --env-file .env stop         # stop, keep the data
 <td>Lint and types</td>
 <td><code>.venv\Scripts\python -m ruff check .</code> and <code>.venv\Scripts\python -m mypy</code></td>
 </tr>
+<tr>
+<td>Download the meaning-search models (once, about 880 MB)</td>
+<td><code>.venv\Scripts\python -m app.chat.embeddings download</code></td>
+</tr>
+<tr>
+<td>Measure the assistant's search on the question sets</td>
+<td><code>.venv\Scripts\python -m app.chat.evaluate</code></td>
+</tr>
 </tbody>
 </table></div>
 <h2 id="9-the-chatbot-end-to-end">9. The chatbot, end to end</h2>
@@ -904,7 +917,7 @@ docker compose -f $compose --env-file .env stop         # stop, keep the data
 <li>The backend checks the permission (<code>chatbot:use</code>) and the limit (30 questions an hour per account).</li>
 <li><strong>Safety rules</strong> look at the question. An emergency, self-harm, a medicine dose, or a patient asking what their own results mean gets a fixed, careful reply. Nothing is looked up.</li>
 <li><strong>Small talk</strong> ("hello", "how are you", "tell me a joke") gets a friendly fixed reply.</li>
-<li>Otherwise the backend asks the AI service, which <strong>searches the reviewed knowledge base</strong> for the passages that match.</li>
+<li>Otherwise the backend asks the AI service, which <strong>searches the reviewed knowledge base</strong>: it finds the passages that share the question's key words, and puts them in order of meaning.</li>
 <li>If Claude is switched on, Claude writes a short answer <strong>from those passages only</strong>. If not, or if anything fails, the passages are quoted word for word.</li>
 <li>The backend checks the answer: it must have a source and must not contain a dose.</li>
 <li>Question and answer are stored in MongoDB. The audit log records that a question was asked, never its words.</li>
@@ -928,16 +941,32 @@ node node_modules\jest\bin\jest.js src/services/chatbot
 - <code>patient-learn.json</code>: the app's Learn articles, word for word;
 - <code>clinician-reference.json</code>: reference cards (PI-RADS, grade groups, PSA density, DRE findings, reading the AI report).</p>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="patient-learn.json" src="img/code-ai-knowledge-base.png" /></figure>
-<p>Every section of every article is one <strong>passage</strong> the assistant can use. The search is classic keyword matching (BM25): it needs no internet and no model, and every result can be explained by the words it shares with the question.</p>
+<p>Every section of every article is one <strong>passage</strong> the assistant can use. Passages are found in two steps (<a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-013-hybrid-retrieval-medcpt.md" target="_blank" rel="noopener">ADR-013</a>):</p>
+<ol>
+<li><strong>Keywords (BM25) decide whether the question is covered.</strong> A passage must share enough of the question's words (a score of 2.0 or more). This needs no model, and every match can be explained by the words it shares with the question.</li>
+<li><strong>Meaning (MedCPT) puts those passages in order.</strong> A biomedical model from the US National Library of Medicine turns the question and each passage into 768 numbers, and the passage closest in meaning comes first. If even the closest one is far from the question (a score under 52.0), the answer is "no reviewed information".
+   - "Are African men more likely to get it?" now gets the passage on who is at higher risk. The keywords alone preferred the one about the gland.
+   - "What is the treatment for malaria?" is refused. It only shares the word "treatment" with a screening passage.</li>
+</ol>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="retrieve.py" src="img/code-ai-retrieve.png" /></figure>
-<p><code>answer.py</code> then decides: no good match means "no reviewed information"; with Claude, Claude writes from the three best passages; otherwise the best passages are quoted.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="answer.py: _rank" src="img/code-ai-rank.png" /></figure>
+<p>The model runs inside the AI service, without the internet. It is a 12-layer BERT encoder written with numpy, so it needs no PyTorch:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="embeddings.py: _encode" src="img/code-ai-encoder.png" /></figure>
+<p><code>answer.py</code> then decides: no passage left means "no reviewed information"; with Claude, Claude writes from the three best passages; otherwise the best passages are quoted.</p>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="answer.py" src="img/code-ai-answer.png" /></figure>
+<p><strong>Setting up the meaning search (once).</strong> In <code>4-ai-intelligence-layer\ai-services</code>, run <code>.venv\Scripts\python -m app.chat.embeddings download</code>.
+- It fetches the two MedCPT encoders (about 880 MB) into <code>models\</code>. Git ignores that folder.
+- It refuses any file whose checksum differs from the pinned one.
+- Then restart the AI service. A few seconds later, the health check says <code>chat_retrieval: keywords+meaning (MedCPT)</code>.
+- Without the models, the assistant answers with keywords only, as it did before. <code>dev-up.ps1</code> reminds you to download them.</p>
+<p><strong>Under heavy load</strong> the meaning search handles 6 questions at a time on this laptop (<code>CHAT_MEANING_SLOTS</code>). A question that waits more than half a second for its turn (<code>CHAT_MEANING_WAIT_MS</code>) is answered with keywords only, so answers stay within 2 seconds. The health check counts those questions (<code>chat_meaning_busy</code>). With 100 clinicians asking at once, none needed it (<a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/performance.md" target="_blank" rel="noopener">performance.md</a>).</p>
 <p><strong>To change what the assistant knows:</strong></p>
 <ol>
 <li>Edit the JSON file. Keep each section short and complete in itself, and give every article a source.</li>
 <li>If you changed <code>patient-learn.json</code>, copy it over <code>1-presentation-layer/mobile-app/assets/education/en/articles.json</code>. A test fails if the two differ.</li>
-<li>Restart the AI service (it reads the files when it starts).</li>
+<li>Restart the AI service. It reads the files when it starts, and works out the new passages' meaning vectors in the background (about 12 seconds).</li>
 <li>Run its tests: <code>.venv\Scripts\python -m pytest -q</code>.</li>
+<li>Check the search on the question sets: <code>.venv\Scripts\python -m app.chat.evaluate</code>. It shows which questions changed their answer, and the meaning scores next to the 52.0 floor. Add new kinds of questions to <code>app/chat/eval_sets.py</code>.</li>
 </ol>
 <p>The content says <em>"Draft for review by a qualified clinician"</em> until a clinician signs it off. Record a sign-off by changing <code>reviewStatus</code> in the file and noting the reviewer and date in the development log.</p>
 <h3 id="95-claude-optional-costs-money">9.5 Claude (optional, costs money)</h3>
@@ -980,8 +1009,13 @@ node node_modules\jest\bin\jest.js src/services/chatbot
 <td><code>3-application-logic\backend</code></td>
 </tr>
 <tr>
-<td>Search quality and Claude with a stand-in</td>
+<td>Search quality (keywords and meaning), and Claude with a stand-in</td>
 <td><code>.venv\Scripts\python -m pytest -q</code></td>
+<td><code>4-ai-intelligence-layer\ai-services</code></td>
+</tr>
+<tr>
+<td>The search measured on the question sets</td>
+<td><code>.venv\Scripts\python -m app.chat.evaluate</code></td>
 <td><code>4-ai-intelligence-layer\ai-services</code></td>
 </tr>
 <tr>
@@ -1197,7 +1231,7 @@ powershell -ExecutionPolicy Bypass -File $gate all
 </code></pre></div></div>
 <p><code>quality-gate.ps1</code> runs the real script, <code>quality-gate.sh</code>, with the <code>bash</code> that comes with Git for Windows. In <strong>Git Bash</strong> you can run that directly: <code>bash 6-infrastructure/scripts/quality-gate.sh backend</code>. Do not type <code>bash …</code> in PowerShell: on this PC it starts Windows' WSL, not Git Bash.</p>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="The backend gate" src="img/term-gate.png" /></figure>
-<p><strong>Where things stood on 30 September 2026:</strong></p>
+<p><strong>Where things stood on 1 October 2026:</strong></p>
 <div class="scroll"><table>
 <thead>
 <tr>
@@ -1220,7 +1254,7 @@ powershell -ExecutionPolicy Bypass -File $gate all
 </tr>
 <tr>
 <td>AI service</td>
-<td>65, and 1 skipped (it would call the real Claude)</td>
+<td>96, and 1 skipped (it would call the real Claude); without the MedCPT models, 3 more are skipped</td>
 </tr>
 <tr>
 <td>Phone app</td>

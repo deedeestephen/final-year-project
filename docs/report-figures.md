@@ -98,7 +98,7 @@ Files: [PNG](report/figures/usecase-chatbot.png) · [SVG](report/figures/usecase
 
 #### Figure 3.8: Activity diagram: how the assistant answers a message
 
-Every decision from the request limit to the stored answer: urgent-care signs, medicines, a patient's own results, small talk, the knowledge-base search and the answer check.
+Every decision from the request limit to the stored answer: urgent-care signs, medicines, a patient's own results, small talk, the knowledge-base search (keywords, then meaning) and the answer check.
 
 ![Figure 3.8: How the assistant answers](report/figures/activity-chat-answer.png)
 
@@ -224,7 +224,7 @@ Files: [PNG](report/figures/class-app-offline.png) · [SVG](report/figures/class
 
 #### Figure 3.25: Class diagram: the assistant on the server
 
-The backend's chatbot module and the AI service's chat module (retrieval, knowledge base, optional Claude writer).
+The backend's chatbot module and the AI service's chat module (keyword retrieval, the MedCPT meaning search, knowledge base, optional Claude writer).
 
 ![Figure 3.25: Server classes for the assistant](report/figures/class-chat-server.png)
 
@@ -426,31 +426,39 @@ The code that meets each objective of the proposal. Every picture shows the real
 
 ![Figure 4.15](report/img/code-chat-answer-flow.png)
 
-#### Figure 4.16: Retrieval: BM25 search of the reviewed knowledge base
+#### Figure 4.16: Retrieval, step 1: BM25 keyword search of the reviewed knowledge base
 
 ![Figure 4.16](report/img/code-ai-retrieve.png)
 
-#### Figure 4.17: Writing the answer from the passages
+#### Figure 4.17: Retrieval, step 2: the keywords decide, MedCPT orders by meaning (ADR-013)
 
-![Figure 4.17](report/img/code-ai-answer.png)
+![Figure 4.17](report/img/code-ai-rank.png)
 
-#### Figure 4.18: The app's chat controller
+#### Figure 4.18: The MedCPT encoder (PubMedBERT, 12 layers) written with numpy
 
-![Figure 4.18](report/img/code-app-chat-controller.png)
+![Figure 4.18](report/img/code-ai-encoder.png)
 
-#### Figure 4.19: Voice input with the phone's speech service
+#### Figure 4.19: Writing the answer from the passages
 
-![Figure 4.19](report/img/code-app-voice.png)
+![Figure 4.19](report/img/code-ai-answer.png)
 
-#### Figure 4.20: Reading aloud for people who cannot read
+#### Figure 4.20: The app's chat controller
 
-![Figure 4.20](report/img/code-app-read-aloud.png)
+![Figure 4.20](report/img/code-app-chat-controller.png)
+
+#### Figure 4.21: Voice input with the phone's speech service
+
+![Figure 4.21](report/img/code-app-voice.png)
+
+#### Figure 4.22: Reading aloud for people who cannot read
+
+![Figure 4.22](report/img/code-app-read-aloud.png)
 
 **Objective 5: ethics, privacy and compliance**
 
-#### Figure 4.21: The audit log's hash chain (database trigger)
+#### Figure 4.23: The audit log's hash chain (database trigger)
 
-![Figure 4.21](report/img/code-db-audit-chain.png)
+![Figure 4.23](report/img/code-db-audit-chain.png)
 
 Figures 4.6 (encryption), 4.10 (de-identification) and 4.13 (fairness) also belong to this objective. **Objective 4** (data collection and model training) has no code yet: no training data or trained model exists in the prototype.
 

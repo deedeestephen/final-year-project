@@ -21,6 +21,7 @@ node "Windows 11 laptop" as pc {
   node "Python 3 virtual environment" {
     component "AI service (FastAPI)\n127.0.0.1:8000" as ai
   }
+  folder "ai-services/models\n(MedCPT, 880 MB;\nmeaning index)" as models
   node "Docker Desktop" {
     database "Redis :6379" as redis
     database "MinIO :9000/9001\n(used by the database tests)" as minio
@@ -43,6 +44,7 @@ backend --> mongo
 backend --> redis
 backend --> objects
 backend --> ai : service token
+ai --> models
 ai ..> anthropic : optional
 pc ..> github : git push
 @enduml

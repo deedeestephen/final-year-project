@@ -56,10 +56,30 @@ package "AI service (Python): app/chat" {
     SECOND_PASSAGE_RATIO = 0.75
     MAX_CHARS = 700
     PASSAGES_FOR_CLAUDE = 3
+    MEANING_FLOOR = 52.0
+    MEANING_SECOND_GAP = 2.0
   }
   class Retriever {
     +search(text) : list[Hit]
   }
+  class MeaningLoader {
+    state : off | loading | ready | failed
+    +start(load_kb, build) : Thread
+    +get(kb_version) : MeaningIndex?
+    +busy : int
+  }
+  class MeaningIndex {
+    kb_version : str
+    slots, wait_s
+    busy : int
+    +scores(question, passages) : list[float]
+    +build(kb) : MeaningIndex
+  }
+  class BertEmbedder <<numpy>> {
+    12 layers, 768 numbers, [CLS]
+    +embed(texts) : list[vector]
+  }
+  class MeaningBusyError <<exception>>
   class KnowledgeBase {
     +passages : tuple[Passage]
     +version : str
@@ -92,9 +112,16 @@ ChatbotService --> AiBrokerService
 ChatbotService --> StoredConversation : MongoDB
 StoredConversation *-- "0..*" StoredMessage
 AiBrokerService ..> answer : HTTP POST /v1/chat/answer\n(service token)
-answer --> Retriever
+answer --> Retriever : keywords decide\nif it is covered
+answer --> MeaningIndex : meaning orders\n(when ready)
+answer ..> MeaningBusyError : catches: keywords only
 answer --> ClaudeWriter : only when a key is set
 answer ..> ChatAnswerResult : returns
+MeaningLoader o-- "0..1" MeaningIndex : builds in the background
+MeaningIndex --> BertEmbedder : MedCPT query encoder
+MeaningIndex ..> BertEmbedder : MedCPT article encoder\n(once; vectors kept in a file)
+MeaningIndex ..> MeaningBusyError : no free slot in time
+MeaningIndex ..> Passage : one vector each
 Retriever --> KnowledgeBase : BM25 over
 KnowledgeBase *-- "1..*" Passage
 Retriever ..> Hit

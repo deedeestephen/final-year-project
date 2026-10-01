@@ -1326,3 +1326,63 @@ The owner asked for all three items from the proposal review: a user-testing kit
 - **A results template** whose tables fit the report's Chapter 4.
 
 The report tool's new step `uat` prints them as one PDF (`docs/uat/PCa-mHealth-UAT-kit.pdf`), with boxes to tick and rows tall enough to write in; `check` warns when the PDF is older than the documents. The task wording was checked against the screens (for example, sign-up asks for name, e-mail, phone, NRC or passport, and a password).
+
+## 2026-10-01: The assistant's meaning search (MedCPT)
+
+The second of the three items. Recorded in [ADR-013](decisions/ADR-013-hybrid-retrieval-medcpt.md).
+
+**What was built** (AI service, `app/chat/`):
+- **Hybrid retrieval.**
+  - BM25 still decides whether the knowledge base covers a question (a score of 2.0 or more).
+  - MedCPT (NCBI's PubMedBERT retriever, public domain) orders those passages by meaning.
+  - An answer whose best passage scores under 52.0 is refused.
+  - A short follow-up must also reach that floor on its own.
+- **The encoders run with numpy** (`embeddings.py`): a 12-layer BERT encoder written for the project, with no PyTorch. Its vectors match the model card's code (transformers 5 and PyTorch, run once in a scratch environment outside the project) to within 0.0001.
+- **A pinned download:** `python -m app.chat.embeddings download` fetches fixed revisions and checks the SHA-256 of every file. The 880 MB go in `ai-services/models/`, which Git ignores. The passages' vectors are kept in an index file per knowledge-base version.
+- **Optional:**
+  - `CHAT_RETRIEVAL` (`auto`, `keywords` or `meaning`);
+  - the index loads in the background;
+  - the health check reports `chat_retrieval` and `chat_meaning_busy`;
+  - `dev-up.ps1` says how to download the models.
+- **Evaluation sets** (`eval_sets.py`):
+  - the 18-question quality set, moved from the tests;
+  - 24 questions in everyday words;
+  - 11 follow-ups and new topics;
+  - 12 off-topic questions.
+
+  `python -m app.chat.evaluate` prints the comparison.
+
+**Tried first and dropped:** NeuML/pubmedbert-base-embeddings, a general sentence model. On the same sets it put fewer first passages in the right article than BM25 alone. Its files were deleted.
+
+**Measured** (`python -m app.chat.evaluate`):
+
+| | Quality (18) | Everyday words (24) | Off-topic refused (12) | Follow-ups right (7) | New topics refused (4) |
+|---|---|---|---|---|---|
+| Keywords only | 18 | 18 | 9 | 6 | 0 |
+| Keywords and meaning | 18 | 20 | 11 | 7 | 3 |
+
+**Problems found and fixed:**
+- **A new topic answered as a follow-up.** Live, "What is the treatment for malaria?" after a DRE question was answered from the DRE article: a question with only two content words is read together with the previous one. Now the short question must also reach the floor on its own.
+- **The load test failed the 2 s target.** With 100 clinicians asking (about 18 questions a second), the first version's P95 was 8,440 ms. Each question costs about 2 billion multiplications (about 60 ms), and questions were encoded one at a time.
+  - A question's products are too small to share well between threads. On this laptop, six questions side by side on one thread each ran at 34 a second, against 14 a second for one question on all threads.
+  - Fix:
+    - one thread per question (`threadpoolctl`);
+    - six slots (`CHAT_MEANING_SLOTS`);
+    - a 0.5 s wait, after which a question is answered with keywords only (`CHAT_MEANING_WAIT_MS`, counted in `chat_meaning_busy`).
+  - After the fix: P50 260 ms, P95 514 ms, 0 errors, no fallbacks. With one slot only: 53% fallbacks, and P95 676 ms.
+  - The load test now waits for the meaning search, and records how passages were found and how many questions fell back ([performance.md](performance.md)).
+- **A wrong example in the first draft.** The first draft of the code comments said MedCPT finds "Is the finger test painful?" in the DRE article although it shares no key words. It shares "finger" and "painful", and keywords alone already found it. The example was replaced with a measured one.
+
+**Known limits** (ADR-013):
+- "Tell me about breast cancer screening" still gets the passage on prostate screening (66.9).
+- "Will it rain tomorrow?" after a PSA question is still answered (53.4).
+- The floor was tuned on small sets written by the developer. Questions from the UAT should be added to them.
+- English only.
+- The query encoder uses about 440 MB of memory in the AI service.
+
+**Docs and pictures:**
+- ADR-013; the operations manual (§3.2, §4, §8, §9); performance.md; the traceability matrix (the gap is closed for retrieval); how-to-test.md; architecture, database, chatbot plan and security.
+- Five report diagrams redrawn (server classes, the chat activity, DFD level 2, the architecture and the chat sequence), and the deployment diagram (the models folder).
+- Two new code pictures: the ranking and the encoder (Figures 4.17 and 4.18; later figures renumbered).
+
+**Tests:** AI service 96 passed and 1 skipped (it would call the real Claude), coverage 98%. Without the models, 3 more are skipped, as in CI.

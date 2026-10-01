@@ -7,7 +7,7 @@ Proposal §3.3 specifies four stores. They are implemented as follows (dev versi
 | **PostgreSQL 16** | Users, roles, permissions, tokens, facilities, patients, clinical records, consents, imaging/histopathology *metadata*, AI registry/jobs/explanations, notifications, sync operations, audit log | `3-application-logic/backend/prisma/schema.prisma`, `5-data-persistence/postgresql/migrations/` |
 | **MongoDB 7** | AI reports, imaging metadata documents, chatbot conversations, AI inference logs | `3-application-logic/backend/src/persistence/mongo/collections.ts` |
 | **Object storage (S3 API, MinIO in dev)** | DICOM (MRI/TRUS/CT), whole-slide images, explanation images | `3-application-logic/backend/src/persistence/storage/` |
-| **Vector DB (Qdrant)** | Chatbot knowledge-base embeddings | `3-application-logic/backend/src/persistence/vector/` |
+| **Vector DB (Qdrant)** | Ready for chatbot knowledge-base embeddings; not used yet. The 32 passages' MedCPT vectors are kept in a file by the AI service (`ai-services/models/index-*.json`, ADR-013) | `3-application-logic/backend/src/persistence/vector/` |
 
 Large files are **never** stored in PostgreSQL: rows keep only a server-generated `storage_key`, SHA-256, size and MIME type.
 

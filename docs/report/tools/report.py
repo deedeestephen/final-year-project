@@ -286,13 +286,18 @@ def step_admin() -> None:
     node("shoot-admin.mjs", str(RAW))
 
 
-# The AI service's own answer to the question, without Claude (the default).
+# The AI service's own answer to the question, as the running service gives it:
+# without Claude (the default), with the meaning search when its models are here.
 ANSWER_PY = """
 import json, sys
+from app.chat import embeddings
 from app.chat.answer import ChatAnswerRequest, answer
 from app.chat.kb import default_knowledge_base
-result = answer(default_knowledge_base(), ChatAnswerRequest(question=sys.argv[1], audience="patient"))
-print(json.dumps(result.model_dump()))
+from app.chat.meaning import MeaningIndex
+kb = default_knowledge_base()
+meaning = MeaningIndex.build(kb) if embeddings.is_installed() else None
+request = ChatAnswerRequest(question=sys.argv[1], audience="patient")
+print(json.dumps(answer(kb, request, meaning=meaning).model_dump()))
 """
 
 # The backend's own safety checks, small-talk replies and disclaimer.

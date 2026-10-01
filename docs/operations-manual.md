@@ -123,7 +123,7 @@ This is the part of the script that looks after the databases:
 | Open this | You should see |
 |---|---|
 | http://localhost:3000/api/v1/health | `"status":"ok"` |
-| http://127.0.0.1:8000/v1/health | `"status":"ok"`, and `chat_writer` says `quotes` (or `claude:…` when Claude is switched on) |
+| http://127.0.0.1:8000/v1/health | `"status":"ok"`; `chat_writer` says `quotes` (or `claude:…` when Claude is switched on); `chat_retrieval` says `keywords+meaning (MedCPT)` a few seconds after start-up (section 9.4) |
 | http://localhost:5173 | the admin sign-in page |
 | http://localhost:3000/api/docs | the API explorer, listing every route |
 
@@ -232,6 +232,7 @@ powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1 -Re
 | Sign-in | `JWT_PRIVATE_KEY_BASE64`, `JWT_PUBLIC_KEY_BASE64` | the key pair that signs sessions |
 | Encryption | `FIELD_ENCRYPTION_KEY_BASE64`, `FIELD_HMAC_KEY_BASE64` | encrypt names, phone and NRC numbers. **If these are lost, those fields cannot be read again: back up `.env` safely** |
 | AI | `AI_SERVICE_URL`, `AI_SERVICE_TOKEN`, `ANTHROPIC_API_KEY`, `CHAT_LLM_MODEL`, `CHAT_LLM_DAILY_LIMIT` | where the AI service is; the shared token; Claude is off while the key is empty |
+| Chatbot search | `CHAT_RETRIEVAL`, `CHAT_MODELS_DIR`, `CHAT_MEANING_SLOTS`, `CHAT_MEANING_WAIT_MS` | `auto`: the meaning search is used when its models are downloaded (`keywords` switches it off); where the models are; how many questions it handles at once, and how long one waits before keywords alone answer (section 9.4) |
 | Demo | `SEED_DEMO_PASSWORD` | the password of the four demo accounts |
 
 ## 5. The backend
@@ -469,7 +470,7 @@ A separate Python program (FastAPI) in `4-ai-intelligence-layer/ai-services`. On
 
 | Route | What it does |
 |---|---|
-| `GET /v1/health` | says it is up, that the models are **development mocks**, and whether Claude writes chat answers |
+| `GET /v1/health` | says it is up, that the models are **development mocks**, whether Claude writes chat answers, and how chat passages are found |
 | `GET /v1/models` | the list of models and their versions |
 | `POST /v1/infer` | runs an analysis (MRI, slide, risk score) |
 | `POST /v1/chat/answer` | finds the reviewed passages for a question and returns the answer |
@@ -484,6 +485,8 @@ A separate Python program (FastAPI) in `4-ai-intelligence-layer/ai-services`. On
 | Run | `.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000` |
 | Tests | `.venv\Scripts\python -m pytest -q` |
 | Lint and types | `.venv\Scripts\python -m ruff check .` and `.venv\Scripts\python -m mypy` |
+| Download the meaning-search models (once, about 880 MB) | `.venv\Scripts\python -m app.chat.embeddings download` |
+| Measure the assistant's search on the question sets | `.venv\Scripts\python -m app.chat.evaluate` |
 
 ## 9. The chatbot, end to end
 
@@ -494,7 +497,7 @@ A separate Python program (FastAPI) in `4-ai-intelligence-layer/ai-services`. On
 3. The backend checks the permission (`chatbot:use`) and the limit (30 questions an hour per account).
 4. **Safety rules** look at the question. An emergency, self-harm, a medicine dose, or a patient asking what their own results mean gets a fixed, careful reply. Nothing is looked up.
 5. **Small talk** ("hello", "how are you", "tell me a joke") gets a friendly fixed reply.
-6. Otherwise the backend asks the AI service, which **searches the reviewed knowledge base** for the passages that match.
+6. Otherwise the backend asks the AI service, which **searches the reviewed knowledge base**: it finds the passages that share the question's key words, and puts them in order of meaning.
 7. If Claude is switched on, Claude writes a short answer **from those passages only**. If not, or if anything fails, the passages are quoted word for word.
 8. The backend checks the answer: it must have a source and must not contain a dose.
 9. Question and answer are stored in MongoDB. The audit log records that a question was asked, never its words.
@@ -533,20 +536,40 @@ The assistant can only say what is in two files in `4-ai-intelligence-layer/know
 
 ![patient-learn.json](report/img/code-ai-knowledge-base.png)
 
-Every section of every article is one **passage** the assistant can use. The search is classic keyword matching (BM25): it needs no internet and no model, and every result can be explained by the words it shares with the question.
+Every section of every article is one **passage** the assistant can use. Passages are found in two steps ([ADR-013](decisions/ADR-013-hybrid-retrieval-medcpt.md)):
+
+1. **Keywords (BM25) decide whether the question is covered.** A passage must share enough of the question's words (a score of 2.0 or more). This needs no model, and every match can be explained by the words it shares with the question.
+2. **Meaning (MedCPT) puts those passages in order.** A biomedical model from the US National Library of Medicine turns the question and each passage into 768 numbers, and the passage closest in meaning comes first. If even the closest one is far from the question (a score under 52.0), the answer is "no reviewed information".
+   - "Are African men more likely to get it?" now gets the passage on who is at higher risk. The keywords alone preferred the one about the gland.
+   - "What is the treatment for malaria?" is refused. It only shares the word "treatment" with a screening passage.
 
 ![retrieve.py](report/img/code-ai-retrieve.png)
 
-`answer.py` then decides: no good match means "no reviewed information"; with Claude, Claude writes from the three best passages; otherwise the best passages are quoted.
+![answer.py: _rank](report/img/code-ai-rank.png)
+
+The model runs inside the AI service, without the internet. It is a 12-layer BERT encoder written with numpy, so it needs no PyTorch:
+
+![embeddings.py: _encode](report/img/code-ai-encoder.png)
+
+`answer.py` then decides: no passage left means "no reviewed information"; with Claude, Claude writes from the three best passages; otherwise the best passages are quoted.
 
 ![answer.py](report/img/code-ai-answer.png)
+
+**Setting up the meaning search (once).** In `4-ai-intelligence-layer\ai-services`, run `.venv\Scripts\python -m app.chat.embeddings download`.
+- It fetches the two MedCPT encoders (about 880 MB) into `models\`. Git ignores that folder.
+- It refuses any file whose checksum differs from the pinned one.
+- Then restart the AI service. A few seconds later, the health check says `chat_retrieval: keywords+meaning (MedCPT)`.
+- Without the models, the assistant answers with keywords only, as it did before. `dev-up.ps1` reminds you to download them.
+
+**Under heavy load** the meaning search handles 6 questions at a time on this laptop (`CHAT_MEANING_SLOTS`). A question that waits more than half a second for its turn (`CHAT_MEANING_WAIT_MS`) is answered with keywords only, so answers stay within 2 seconds. The health check counts those questions (`chat_meaning_busy`). With 100 clinicians asking at once, none needed it ([performance.md](performance.md)).
 
 **To change what the assistant knows:**
 
 1. Edit the JSON file. Keep each section short and complete in itself, and give every article a source.
 2. If you changed `patient-learn.json`, copy it over `1-presentation-layer/mobile-app/assets/education/en/articles.json`. A test fails if the two differ.
-3. Restart the AI service (it reads the files when it starts).
+3. Restart the AI service. It reads the files when it starts, and works out the new passages' meaning vectors in the background (about 12 seconds).
 4. Run its tests: `.venv\Scripts\python -m pytest -q`.
+5. Check the search on the question sets: `.venv\Scripts\python -m app.chat.evaluate`. It shows which questions changed their answer, and the meaning scores next to the 52.0 floor. Add new kinds of questions to `app/chat/eval_sets.py`.
 
 The content says *"Draft for review by a qualified clinician"* until a clinician signs it off. Record a sign-off by changing `reviewStatus` in the file and noting the reviewer and date in the development log.
 
@@ -586,7 +609,8 @@ These screens are drawn by the app's own code with synthetic data. The answer is
 |---|---|---|
 | Safety rules and small talk (89 tests) | `node node_modules\jest\bin\jest.js src/services/chatbot` | `3-application-logic\backend` |
 | The whole chat through the API and MongoDB (11 tests) | `node node_modules\jest\bin\jest.js --config ./test/jest-db.json --runInBand test/db/chatbot.int-spec.ts` | `3-application-logic\backend` |
-| Search quality and Claude with a stand-in | `.venv\Scripts\python -m pytest -q` | `4-ai-intelligence-layer\ai-services` |
+| Search quality (keywords and meaning), and Claude with a stand-in | `.venv\Scripts\python -m pytest -q` | `4-ai-intelligence-layer\ai-services` |
+| The search measured on the question sets | `.venv\Scripts\python -m app.chat.evaluate` | `4-ai-intelligence-layer\ai-services` |
 | The chat screens | `flutter test test/features/chat` | `1-presentation-layer\mobile-app` |
 
 ## 10. The phone app
@@ -747,14 +771,14 @@ powershell -ExecutionPolicy Bypass -File $gate all
 
 ![The backend gate](report/img/term-gate.png)
 
-**Where things stood on 30 September 2026:**
+**Where things stood on 1 October 2026:**
 
 | Part | Tests |
 |---|---|
 | Backend unit tests | 307 |
 | Backend end-to-end tests | 20 |
 | Backend database tests | 230 |
-| AI service | 65, and 1 skipped (it would call the real Claude) |
+| AI service | 96, and 1 skipped (it would call the real Claude); without the MedCPT models, 3 more are skipped |
 | Phone app | 280 (line coverage 90.9%) |
 | Admin website | 81 (coverage 87.8%) |
 

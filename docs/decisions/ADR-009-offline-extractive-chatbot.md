@@ -1,6 +1,6 @@
 # ADR-009: An offline, extractive chatbot over a reviewed knowledge base
 
-- **Status:** Accepted (Phase 13, 2026-09-29). The owner asked for Phase 13 to be built after the other phases. The decisions the [chatbot plan](../chatbot-plan.md) left to the owner were given the defaults below. Each is recorded here, and each can be changed.
+- **Status:** Accepted (Phase 13, 2026-09-29). The owner asked for Phase 13 to be built after the other phases. The decisions the [chatbot plan](../chatbot-plan.md) left to the owner were given the defaults below. Each is recorded here, and each can be changed. Point 2 is extended by [ADR-013](ADR-013-hybrid-retrieval-medcpt.md) (1 October 2026): the keywords still decide whether a question is covered, and a biomedical model (MedCPT) now orders the passages by meaning.
 - **Context:** The proposal asks for a RAG chatbot for patients and clinicians (FR-07, UC-07), answering within 2 s, in English, Bemba and Nyanja. The project rules forbid paid services unless the owner approves the cost, and forbid invented medical content. There is no clinician on the team to sign off content, and no trained language model runs on this laptop without large downloads.
 
 ## Decision

@@ -70,6 +70,10 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
   - Emergency and self-harm wording gets the fixed urgent-care text. Doses (everyone) and a patient's own results or diagnosis (patients) are declined before anything is looked up.
   - An answer without a source, or with a dose in it, is never shown.
   - Patients never get clinician content.
+- **The meaning search (ADR-013):**
+  - The MedCPT models run inside the AI service, so questions do not leave it.
+  - They are downloaded once, from fixed revisions, and every file is checked against a pinned SHA-256 sum. A file that differs is refused.
+  - The model only ranks reviewed passages and can refuse an answer. It writes no text, so it cannot add content.
 - **Claude (when `ANTHROPIC_API_KEY` is set, ADR-010):**
   - Claude only gets the reviewed passages found for the question, the last three turns and the question, after e-mail addresses, NRC numbers, phone numbers and long digit strings are removed.
   - It answers through a forced tool call. Safety rules run before it, and the output check runs after it.

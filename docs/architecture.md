@@ -72,10 +72,12 @@ per-record sync log is kept.
 
 **AI analysis (UC-05), built in Phase 11.** Clinician → `POST /api/v1/patients/{id}/ai-jobs`. The backend checks facility, `AI_ANALYSIS` consent and that a screening record exists, then creates an `ai_jobs` row (QUEUED) and answers `202`. A job queue (in-process now; Redis/BullMQ when there are several API instances) runs the job: the broker calls ai-services `POST /v1/infer` with the service token, a keyed pseudonym, clinical values and storage keys, and a timeout. The Model Router in ai-services runs every module the inputs allow and says why the others were skipped. Until trained models exist, every module is a **labelled MOCK** whose numbers depend only on the job id. The backend validates the answer against the contract, stores the report in MongoDB `ai_reports` and a timeline in `ai_inference_logs`, and marks the job SUCCEEDED, FAILED or TIMED_OUT. The client reads `GET /api/v1/ai-jobs/{id}`.
 
-**Chatbot (UC-07).** Query → language detection (en / bem / nya) → embedding → Qdrant top-k (k=5) → safety filter
-(diagnosis requests, self-harm, prompt injection) → LLM provider (interface; a local/extractive fallback when no LLM is
-configured) → answer + cited chunks + disclaimer. Content in Bemba and Nyanja **must come from human-verified translations**.
-The system will not machine-translate medical content and present it as verified.
+**Chatbot (UC-07), built in Phase 13 and extended by ADR-010 and ADR-013.** Question → backend safety rules (emergency and self-harm, doses, a patient's own results; always first) → small talk → AI service:
+- BM25 keyword search of the reviewed knowledge base decides whether the question is covered;
+- MedCPT (a PubMedBERT retriever, 768 numbers, run with numpy) orders the matching passages by meaning, and refuses an answer whose best passage is far from the question;
+- the best passages are quoted, or Claude writes from them when a key is set.
+
+Then the backend checks the answer (source, no dose), stores it and adds the disclaimer. The plan above (embedding → Qdrant top-k) was changed: with 32 passages, the vectors are kept in a file, and Qdrant stays for a larger knowledge base. Content in Bemba and Nyanja **must come from human-verified translations**. The system will not machine-translate medical content and present it as verified.
 
 **Imaging (UC-03/04), built in Phase 10.** The client sends the form fields first, then one file, as multipart/form-data. The stream goes through a guard that counts bytes (size cap), hashes (SHA-256) and checks magic bytes, then straight into object storage (`StorageModule`: local files, or S3/MinIO with multipart upload). DICOM headers are read with `dicom-parser` (technical fields only) and checked against the chosen modality. Only then is the `imaging_studies` / `histopathology_specimens` row written, with an audit entry, plus a metadata copy in MongoDB `imaging_metadata`. A repeated `clientUuid` returns the existing record, so a lost connection can simply be retried (whole-file retry; byte-range resume is future work).
 

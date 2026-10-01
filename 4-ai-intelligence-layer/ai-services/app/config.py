@@ -31,6 +31,18 @@ class Settings:
     chat_llm_timeout_s: float = 8.0
     #: At most this many Claude calls per day (UTC), to cap the cost.
     chat_llm_daily_limit: int = 2000
+    #: How the chat finds passages (ADR-013): "auto" uses the meaning search
+    #: (MedCPT) when its models are downloaded, "keywords" never does, and
+    #: "meaning" warns at start-up when the models are missing.
+    chat_retrieval: str = "auto"
+    #: Where the MedCPT models are; empty means ai-services/models.
+    chat_models_dir: str = ""
+    #: How many questions the meaning search encodes at once, each on one
+    #: processor thread; 0 means three-quarters of the processor threads.
+    chat_meaning_slots: int = 0
+    #: How long a question waits for a free slot before it is answered with
+    #: keywords only, so answers stay within the 2 s target under heavy load.
+    chat_meaning_wait_ms: int = 500
 
 
 def _from_env_file(path: Path, key: str) -> str:
@@ -59,6 +71,10 @@ def load_settings(env_file: Path = _DEV_ENV_FILE) -> Settings:
         chat_model=setting("CHAT_LLM_MODEL") or Settings.chat_model,
         chat_llm_timeout_s=float(setting("CHAT_LLM_TIMEOUT_S") or Settings.chat_llm_timeout_s),
         chat_llm_daily_limit=int(setting("CHAT_LLM_DAILY_LIMIT") or Settings.chat_llm_daily_limit),
+        chat_retrieval=(setting("CHAT_RETRIEVAL") or Settings.chat_retrieval).lower(),
+        chat_models_dir=setting("CHAT_MODELS_DIR"),
+        chat_meaning_slots=int(setting("CHAT_MEANING_SLOTS") or Settings.chat_meaning_slots),
+        chat_meaning_wait_ms=int(setting("CHAT_MEANING_WAIT_MS") or Settings.chat_meaning_wait_ms),
     )
 
 

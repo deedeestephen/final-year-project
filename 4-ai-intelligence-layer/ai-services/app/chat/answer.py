@@ -1,6 +1,10 @@
 """Chat answers from the reviewed knowledge base.
 
-The passages that match the question are found first (BM25). Then either:
+The passages that match the question's words are found first (BM25); only
+a match of at least MIN_SCORE means the knowledge base covers the question.
+When the meaning search is on (ADR-013), MedCPT then orders those passages
+by meaning and refuses an answer whose best passage is far from the
+question; when it is too busy, the keywords alone decide. Then either:
 - Claude writes the answer from those passages only and names the ones it
   used (`GENERATED`, ADR-010), when an API key is configured; or
 - the passages are quoted word for word (`EXTRACTIVE`, ADR-009), which is
@@ -14,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.chat.generate import ClaudeWriter, Turn
 from app.chat.kb import Audience, KnowledgeBase, Passage
+from app.chat.meaning import MeaningBusyError, MeaningScorer
 from app.chat.retrieve import Hit, Retriever, query_terms
 
 Language = Literal["en", "bem", "nya"]
@@ -29,6 +34,13 @@ MAX_CHARS = 700
 PASSAGES_FOR_CLAUDE = 3
 #: A question with this few content words is read as a follow-up.
 FOLLOW_UP_TERMS = 2
+#: Meaning search: the chosen passage's MedCPT score must reach this, or the
+#: answer is "no reviewed information". Right answers on the evaluation sets
+#: scored 56.7 or more; off-topic questions that pass the keyword gate
+#: ("What is the treatment for malaria?") 48.5 (python -m app.chat.evaluate).
+MEANING_FLOOR = 52.0
+#: Meaning search: a second passage is quoted when it scores this close to the first.
+MEANING_SECOND_GAP = 2.0
 
 
 class _Strict(BaseModel):
@@ -116,20 +128,78 @@ def _passage_out(hit: Hit) -> PassageOut:
     )
 
 
+def _rank(
+    retriever: Retriever, question: str, text: str, meaning: MeaningScorer | None
+) -> tuple[list[Hit], list[Hit]] | None:
+    """The passages in order of relevance, and the ones to quote; None when the
+    knowledge base does not cover the question. `text` is the question, or a
+    short follow-up read together with the previous question."""
+    if meaning is None:
+        hits = retriever.search(text)
+        if not hits or hits[0].score < MIN_SCORE:
+            return None
+        # Whole passages are quoted: each knowledge base section is written to
+        # stand on its own, so a quote never loses the sentence it depends on.
+        quoted = [hits[0]]
+        if (
+            len(hits) > 1
+            and hits[1].score >= SECOND_PASSAGE_RATIO * hits[0].score
+            and len(hits[0].passage.body) + len(hits[1].passage.body) <= MAX_CHARS
+        ):
+            quoted.append(hits[1])
+        return hits, quoted
+
+    # Meaning search: the keywords decide whether the question is covered;
+    # among the passages that match them, the closest in meaning comes first.
+    hits = retriever.search(text, top_k=len(retriever.passages))
+    candidates = [h for h in hits if h.score >= MIN_SCORE]
+    if not candidates:
+        return None
+    closeness = meaning.scores(text, [h.passage for h in candidates])
+    ordered = sorted(zip(candidates, closeness, strict=True), key=lambda pair: -pair[1])
+    (best, best_closeness) = ordered[0]
+    if best_closeness < MEANING_FLOOR:
+        return None
+    # A short question read with the previous one must itself be close to the
+    # passage: "Does it hurt?" after the DRE is, "What is the treatment for
+    # malaria?" after the DRE is not (it is a new topic, and not covered).
+    if text != question and meaning.scores(question, [best.passage])[0] < MEANING_FLOOR:
+        return None
+    quoted = [best]
+    if (
+        len(ordered) > 1
+        and ordered[1][1] >= best_closeness - MEANING_SECOND_GAP
+        and len(best.passage.body) + len(ordered[1][0].passage.body) <= MAX_CHARS
+    ):
+        quoted.append(ordered[1][0])
+    ranked = [h for h, _ in ordered] + [h for h in hits if h.score < MIN_SCORE]
+    return ranked, quoted
+
+
 def answer(
-    kb: KnowledgeBase, request: ChatAnswerRequest, writer: ClaudeWriter | None = None
+    kb: KnowledgeBase,
+    request: ChatAnswerRequest,
+    writer: ClaudeWriter | None = None,
+    meaning: MeaningScorer | None = None,
 ) -> ChatAnswerResult:
     if request.language not in kb.languages():
         raise LanguageNotAvailableError(request.language)
     audience: Audience = request.audience
     retriever = Retriever(kb, audience, request.language)
-    hits = retriever.search(_search_text(request))
     info = KnowledgeBaseInfo(version=kb.version, reviewStatus=kb.review_status)
     unmatched = ChatAnswerResult(
         matched=False, text=None, passages=[], sources=[], knowledgeBase=info
     )
-    if not hits or hits[0].score < MIN_SCORE:
+    text = _search_text(request)
+    try:
+        ranking = _rank(retriever, request.question, text, meaning)
+    except MeaningBusyError:
+        # Every slot of the meaning search is taken (heavy load): keywords
+        # only, as before ADR-013, so the answer still comes within 2 s.
+        ranking = _rank(retriever, request.question, text, None)
+    if ranking is None:
         return unmatched
+    hits, quoted = ranking
 
     if writer is not None:
         given = hits[:PASSAGES_FOR_CLAUDE]
@@ -154,15 +224,6 @@ def answer(
             )
         # No usable answer from Claude: quote the passages instead.
 
-    # Whole passages are quoted: each knowledge base section is written to
-    # stand on its own, so a quote never loses the sentence it depends on.
-    quoted: list[Hit] = [hits[0]]
-    if (
-        len(hits) > 1
-        and hits[1].score >= SECOND_PASSAGE_RATIO * hits[0].score
-        and len(hits[0].passage.body) + len(hits[1].passage.body) <= MAX_CHARS
-    ):
-        quoted.append(hits[1])
     return ChatAnswerResult(
         matched=True,
         text=" ".join(h.passage.body for h in quoted),

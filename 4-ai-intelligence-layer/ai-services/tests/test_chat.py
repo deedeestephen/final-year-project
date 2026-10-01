@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.chat.answer import ChatAnswerRequest, answer
+from app.chat.eval_sets import QUALITY_SET
 from app.chat.kb import DEFAULT_DIR, KnowledgeBase, KnowledgeBaseError, default_knowledge_base, load
 from app.chat.retrieve import Retriever, query_terms
 from app.config import Settings, get_settings
@@ -74,28 +75,7 @@ def test_refuses_articles_without_sources(tmp_path: Path) -> None:
 
 
 # --- retrieval quality --------------------------------------------------------------
-
-#: Questions people ask, and the article that answers them.
-QUALITY_SET = [
-    ("patient", "What does a PSA test measure?", "psa-test"),
-    ("patient", "Where is the prostate?", "prostate"),
-    ("patient", "Why does the prostate get bigger with age?", "prostate"),
-    ("patient", "What happens during a rectal exam?", "dre"),
-    ("patient", "Can I ask for a chaperone during the DRE?", "dre"),
-    ("patient", "Who is at higher risk of prostate cancer?", "screening"),
-    ("patient", "What should I ask my doctor?", "questions"),
-    ("patient", "When should I get help quickly?", "get-help"),
-    ("patient", "it hurts to pee", "get-help"),
-    ("patient", "Is there blood in urine a problem?", "get-help"),
-    ("clinician", "What is grade group 3?", "isup-grade-groups"),
-    ("clinician", "Gleason 4+3", "isup-grade-groups"),
-    ("clinician", "How is PSA density calculated?", "psa-density-free-psa"),
-    ("clinician", "free PSA ratio", "psa-density-free-psa"),
-    ("clinician", "What does PI-RADS 4 mean?", "pi-rads"),
-    ("clinician", "What does a nodular DRE mean?", "dre-findings"),
-    ("clinician", "Why does the AI report say mock data?", "ai-report"),
-    ("clinician", "Why is there no heatmap in the AI report?", "ai-report"),
-]
+# Questions people ask, and the article that answers them (app/chat/eval_sets.py).
 
 
 def test_retrieval_finds_the_right_article(kb: KnowledgeBase) -> None:

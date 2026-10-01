@@ -9,7 +9,7 @@ This page reports **what was measured**, next to the research targets in the pro
 | **NFR-02:** AI result within **3 s at the 95th percentile** under concurrent load | **545 ms** P95 end to end, with 500 users active and one analysis a second. **1,027 ms** P95 for 20 analyses at the same moment | **Met for the pipeline, with mock models.** Must be measured again once the trained models are in (see the limits below) |
 | **NFR-05:** **at least 500 concurrent users** without response-time degradation | **500 users**, each acting every 2–8 s (about 98 requests a second): **0 errors**, P95 **156 ms**, P99 269 ms. With 25 users: P95 41 ms | **Met in practice.** Answers slowed from 41 to 156 ms at P95, but stayed far under a second, which users would not notice. One laptop instance saturates at about **133 requests a second** (see Stress) |
 | **NFR-08:** offline changes are never lost or saved twice, also under load | 100 phones × 20 changes at the same moment: all **2,000 saved**, 0 errors, and all 2,000 recognised as already saved when sent again | **Met.** Bulk speed is limited by the audit chain (below) |
-| **FR-07:** chatbot answer within **2 s** (UC-07) | 100 clinicians each asking every 2–8 s (about 20 questions a second): **0 errors**, P50 **25 ms**, P95 **43 ms** (Phase 13, `PERF_ONLY=chat`) | **Met** for the offline extractive assistant (ADR-009) |
+| **FR-07:** chatbot answer within **2 s** (UC-07) | 100 clinicians each asking every 2–8 s (about 18 questions a second): **0 errors**, P50 **260 ms**, P95 **514 ms** with the meaning search (ADR-013, 1 October 2026). Keywords only (Phase 13): P50 25 ms, P95 43 ms | **Met** for the offline assistant, with and without the meaning search |
 | Start-up (no target in the proposal) | Backend ready in **3.8 s**, AI service in **1.4 s**. Phone app cold start **1.7 s** median (emulator, profile build) | Reported |
 
 ## How it was measured
@@ -114,6 +114,27 @@ Status codes: 200 × 3990.
 | `POST /chat/conversations/:id/messages` | 590 | 0 | 25 ms | 43 ms | 52 ms | 56 ms |
 
 The answer is quoted, not generated. A language-model provider, if the owner ever approves one, would add its own seconds, and would have to be measured against the same 2 s target.
+
+### The assistant with the meaning search (ADR-013)
+
+The same test (`PERF_ONLY=chat PERF_USERS=100 npm run perf`), after the MedCPT meaning search was added on 1 October 2026. The test now waits until the AI service's meaning search is ready, and records how passages were found and how many questions fell back to keywords.
+
+| Run | Answers | Errors | P50 | P95 | P99 | Max | Keywords only (busy) |
+|---|---|---|---|---|---|---|---|
+| First version: one question at a time on all processor threads | 307 | 0 | 3,547 ms | **8,440 ms** | 10,336 ms | 10,798 ms | (not counted yet) |
+| **As shipped:** 6 questions side by side, one thread each, 0.5 s wait | 552 | 0 | 260 ms | **514 ms** | 608 ms | 916 ms | 0 of 571 |
+| One slot only (`CHAT_MEANING_SLOTS=1`, like a one-core server) | 514 | 0 | 541 ms | **676 ms** | 752 ms | 882 ms | 287 of 540 (53%) |
+
+Results files: `var/perf/phase17-2026-10-01T11-27-52-714Z.json`, `…T11-45-45-102Z.json` and `…T11-47-05-801Z.json`. All three found passages with "keywords+meaning (MedCPT)".
+
+**What the first run showed.** Each question costs about 2 billion multiplications in the 12-layer encoder (about 60 ms). The load is about 18 to 20 questions a second, which is more than one question at a time can keep up with, so the questions queued and P95 reached 8.4 s. A question's products are too small to share well between processor threads: on this laptop, one question on all threads ran at 14 a second, and six questions side by side, one thread each, at 34 a second (scratch measurements of the encoder alone).
+
+**What was changed** (`app/chat/meaning.py`, `embeddings.one_thread_per_question`):
+- Each question now runs on one thread.
+- Up to `CHAT_MEANING_SLOTS` questions run at once: by default, three-quarters of the processor threads, so 6 here.
+- A question that waits more than `CHAT_MEANING_WAIT_MS` (500 ms) for a free slot is answered with keywords only, as in Phase 13, and counted (`chat_meaning_busy` in `GET /v1/health`).
+
+As shipped, no question needed that fallback at this load. The one-slot run shows what the fallback is for: on a machine that cannot keep up, half the questions get keyword answers, but every answer still comes within a second.
 
 ### Why bulk sync is slow: the audit chain
 

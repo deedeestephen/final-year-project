@@ -20,7 +20,7 @@ The folders follow the six layers of the architecture ([docs/architecture.md](do
 | [`1-presentation-layer/`](1-presentation-layer/) | Presentation | `mobile-app/` (Flutter: patient, clinician and pathologist screens, offline capture, report viewer) and `admin-panel-web/` (React admin website with the activity dashboard) |
 | [`2-api-gateway/`](2-api-gateway/) | API Gateway | `openapi/` (the REST contract and the AI contract), `reverse-proxy/` (TLS 1.3 and load balancing template), `fhir/definitions/` (the project's FHIR code systems and extension). The gateway code runs in the backend: `3-application-logic/backend/src/gateway/` |
 | [`3-application-logic/`](3-application-logic/) | Application Logic | `backend/` (NestJS). `src/gateway/` (JWT, RBAC, rate limits, validation), `src/services/` (users, patients, consent, imaging, AI broker, FHIR, notifications, audit…), `src/persistence/` (database, storage and encryption code), `test/` (database, end-to-end workflow and performance tests) |
-| [`4-ai-intelligence-layer/`](4-ai-intelligence-layer/) | AI Intelligence | `ai-services/` (FastAPI: Model Router, U-Net, ResNet-50, ANN, Patch-CNN+MIL, XGBoost; labelled **mock** models until real ones are trained) |
+| [`4-ai-intelligence-layer/`](4-ai-intelligence-layer/) | AI Intelligence | `ai-services/` (FastAPI: Model Router, U-Net, ResNet-50, ANN, Patch-CNN+MIL, XGBoost; labelled **mock** models until real ones are trained; the chatbot's search of the reviewed knowledge base) |
 | [`5-data-persistence/`](5-data-persistence/) | Data Persistence | `postgresql/` (database migrations), `mongodb/`, `dicom-archive/`, `vector-db/`, `backup-recovery/` (backup and restore scripts) |
 | [`6-infrastructure/`](6-infrastructure/) | Infrastructure | `docker/` (development databases), `scripts/` (start, stop, quality gate, keys, TLS, FHIR and link checks), `kubernetes/` and `monitoring/` (plans) |
 | [`docs/`](docs/) | all | architecture, decisions, security, testing, performance, how to test |
@@ -45,6 +45,7 @@ The folders follow the six layers of the architecture ([docs/architecture.md](do
 | 18 | Final quality audit | Done (see the [development log](docs/development-log.md)) |
 | extra | Admin website, activity dashboard, dark mode, "modern health app" redesign | Done (`bfd9cfc`, `5bc85f3`, `967c988`, `0aebf4e`, `12c1d57`) |
 | extra | Awareness-blue theme, modern icons and the assistant bot ([ADR-011](docs/decisions/ADR-011-awareness-blue-and-modern-icons.md)); voice messages and read-aloud ([ADR-012](docs/decisions/ADR-012-voice-input-and-read-aloud.md)) | Done (see the [development log](docs/development-log.md)) |
+| extra | Proposal review: report diagrams ([report-figures.md](docs/report-figures.md)), a user-testing kit ([uat/](docs/uat/README.md)), and a biomedical meaning search for the assistant ([ADR-013](docs/decisions/ADR-013-hybrid-retrieval-medcpt.md)) | Done (`0fde88c`, `9104c32`, and the meaning-search commit) |
 
 **Still waiting for outside input:**
 - **Trained AI models:** see the [integration guide](docs/ai-model-integration-guide.md). The mocks stay labelled until then.

@@ -29,6 +29,21 @@ def test_no_token_anywhere_means_fail_closed(
     assert load_settings(tmp_path / "missing.env").service_token == ""
 
 
+def test_the_meaning_search_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    missing = tmp_path / "missing.env"
+    for key in ("CHAT_RETRIEVAL", "CHAT_MEANING_SLOTS", "CHAT_MEANING_WAIT_MS"):
+        monkeypatch.delenv(key, raising=False)
+    defaults = load_settings(missing)
+    assert (defaults.chat_retrieval, defaults.chat_meaning_slots) == ("auto", 0)
+    assert defaults.chat_meaning_wait_ms == 500
+    monkeypatch.setenv("CHAT_RETRIEVAL", "Keywords")
+    monkeypatch.setenv("CHAT_MEANING_SLOTS", "3")
+    monkeypatch.setenv("CHAT_MEANING_WAIT_MS", "250")
+    chosen = load_settings(missing)
+    assert (chosen.chat_retrieval, chosen.chat_meaning_slots) == ("keywords", 3)
+    assert chosen.chat_meaning_wait_ms == 250
+
+
 def test_finds_the_repository_env_file_from_any_depth(tmp_path: Path) -> None:
     from app.config import _repo_root
 

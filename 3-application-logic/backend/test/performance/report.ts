@@ -43,7 +43,11 @@ const r = JSON.parse(readFileSync(file, 'utf8')) as {
   stress?: Load;
   aiUnderLoad?: Ai;
   aiBurst?: Ai & { maxConcurrentJobs: number };
-  chat?: Load;
+  chat?: Load & {
+    retrieval?: string;
+    asked?: number;
+    keywordsOnlyBusy?: number;
+  };
   syncStress?: {
     phones: number;
     changesPerPhone: number;
@@ -92,7 +96,18 @@ const loadTable = (title: string, l: Load) => {
 if (r.baseline) loadTable('Baseline', r.baseline);
 if (r.main) loadTable('Main run', r.main);
 if (r.stress) loadTable('Stress', r.stress);
-if (r.chat) loadTable('Chat (the assistant)', r.chat);
+if (r.chat) {
+  loadTable('Chat (the assistant)', r.chat);
+  // Files from before ADR-013 have no retrieval: the search was keywords only.
+  line(`Retrieval in the AI service: ${r.chat.retrieval ?? 'keywords'}.`);
+  if (r.chat.keywordsOnlyBusy !== undefined && r.chat.asked)
+    line(
+      `Answered with keywords only because the meaning search was busy: ` +
+        `${r.chat.keywordsOnlyBusy} of ${r.chat.asked} questions ` +
+        `(${((100 * r.chat.keywordsOnlyBusy) / r.chat.asked).toFixed(1)}%, ramp-up included).`,
+    );
+  line();
+}
 
 const aiRow = (label: string, a: Ai) =>
   line(

@@ -29,7 +29,7 @@ package "3  Application logic (NestJS 11, TypeScript)" as L3 {
 package "4  AI intelligence (Python 3, FastAPI)" as L4 {
   component "Model router and providers\n(U-Net, ResNet-50, ANN,\npatch-CNN MIL, XGBoost fusion)\ntoday: labelled MOCK" as router
   component "Explainers\n(Grad-CAM, SHAP, MIL attention)\nor the reason there is none" as explain
-  component "Chat answers: BM25 over\nthe reviewed knowledge base;\noptional Claude writer (off)" as chat
+  component "Chat answers from the reviewed\nknowledge base: BM25 keywords,\nMedCPT meaning (numpy);\noptional Claude writer (off)" as chat
 }
 
 package "5  Data persistence" as L5 {
@@ -38,7 +38,8 @@ package "5  Data persistence" as L5 {
   storage "Object storage\nlocal folder\n(S3 / MinIO option)" as files
   database "Redis\nrate-limit counters" as redis
   storage "Knowledge base\n(reviewed JSON)" as kb
-  database "Vector store\n(memory; Qdrant ready,\nnot used by the chat)" as vec
+  storage "Meaning index\n(passage vectors, file)\nand MedCPT models" as vec
+  database "Vector store\n(memory; Qdrant ready\nfor a larger knowledge base)" as qvec
 }
 
 package "6  Infrastructure" as L6 {
@@ -61,6 +62,7 @@ s5 --> router : HTTP + service token
 s6 --> chat : HTTP + service token
 router --> explain
 chat --> kb
+chat --> vec
 s1 --> pg
 s2 --> pg
 s3 --> pg

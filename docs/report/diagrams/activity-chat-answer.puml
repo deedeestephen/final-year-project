@@ -36,19 +36,31 @@ else (a health question)
   |AI service|
   :BM25 search of the reviewed knowledge base
   (short follow-ups are read with the previous question);
-  if (Best passage scores at least 2.0?) then (yes)
-    if (Claude switched on, and it answers\nonly from passages it cites?) then (yes)
-      :Answer written by Claude
-      from the passages ("GENERATED");
-    else (no: the default)
-      :Quote the best passage, and a second
-      one if it scores almost as well ("EXTRACTIVE");
+  if (A passage scores at least 2.0?) then (yes)
+    if (Meaning search ready, and a turn\nfree within 0.5 s?) then (yes)
+      :MedCPT orders those passages by meaning;
+      :Drop the answer if the closest scores under 52.0
+      (a follow-up must also reach it on its own);
+    else (no: keywords only)
     endif
-    |Backend|
-    if (checkAnswer: has a source, no dose,\nnot too long?) then (passes)
-      :Answer with its sources
-      and review status;
-    else (fails)
+    if (A passage left to answer from?) then (yes)
+      if (Claude switched on, and it answers\nonly from passages it cites?) then (yes)
+        :Answer written by Claude
+        from the passages ("GENERATED");
+      else (no: the default)
+        :Quote the best passage, and a second
+        one if it is almost as close ("EXTRACTIVE");
+      endif
+      |Backend|
+      if (checkAnswer: has a source, no dose,\nnot too long?) then (passes)
+        :Answer with its sources
+        and review status;
+      else (fails)
+        :Fixed "no reviewed information"
+        text (NO_SOURCE);
+      endif
+    else (no)
+      |Backend|
       :Fixed "no reviewed information"
       text (NO_SOURCE);
     endif

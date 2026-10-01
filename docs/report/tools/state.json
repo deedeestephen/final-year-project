@@ -1,8 +1,8 @@
 {
  "code": {
   "date": "2026-10-01",
-  "commit": "dd1813e",
-  "uncommitted": false,
+  "commit": "9104c32",
+  "uncommitted": true,
   "shots": {
    "backend-main": {
     "file": "3-application-logic/backend/src/main.ts",
@@ -94,11 +94,23 @@
     "last": 100,
     "sha256": "d6fbdde0875830fe"
    },
+   "ai-rank": {
+    "file": "4-ai-intelligence-layer/ai-services/app/chat/answer.py",
+    "first": 131,
+    "last": 176,
+    "sha256": "30d5ec25e6028c99"
+   },
+   "ai-encoder": {
+    "file": "4-ai-intelligence-layer/ai-services/app/chat/embeddings.py",
+    "first": 171,
+    "last": 203,
+    "sha256": "3f89679d00b6db15"
+   },
    "ai-answer": {
     "file": "4-ai-intelligence-layer/ai-services/app/chat/answer.py",
-    "first": 119,
-    "last": 172,
-    "sha256": "63ae8acc7a9c27c0"
+    "first": 179,
+    "last": 233,
+    "sha256": "f8f0b35aa1b55c25"
    },
    "ai-claude-instructions": {
     "file": "4-ai-intelligence-layer/ai-services/app/chat/generate.py",
@@ -218,36 +230,36 @@
  },
  "pdf": {
   "date": "2026-10-01",
-  "manual": "93519b9ad94352a0"
+  "manual": "7533000a158d3fc3"
  },
  "html": {
   "date": "2026-10-01",
-  "manual": "93519b9ad94352a0"
+  "manual": "7533000a158d3fc3"
  },
  "diagrams": {
   "date": "2026-10-01",
   "sources": {
    "docs/report/diagrams/activity-ai-analysis.puml": "c4dd124aa41762e1",
-   "docs/report/diagrams/activity-chat-answer.puml": "a11c736e0e0d9e17",
+   "docs/report/diagrams/activity-chat-answer.puml": "0e6aa5d8b00680d2",
    "docs/report/diagrams/activity-offline-capture.puml": "45dda64964f90377",
    "docs/report/diagrams/activity-prototyping-cycle.puml": "707df99c8493a62a",
    "docs/report/diagrams/activity-quality-gate.puml": "5156a0695a39ce83",
    "docs/report/diagrams/activity-voice-question.puml": "34f546609409dceb",
-   "docs/report/diagrams/architecture-layers.puml": "bda8f5c01bbb3f7f",
+   "docs/report/diagrams/architecture-layers.puml": "db3d8a5a3e04dd87",
    "docs/report/diagrams/class-app-chat-audio.puml": "701e8a5705dcd972",
    "docs/report/diagrams/class-app-offline.puml": "283988e3a9624536",
-   "docs/report/diagrams/class-chat-server.puml": "bc6f3e57fadd7930",
+   "docs/report/diagrams/class-chat-server.puml": "b0055c781c6a484c",
    "docs/report/diagrams/component-backend.puml": "a94a4321a1608d5e",
    "docs/report/diagrams/context-diagram.puml": "eeba169c7c0e1731",
    "docs/report/diagrams/database-mongodb.puml": "b86b2b2d9890fe84",
    "docs/report/diagrams/database-phone.puml": "3bda62e443da3410",
-   "docs/report/diagrams/deployment.puml": "9749d926ed6e38a3",
+   "docs/report/diagrams/deployment.puml": "6002ecd3d78f646a",
    "docs/report/diagrams/dfd-level-1.puml": "67ee6ed294b35519",
-   "docs/report/diagrams/dfd-level-2-chatbot.puml": "8aaa04091ba39191",
+   "docs/report/diagrams/dfd-level-2-chatbot.puml": "77ded5ac1f3b5138",
    "docs/report/diagrams/gantt-planned.puml": "6a76501c25d42fd1",
    "docs/report/diagrams/navigation-app.puml": "a571740f0d70a6db",
    "docs/report/diagrams/sequence-ai-analysis.puml": "839db637981a0a9f",
-   "docs/report/diagrams/sequence-chat.puml": "ea0f6b6e147be34d",
+   "docs/report/diagrams/sequence-chat.puml": "be3a934782ffa069",
    "docs/report/diagrams/sequence-fhir-export.puml": "c321b3be9cbc0507",
    "docs/report/diagrams/sequence-offline-sync.puml": "216e68e394396648",
    "docs/report/diagrams/sequence-sign-in.puml": "0e8f579b448d3b6d",
@@ -261,7 +273,7 @@
   "inputs": {
    "3-application-logic/backend/prisma/schema.prisma": "5069f27653c2f4e6",
    "docs/access-matrix.md": "0c227dc34731b975",
-   "2-api-gateway/openapi/ai-contract.yaml": "bc2a57b70ead397d"
+   "2-api-gateway/openapi/ai-contract.yaml": "523fba36657a6a75"
   }
  },
  "figures": {

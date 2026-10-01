@@ -9,6 +9,13 @@ dependencies = [
     "pydantic>=2.8",
     # Claude-written chat answers (ADR-010); used only when ANTHROPIC_API_KEY is set.
     "anthropic>=0.40",
+    # The meaning search (ADR-013): MedCPT run with numpy, no PyTorch. The models
+    # themselves are downloaded separately: python -m app.chat.embeddings download
+    "numpy>=2",
+    "safetensors>=0.4",
+    "tokenizers>=0.20",
+    # One processor thread per question, so several are encoded side by side.
+    "threadpoolctl>=3.5",
 ]
 
 [project.optional-dependencies]

@@ -154,6 +154,11 @@ if (-not (Test-Path $aiPython)) {
       "`$Host.UI.RawUI.WindowTitle = 'PCa mHealth AI service (mock models) - close this window to stop'; .venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
     )
   }
+  # The chat's meaning search (ADR-013) needs the MedCPT models; without them it uses keywords only.
+  if (-not (Test-Path (Join-Path $aiServices 'models\medcpt-query\model.safetensors'))) {
+    Write-Host '   The chat searches by keywords only. For the meaning search too (about 880 MB, once):' -ForegroundColor Yellow
+    Write-Host "   cd `"$aiServices`"; .venv\Scripts\python -m app.chat.embeddings download"
+  }
 }
 
 Write-Host ''

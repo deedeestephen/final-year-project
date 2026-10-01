@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: PCa mHealth AI Services contract (Layer 4)
-  version: 0.4.0
+  version: 0.5.0
   description: |
     Internal contract between the backend AI broker (Layer 3) and ai-services (Layer 4).
     Frozen at v0 in Phase 3; implemented in Phases 11-13.
@@ -14,6 +14,11 @@ info:
     is configured, Claude writes the answer from the retrieved passages only (`mode: GENERATED`,
     `model`), falling back to quoting (ADR-010). Health reports `chat_writer`. Only the backend may call it
     (internal network + `Authorization: Bearer <AI_SERVICE_TOKEN>`).
+    v0.5 (additive): when the MedCPT models are downloaded, the passages that match the question's
+    words are put in order of meaning, and an answer whose best passage is far from the question in
+    meaning is not given (ADR-013). The request and the result are unchanged; health reports
+    `chat_retrieval`, and `chat_meaning_busy` (questions answered with keywords only because the
+    meaning search was busy).
 
     Rules that every implementation must follow:
     - Inputs are de-identified references (storage keys, record ids, clinical values). No names,
@@ -45,6 +50,13 @@ paths:
                   mode: { type: string, enum: [development-mock, research-model] }
                   clinical_models_loaded: { type: boolean }
                   chat_writer: { type: string, description: 'claude:<model> or quotes' }
+                  chat_retrieval:
+                    type: string
+                    description: 'keywords, keywords+meaning (MedCPT), or keywords with the reason the meaning search is not on'
+                  chat_meaning_busy:
+                    type: integer
+                    minimum: 0
+                    description: 'Questions since start-up answered with keywords only because every slot of the meaning search was taken'
   /v1/models:
     get:
       summary: Registered model versions
@@ -240,7 +252,7 @@ components:
               articleId: { type: string }
               title: { type: string }
               heading: { type: string }
-              score: { type: number }
+              score: { type: number, description: 'The keyword (BM25) score' }
         sources:
           type: array
           items:
