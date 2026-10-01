@@ -64,6 +64,9 @@ docs() {
   step "docs"
   cd "$ROOT"
   run "docs link check (relative links resolve)" python 6-infrastructure/scripts/link-check.py
+  # Are the operations manual's code pictures and PDF current? Warns only:
+  # code that has moved on is not a fault (docs/report/tools/README.md).
+  run "operations manual pictures checked (warnings above, if any)" python docs/report/tools/report.py check
 }
 
 ai() {

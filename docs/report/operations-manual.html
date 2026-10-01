@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCa mHealth Operations Manual</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap">
+<style>
+/* The web page of the manual. Layout: a contents rail that stays in view beside
+   one reading column; code pictures and tables may run wider than the text,
+   inside their own scrollers. Awareness blue (ADR-011), light and dark. */
+:root {
+  --bg: #f5f8ff; --surface: #ffffff; --soft: #eef3ff; --line: #dce4f2;
+  --ink: #0f172a; --ink-2: #334155; --muted: #52627a;
+  --accent: #2563eb; --link: #1d4ed8; --hero-a: #1d4ed8; --hero-b: #1e3a8a; --sky: #38bdf8;
+  --on-hero: #ffffff; --on-hero-soft: #dbeafe;
+  --warn-bg: #fff7ed; --warn-ink: #92400e; --warn-line: #d97706;
+  --code-bg: #0d1117; --code-ink: #e6edf3; --code-line: #30363d;
+  --display: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  --text: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1220; --surface: #111a2e; --soft: #1a2540; --line: #243150;
+  --ink: #e8eef9; --ink-2: #b9c5da; --muted: #93a3bd;
+  --accent: #2563eb; --link: #93c5fd; --hero-a: #1e40af; --hero-b: #172554;
+  --warn-bg: #3a2a10; --warn-ink: #fcd34d; --warn-line: #f59e0b;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0b1220; --surface: #111a2e; --soft: #1a2540; --line: #243150;
+  --ink: #e8eef9; --ink-2: #b9c5da; --muted: #93a3bd;
+  --accent: #2563eb; --link: #93c5fd; --hero-a: #1e40af; --hero-b: #172554;
+  --warn-bg: #3a2a10; --warn-ink: #fcd34d; --warn-line: #f59e0b;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.65 var(--text); }
+a { color: var(--link); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; border-radius: 4px; }
+
+.hero { background: linear-gradient(135deg, var(--hero-a), var(--hero-b)); color: var(--on-hero);
+  padding-block: 2.5rem 2.25rem; padding-inline: max(1rem, calc((100% - 78rem) / 2)); }
+.hero .eyebrow { font: 600 .78rem/1 var(--text); letter-spacing: .12em; text-transform: uppercase; color: var(--on-hero-soft); }
+.hero h1 { font: 800 clamp(1.7rem, 4vw, 2.6rem)/1.15 var(--display); margin: .7rem 0 .8rem; text-wrap: balance; max-width: 22ch; }
+.hero p { margin: 0; max-width: 62ch; color: var(--on-hero-soft); }
+.hero .meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.25rem; font-size: .82rem; }
+.hero .meta span { border: 1px solid color-mix(in srgb, var(--on-hero) 35%, transparent); border-radius: 999px; padding: .2rem .7rem; }
+.rule { height: 4px; background: linear-gradient(90deg, var(--accent), var(--sky)); }
+
+.shell { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); gap: 2.5rem;
+  max-width: 78rem; margin-inline: auto; padding-inline: 1rem; padding-block: 1.75rem 4rem; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); align-self: start;
+  max-height: calc(100vh - 2rem); overflow-y: auto; font-size: .9rem; }
+nav.toc summary { font: 700 .78rem/1 var(--text); letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  cursor: pointer; padding-block: .4rem; list-style: none; }
+nav.toc summary::-webkit-details-marker { display: none; }
+nav.toc ol { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .1rem; border-left: 2px solid var(--line); }
+nav.toc a { display: block; padding: .3rem .8rem; margin-left: -2px; border-left: 2px solid transparent;
+  color: var(--ink-2); text-decoration: none; line-height: 1.35; }
+nav.toc a:hover { color: var(--link); border-left-color: var(--accent); }
+
+main { min-width: 0; }
+main > * { max-width: 46rem; }
+main > .scroll, main > .phones, main > figure.wide, main > .start { max-width: 100%; }
+h2 { font: 800 1.55rem/1.2 var(--display); margin: 3rem 0 .9rem; padding-top: 1.1rem; border-top: 1px solid var(--line);
+  text-wrap: balance; scroll-margin-top: 1rem; }
+main > h2:first-of-type { margin-top: 1.5rem; }
+h3 { font: 700 1.12rem/1.3 var(--display); margin: 2rem 0 .5rem; color: var(--link); scroll-margin-top: 1rem; }
+p, ul, ol { margin: .7rem 0; }
+li + li { margin-top: .25rem; }
+strong { font-weight: 600; }
+code { font: 400 .86em var(--mono); background: var(--soft); border: 1px solid var(--line); border-radius: 4px; padding: .05em .35em;
+  overflow-wrap: anywhere; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
+
+.start { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.25rem; margin-bottom: .5rem; }
+.start h2 { font-size: 1.05rem; margin: 0 0 .2rem; padding: 0; border: 0; }
+.start p { margin: .2rem 0 .7rem; color: var(--ink-2); }
+.ports { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .6rem 1.5rem; margin: .9rem 0 0; }
+.ports div { display: grid; gap: .1rem; }
+.ports dt { font-size: .78rem; color: var(--muted); }
+.ports dd { margin: 0; font: 600 .9rem var(--mono); overflow-wrap: anywhere; }
+
+.cmd { display: grid; background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 10px; margin: .9rem 0; }
+.cmd pre { margin: 0; padding: .9rem 1rem; overflow-x: auto; color: var(--code-ink); font: 400 .84rem/1.6 var(--mono); min-width: 0; }
+.cmd:not(.plain) pre { padding-top: .35rem; }
+.cmd code { background: none; border: 0; padding: 0; font: inherit; color: inherit; overflow-wrap: normal; }
+.copy { justify-self: end; margin: .45rem .45rem 0 0; font: 600 .74rem var(--text); color: var(--code-ink);
+  background: #21262d; border: 1px solid var(--code-line); border-radius: 6px; padding: .3rem .6rem; cursor: pointer; }
+.copy:hover { border-color: var(--sky); }
+
+.scroll { overflow-x: auto; margin: 1rem 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .8rem; border-bottom: 1px solid var(--line); min-width: 7rem; }
+th { background: var(--soft); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+
+figure { margin: 1rem 0; }
+figure.wide img { display: block; width: auto; max-width: min(100%, 58rem); border-radius: 10px; border: 1px solid var(--line); }
+img.shot { border-color: var(--code-line) !important; }
+.phones { display: grid; grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr)); gap: 1.1rem; margin: 1.2rem 0; }
+.phones figure { margin: 0; display: grid; gap: .45rem; align-content: start; }
+.phones img { width: 100%; border-radius: 14px; border: 1px solid var(--line); }
+figcaption { font-size: .82rem; color: var(--muted); }
+
+blockquote { margin: 1rem 0; padding: .7rem 1rem; background: var(--warn-bg); color: var(--warn-ink);
+  border-left: 4px solid var(--warn-line); border-radius: 0 8px 8px 0; }
+blockquote p { margin: 0; }
+blockquote code { background: transparent; border-color: currentColor; }
+footer { max-width: 78rem; margin-inline: auto; padding-inline: 1rem; padding-block: 0 3rem; color: var(--muted); font-size: .85rem; }
+
+@media (max-width: 56rem) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  nav.toc { position: static; max-height: none; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: .5rem 1rem; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="eyebrow">Operations manual</div>
+  <h1>PCa mHealth: how it was built, and how to run it yourself</h1>
+  <p>The backend, the databases, Docker, the AI service, the chatbot, the phone app and the admin website:
+  how each was made, and how to start, check, change and repair it without an AI assistant.</p>
+  <div class="meta"><span>Made on 1 October 2026</span><span>Code pictures from commit 9cdccac</span><span>Synthetic data only</span><span>Not a medical device</span></div>
+</header>
+<div class="rule"></div>
+
+<div class="shell">
+  <nav class="toc" aria-label="Contents">
+    <details id="toc">
+      <summary>Contents</summary>
+      <ol><li><a href="#1-the-system-on-one-page">1. The system on one page</a></li><li><a href="#2-what-is-installed-on-this-pc">2. What is installed on this PC</a></li><li><a href="#3-starting-and-stopping">3. Starting and stopping</a></li><li><a href="#4-the-settings-file-env">4. The settings file (.env)</a></li><li><a href="#5-the-backend">5. The backend</a></li><li><a href="#6-the-databases">6. The databases</a></li><li><a href="#7-docker">7. Docker</a></li><li><a href="#8-the-ai-service">8. The AI service</a></li><li><a href="#9-the-chatbot-end-to-end">9. The chatbot, end to end</a></li><li><a href="#10-the-phone-app">10. The phone app</a></li><li><a href="#11-the-admin-website">11. The admin website</a></li><li><a href="#12-tests-and-the-quality-gate">12. Tests and the quality gate</a></li><li><a href="#13-git-and-github">13. Git and GitHub</a></li><li><a href="#14-when-something-goes-wrong">14. When something goes wrong</a></li><li><a href="#15-before-real-patients">15. Before real patients</a></li><li><a href="#16-where-to-read-more">16. Where to read more</a></li><li><a href="#17-updating-this-manual">17. Updating this manual</a></li></ol>
+    </details>
+  </nav>
+  <main>
+    <section class="start" aria-labelledby="start-h">
+      <h2 id="start-h">Start everything</h2>
+      <p>In PowerShell, from the project folder. Keep the three windows it opens.</p>
+      <div class="cmd"><button class="copy" type="button">Copy</button><pre><code>cd "D:\Final Year Project\pca-mhealth"
+powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1</code></pre></div>
+      <dl class="ports">
+        <div><dt>Backend (API)</dt><dd>localhost:3000/api/v1/health</dd></div>
+        <div><dt>API explorer</dt><dd>localhost:3000/api/docs</dd></div>
+        <div><dt>Admin website</dt><dd>localhost:5173</dd></div>
+        <div><dt>AI service</dt><dd>127.0.0.1:8000/v1/health</dd></div>
+        <div><dt>PostgreSQL 18</dt><dd>localhost:5432</dd></div>
+        <div><dt>MongoDB 8.3</dt><dd>localhost:27017</dd></div>
+      </dl>
+    </section>
+    
+<h2 id="1-the-system-on-one-page">1. The system on one page</h2>
+<p>PCa mHealth helps clinics in Zambia screen for prostate cancer. Clinicians register patients and record screenings on a phone, also without internet. Pathologists review slides. Patients see their own results, read or listen to health information, and ask an assistant questions. Administrators manage accounts on a website.</p>
+<p><strong>The pieces</strong></p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>What it does</th>
+<th>Built with</th>
+<th>Folder</th>
+<th>Address on this PC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phone app</td>
+<td>Screens for patients, clinicians and pathologists; works offline</td>
+<td>Flutter 3.35 (Dart)</td>
+<td><code>1-presentation-layer/mobile-app</code></td>
+<td>runs on the emulator or a phone</td>
+</tr>
+<tr>
+<td>Admin website</td>
+<td>Accounts, roles, patient links, audit log, dashboard</td>
+<td>React 19 + Vite 8 (TypeScript)</td>
+<td><code>1-presentation-layer/admin-panel-web</code></td>
+<td>http://localhost:5173</td>
+</tr>
+<tr>
+<td>Backend (the API)</td>
+<td>Every rule of the system: sign-in, permissions, patients, consent, uploads, sync, chat, audit</td>
+<td>NestJS 11 (TypeScript) on Node 24</td>
+<td><code>3-application-logic/backend</code></td>
+<td>http://localhost:3000</td>
+</tr>
+<tr>
+<td>AI service</td>
+<td>The AI models (labelled mock models for now) and the chatbot's search</td>
+<td>FastAPI (Python 3.14)</td>
+<td><code>4-ai-intelligence-layer/ai-services</code></td>
+<td>http://127.0.0.1:8000</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>Accounts, patients, screenings, consents, audit log</td>
+<td>PostgreSQL 18, installed on the PC</td>
+<td>schema in <code>3-application-logic/backend/prisma</code>, history in <code>5-data-persistence/postgresql/migrations</code></td>
+<td>localhost:5432</td>
+</tr>
+<tr>
+<td>MongoDB</td>
+<td>AI reports, chats, scan details</td>
+<td>MongoDB 8.3, installed on the PC</td>
+<td><code>3-application-logic/backend/src/persistence/mongo</code></td>
+<td>localhost:27017</td>
+</tr>
+<tr>
+<td>Redis, MinIO, Qdrant</td>
+<td>Shared rate limits; S3 file storage; vector search (planned)</td>
+<td>Docker containers</td>
+<td><code>6-infrastructure/docker</code></td>
+<td>6379; 9000 and 9001; 6333</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>How a request travels</strong></p>
+<div class="cmd plain"><pre><code>Phone app / admin website
+        |   HTTPS in production; http://localhost:3000 on this PC
+        v
+Backend (NestJS)
+  1. rate limit per network address
+  2. who are you?  (JWT access token)
+  3. rate limit per account
+  4. may you do this?  (role permissions)
+  5. is the request well-formed?  (validation)
+  6. the service does the work and writes an audit entry
+        |                    |                     |
+        v                    v                     v
+  PostgreSQL 18         MongoDB 8.3          AI service (FastAPI)
+  (records)             (documents)          (models, chatbot search)
+</code></pre></div>
+<p>The phone app never talks to a database or to the AI service. Everything goes through the backend, so every rule is enforced in one place.</p>
+<p><strong>Why these choices</strong> (each has a decision record in <code>docs/decisions/</code>):
+- Flutter, because one codebase gives Android and iPhone apps with good offline support (ADR-001).
+- NestJS with PostgreSQL and MongoDB, and a separate Python service for AI, because AI libraries live in Python while the rest benefits from TypeScript's type checks (ADR-003).
+- A website for administrators instead of phone screens, because administration is desk work (ADR-005).
+- A chatbot that only answers from reviewed documents, because a health assistant must never invent medical text (ADR-009, ADR-010).</p>
+<h2 id="2-what-is-installed-on-this-pc">2. What is installed on this PC</h2>
+<p>Checked on 30 September 2026:</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+<th>Used for</th>
+<th>How to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js / npm</td>
+<td>24.15.0 / 11.12.1</td>
+<td>backend, admin website, scripts</td>
+<td><code>node -v</code></td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.14.5</td>
+<td>AI service</td>
+<td><code>python --version</code></td>
+</tr>
+<tr>
+<td>Flutter / Dart SDK</td>
+<td>3.35.2 / 3.9</td>
+<td>phone app</td>
+<td><code>flutter --version</code></td>
+</tr>
+<tr>
+<td>Android Studio + SDK</td>
+<td>emulator <code>Galaxy_S9_Plus_API_29</code></td>
+<td>running the app</td>
+<td>Android Studio › Device Manager</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>18.6 (service <code>postgresql-x64-18</code>), with pgAdmin 4</td>
+<td>main database</td>
+<td><code>&amp; "C:\Program Files\PostgreSQL\18\bin\psql.exe" --version</code></td>
+</tr>
+<tr>
+<td>MongoDB</td>
+<td>8.3.2 (service <code>MongoDB</code>), with Compass</td>
+<td>document database</td>
+<td>Services (<code>services.msc</code>)</td>
+</tr>
+<tr>
+<td>Docker Desktop</td>
+<td>29.8.0</td>
+<td>Redis, MinIO, Qdrant</td>
+<td><code>docker --version</code></td>
+</tr>
+<tr>
+<td>Git</td>
+<td>2.51</td>
+<td>version control</td>
+<td><code>git --version</code></td>
+</tr>
+<tr>
+<td>Google Chrome</td>
+<td></td>
+<td>admin website</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p>On a new PC, install the same tools, then follow <a href="#35-setting-up-on-a-new-pc">section 3.5</a>.</p>
+<h2 id="3-starting-and-stopping">3. Starting and stopping</h2>
+<h3 id="31-start-everything-with-one-command">3.1 Start everything with one command</h3>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>cd &quot;D:\Final Year Project\pca-mhealth&quot;
+powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1
+</code></pre></div></div>
+<p>The script does this, in order:</p>
+<ol>
+<li>Checks that the <code>.env</code> settings file exists.</li>
+<li>Checks that the two database services (<strong>postgresql-x64-18</strong> and <strong>MongoDB</strong>) are running, and starts them if not.</li>
+<li>Starts Docker Desktop if needed, then Redis, MinIO and Qdrant.</li>
+<li>Stops an old backend if one is still running.</li>
+<li>Applies any new database changes (<code>prisma migrate deploy</code>) and makes sure the synthetic demo data exists (<code>db:seed</code>).</li>
+<li>Builds the backend and starts it in its own window.</li>
+<li>Waits until the backend answers.</li>
+<li>Starts the admin website in its own window.</li>
+<li>Starts the AI service in its own window.</li>
+</ol>
+<p><strong>Keep the three windows open.</strong> Closing a window stops that piece.</p>
+<p>This is the part of the script that looks after the databases:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="dev-up.ps1: the database services" src="img/code-dev-up-databases.png" /></figure>
+<h3 id="32-check-that-everything-is-up">3.2 Check that everything is up</h3>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Open this</th>
+<th>You should see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>http://localhost:3000/api/v1/health</td>
+<td><code>"status":"ok"</code></td>
+</tr>
+<tr>
+<td>http://127.0.0.1:8000/v1/health</td>
+<td><code>"status":"ok"</code>, and <code>chat_writer</code> says <code>quotes</code> (or <code>claude:…</code> when Claude is switched on)</td>
+</tr>
+<tr>
+<td>http://localhost:5173</td>
+<td>the admin sign-in page</td>
+</tr>
+<tr>
+<td>http://localhost:3000/api/docs</td>
+<td>the API explorer, listing every route</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="Health checks" src="img/term-health.png" /></figure>
+<h3 id="33-stop-everything">3.3 Stop everything</h3>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-down.ps1
+</code></pre></div></div>
+<p>It stops the backend, the admin website, the AI service and the Docker containers. <strong>No data is lost.</strong> PostgreSQL and MongoDB keep running as Windows services, which is normal.</p>
+<h3 id="34-start-each-piece-by-hand">3.4 Start each piece by hand</h3>
+<p>Use this when you want to see one piece's messages, or when the script fails.</p>
+<p><strong>Databases</strong> (usually already running):</p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>Get-Service postgresql-x64-18, MongoDB          # both should say Running
+Start-Service postgresql-x64-18                 # needs PowerShell &quot;Run as administrator&quot;
+Start-Service MongoDB
+</code></pre></div></div>
+<p><strong>Docker services:</strong></p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>docker compose -f 6-infrastructure\docker\docker-compose.yml --env-file .env up -d
+</code></pre></div></div>
+<p><strong>Backend:</strong></p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>cd 3-application-logic\backend
+npm ci                      # only the first time, or after package.json changed
+npx prisma migrate deploy   # apply database changes
+npm run db:seed             # synthetic demo data (safe to repeat)
+npm run build
+npm run start:prod          # or: npm run start:dev  (restarts when you save a file)
+</code></pre></div></div>
+<p><strong>AI service:</strong></p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>cd 4-ai-intelligence-layer\ai-services
+py -3 -m venv .venv                                  # only the first time
+.venv\Scripts\python -m pip install -e &quot;.[dev]&quot;      # only the first time
+.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+</code></pre></div></div>
+<p><strong>Admin website:</strong></p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>cd 1-presentation-layer\admin-panel-web
+npm ci          # only the first time
+npm run dev     # then open http://localhost:5173
+</code></pre></div></div>
+<p><strong>Phone app:</strong> see <a href="#102-running-the-app">section 10.2</a>.</p>
+<h3 id="35-setting-up-on-a-new-pc">3.5 Setting up on a new PC</h3>
+<ol>
+<li>Install the tools in section 2.</li>
+<li>Get the code: <code>git clone https://github.com/deedeestephen/final-year-project.git</code></li>
+<li>Create the settings file with fresh random secrets: <code>node 6-infrastructure\scripts\gen-keys.mjs --init-env</code></li>
+<li>Create the database login and database: follow steps 1 and 3 of <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/local-databases.md#how-the-databases-were-set-up-2026-09-29" target="_blank" rel="noopener">local-databases.md</a>, and put the same passwords in <code>.env</code>.</li>
+<li>Install the AI service (the two "only the first time" lines above).</li>
+<li>Run <code>dev-up.ps1</code>. It installs the other packages, creates the tables and adds the demo data.</li>
+</ol>
+<h3 id="36-signing-in">3.6 Signing in</h3>
+<p>The seed creates four synthetic demo accounts:</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Account</th>
+<th>Role</th>
+<th>Where it signs in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin@demo.pca-mhealth.test</code></td>
+<td>Administrator</td>
+<td>admin website</td>
+</tr>
+<tr>
+<td><code>clinician@demo.pca-mhealth.test</code></td>
+<td>Clinician</td>
+<td>phone app</td>
+</tr>
+<tr>
+<td><code>pathologist@demo.pca-mhealth.test</code></td>
+<td>Pathologist</td>
+<td>phone app</td>
+</tr>
+<tr>
+<td><code>patient@demo.pca-mhealth.test</code></td>
+<td>Patient</td>
+<td>phone app</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>The password</strong> of all four is the value of <code>SEED_DEMO_PASSWORD</code> in <code>.env</code>.</li>
+<li>The first time an account signs in, it may be asked to choose its own password (12 or more characters).</li>
+<li><strong>Forgot it, or locked out?</strong> Five wrong tries lock an account for 15 minutes. This command puts all four back to the password in <code>.env</code> and removes the lock:</li>
+</ul>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1 -ResetDemoPasswords
+</code></pre></div></div>
+<h2 id="4-the-settings-file-env">4. The settings file (.env)</h2>
+<p><code>.env</code> sits in the project folder. It holds every setting and every secret: database passwords, the keys that sign sessions, the key that encrypts personal fields.</p>
+<ul>
+<li><strong>It is never committed to Git.</strong> <code>.gitignore</code> excludes it, and a secret scanner checks every commit.</li>
+<li><strong><code>.env.example</code> is not the settings file.</strong> It is a template with empty or placeholder values, which <em>is</em> in Git, so a new developer knows which settings exist.</li>
+<li><strong>How it was made:</strong> <code>node 6-infrastructure\scripts\gen-keys.mjs --init-env</code> copies the template and fills every secret with random values.</li>
+<li><strong>After changing <code>.env</code>, restart the piece that reads it</strong> (the backend or the AI service).</li>
+<li><strong>A value that contains <code>$</code> must be in single quotes</strong>, for example <code>SEED_DEMO_PASSWORD='$example'</code>. Otherwise Docker reads <code>$example</code> as a variable and prints a warning.</li>
+</ul>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt=".env.example: the database settings" src="img/code-env-example.png" /></figure>
+<p><strong>The settings in groups</strong></p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Settings</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend</td>
+<td><code>PORT</code>, <code>CORS_ORIGINS</code>, <code>RATE_LIMIT_MAX</code>, <code>USER_RATE_LIMIT_MAX</code></td>
+<td>port 3000; which website may call the API; 600 requests a minute per address, 120 per account</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td><code>DATABASE_URL</code>, <code>POSTGRES_USER</code>, <code>POSTGRES_PASSWORD</code>, <code>LOCAL_POSTGRES_ADMIN_PASSWORD</code></td>
+<td>where the main database is; the app's login; the admin login, used only for set-up</td>
+</tr>
+<tr>
+<td>MongoDB</td>
+<td><code>MONGO_URL</code>, <code>MONGO_USER</code>, <code>MONGO_PASSWORD</code></td>
+<td>where the document database is</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><code>REDIS_URL</code>, <code>REDIS_PASSWORD</code></td>
+<td>shared rate-limit counters; without it each backend counts alone</td>
+</tr>
+<tr>
+<td>Files</td>
+<td><code>STORAGE_DRIVER</code>, <code>LOCAL_STORAGE_ROOT</code>, <code>S3_*</code>, <code>MINIO_*</code></td>
+<td><code>local</code> (now): files go to <code>backend/var/objects</code>; <code>s3</code>: files go to MinIO</td>
+</tr>
+<tr>
+<td>Sign-in</td>
+<td><code>JWT_PRIVATE_KEY_BASE64</code>, <code>JWT_PUBLIC_KEY_BASE64</code></td>
+<td>the key pair that signs sessions</td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td><code>FIELD_ENCRYPTION_KEY_BASE64</code>, <code>FIELD_HMAC_KEY_BASE64</code></td>
+<td>encrypt names, phone and NRC numbers. <strong>If these are lost, those fields cannot be read again: back up <code>.env</code> safely</strong></td>
+</tr>
+<tr>
+<td>AI</td>
+<td><code>AI_SERVICE_URL</code>, <code>AI_SERVICE_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>CHAT_LLM_MODEL</code>, <code>CHAT_LLM_DAILY_LIMIT</code></td>
+<td>where the AI service is; the shared token; Claude is off while the key is empty</td>
+</tr>
+<tr>
+<td>Demo</td>
+<td><code>SEED_DEMO_PASSWORD</code></td>
+<td>the password of the four demo accounts</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-the-backend">5. The backend</h2>
+<h3 id="51-what-it-is-and-how-it-is-organised">5.1 What it is and how it is organised</h3>
+<p>The backend is a NestJS application: a web server that answers requests under <code>http://localhost:3000/api/v1/…</code>. Its source is in <code>3-application-logic/backend/src</code>, in three folders that match the architecture:</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>What is inside</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gateway/</code></td>
+<td>What every request passes through: sign-in check, permissions, rate limits, validation, error format, logging, upload checks</td>
+</tr>
+<tr>
+<td><code>services/</code></td>
+<td>One folder per feature: <code>auth</code>, <code>users</code>, <code>patients</code>, <code>clinical</code>, <code>imaging</code>, <code>ai</code>, <code>chatbot</code>, <code>sync</code>, <code>notifications</code>, <code>fhir</code>, <code>admin</code>, <code>audit</code></td>
+</tr>
+<tr>
+<td><code>persistence/</code></td>
+<td>Talking to stores: <code>database</code> (PostgreSQL through Prisma, and MongoDB), <code>storage</code> (files), <code>crypto</code> (field encryption), <code>mongo</code> (collection rules), <code>seed.ts</code> (demo data)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each feature folder has the same three kinds of file:
+- a <strong>controller</strong> (<code>*.controller.ts</code>): the routes, and the permission each one needs;
+- a <strong>service</strong> (<code>*.service.ts</code>): the rules and the database work;
+- a <strong>DTO</strong> file (<code>*.dto.ts</code>): the exact shape of what may be sent and what comes back.</p>
+<h3 id="52-how-it-starts">5.2 How it starts</h3>
+<p><code>main.ts</code> is the first file that runs. It reads <code>.env</code>, builds the application, applies the security settings and starts listening on the port.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="main.ts" src="img/code-backend-main.png" /></figure>
+<h3 id="53-four-guards-on-every-request">5.3 Four guards on every request</h3>
+<p><code>app.module.ts</code> registers four guards that run on <strong>every</strong> route, in this order. A route is closed unless the code says otherwise ("deny by default").</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="The guards in app.module.ts" src="img/code-backend-guards.png" /></figure>
+<ol>
+<li><strong>AppThrottlerGuard:</strong> at most 600 requests a minute from one network address.</li>
+<li><strong>JwtAuthGuard:</strong> the request must carry a valid session token. Only routes marked <code>@Public()</code> (sign-in, health) skip this.</li>
+<li><strong>UserRateLimitGuard:</strong> at most 120 requests a minute per account.</li>
+<li><strong>PermissionsGuard:</strong> the account's roles must include the permission the route asks for.</li>
+</ol>
+<p>The permissions guard compares what the route needs with what the user has, and writes an audit entry when it refuses:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="permissions.guard.ts" src="img/code-backend-permissions-guard.png" /></figure>
+<ul>
+<li><strong>Roles:</strong> <code>PATIENT</code>, <code>CLINICIAN</code>, <code>PATHOLOGIST</code>, <code>ADMIN</code>.</li>
+<li><strong>Permissions</strong> are codes such as <code>patient:read</code> or <code>user:manage</code>. Roles hold permissions, and users hold roles.</li>
+<li><strong>Every route and who may use it</strong> is listed in <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/access-matrix.md" target="_blank" rel="noopener">access-matrix.md</a> (73 routes). That file is generated from the code with <code>npm run access:matrix</code>, and the quality gate fails if it is out of date.</li>
+</ul>
+<h3 id="54-one-feature-from-top-to-bottom-deleting-an-account">5.4 One feature from top to bottom: deleting an account</h3>
+<p>The <strong>route</strong> says which address it answers, which permission it needs, and what it returns:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="users.controller.ts: the delete route" src="img/code-backend-delete-route.png" /></figure>
+<p>The <strong>service</strong> holds the rules. It refuses the administrator's own account and any account named in the clinical record. Otherwise it deletes the account and writes the audit entry in one database transaction (both happen or neither does). Last, it removes the account's chats from MongoDB.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="users.service.ts: delete" src="img/code-backend-delete-service.png" /></figure>
+<p>Every feature follows this pattern: controller → service → Prisma (database) → audit.</p>
+<h3 id="55-security-that-is-built-in">5.5 Security that is built in</h3>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Protection</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Passwords</td>
+<td>Stored only as Argon2id hashes (64 MB memory, 3 passes). Nobody, including an administrator, can read a password. At least 12 characters</td>
+</tr>
+<tr>
+<td>Sessions</td>
+<td>A short access token (15 minutes), signed with an Ed25519 key pair, plus a refresh token (14 days) that is replaced on every use. A stolen, reused refresh token ends the whole session family</td>
+</tr>
+<tr>
+<td>Lockout</td>
+<td>5 wrong passwords lock the account for 15 minutes</td>
+</tr>
+<tr>
+<td>Personal fields</td>
+<td>Names, phone and NRC numbers are encrypted in the database (AES-256-GCM). The NRC can still be matched exactly through a keyed hash</td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>Every important action is recorded. The table only accepts new rows, and each row carries a hash of the row before it, so any later change is detected</td>
+</tr>
+<tr>
+<td>Input</td>
+<td>Every request body is validated against its DTO; unknown fields are rejected</td>
+</tr>
+<tr>
+<td>Uploads</td>
+<td>Size limits, file-type checks by content, DICOM header checks</td>
+</tr>
+</tbody>
+</table></div>
+<p>The audit chain is enforced by the database itself, not only by the application:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="The audit log trigger" src="img/code-db-audit-chain.png" /></figure>
+<p>On the admin website, <strong>Audit log › Check integrity</strong> re-computes the whole chain.</p>
+<h3 id="56-backend-commands">5.6 Backend commands</h3>
+<p>Run these in <code>3-application-logic\backend</code>:</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Install packages</td>
+<td><code>npm ci</code></td>
+</tr>
+<tr>
+<td>Build</td>
+<td><code>npm run build</code></td>
+</tr>
+<tr>
+<td>Start (built code)</td>
+<td><code>npm run start:prod</code></td>
+</tr>
+<tr>
+<td>Start and restart on every save</td>
+<td><code>npm run start:dev</code></td>
+</tr>
+<tr>
+<td>Unit tests</td>
+<td><code>npm test</code></td>
+</tr>
+<tr>
+<td>End-to-end tests (no database needed)</td>
+<td><code>npm run test:e2e</code></td>
+</tr>
+<tr>
+<td>Database tests (need PostgreSQL, MongoDB and Docker's MinIO)</td>
+<td><code>npm run test:db</code></td>
+</tr>
+<tr>
+<td>Whole workflows on the live system</td>
+<td><code>npm run test:workflows</code></td>
+</tr>
+<tr>
+<td>Format and lint</td>
+<td><code>npx prettier --write src test</code> and <code>npm run lint</code></td>
+</tr>
+<tr>
+<td>Rebuild the API description</td>
+<td><code>npm run openapi:export</code></td>
+</tr>
+<tr>
+<td>Rebuild the route list</td>
+<td><code>npm run access:matrix</code></td>
+</tr>
+<tr>
+<td>Reset the demo passwords</td>
+<td><code>npm run db:reset-demo</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="57-the-api-explorer">5.7 The API explorer</h3>
+<p>http://localhost:3000/api/docs lists every route with its inputs and outputs. To try one: sign in through <code>POST /api/v1/auth/login</code>, copy the <code>accessToken</code>, click <strong>Authorize</strong> and paste it. The same description is saved in <code>2-api-gateway/openapi/openapi.json</code>.</p>
+<h3 id="58-adding-a-new-route">5.8 Adding a new route</h3>
+<ol>
+<li>Pick the feature folder in <code>src/services/</code> (or create one with a module, controller and service).</li>
+<li>Describe the input and output in the <code>*.dto.ts</code> file.</li>
+<li>Add the method to the service. Record an audit entry for anything that changes data.</li>
+<li>Add the route to the controller with <code>@RequirePermissions('…')</code>.</li>
+<li>Write a test: a unit test next to the file (<code>*.spec.ts</code>), or a database test in <code>test/db/</code>.</li>
+<li>Run <code>npm run openapi:export</code> and <code>npm run access:matrix</code>.</li>
+<li>Run the gate: <code>powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\quality-gate.ps1 backend</code>.</li>
+</ol>
+<h2 id="6-the-databases">6. The databases</h2>
+<h3 id="61-what-is-stored-where">6.1 What is stored where</h3>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Where</th>
+<th>Why there</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accounts, roles, patients, screenings, consents, scans and slides (the records), AI jobs, notifications, sync history, audit log</td>
+<td>PostgreSQL 18, database <code>pca_mhealth</code>, 20 tables</td>
+<td>Structured records with strict rules and links between them</td>
+</tr>
+<tr>
+<td>AI reports, AI logs, scan technical details, chatbot conversations</td>
+<td>MongoDB 8.3, database <code>pca_mhealth</code>, 4 collections</td>
+<td>Documents whose shape varies</td>
+</tr>
+<tr>
+<td>Uploaded scan and slide files</td>
+<td>the folder <code>3-application-logic/backend/var/objects</code></td>
+<td>Large files do not belong in a database</td>
+</tr>
+<tr>
+<td>Rate-limit counters</td>
+<td>Redis (Docker)</td>
+<td>Fast, shared, temporary</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="The 20 tables" src="img/term-tables.png" /></figure>
+<h3 id="62-postgresql-how-the-tables-were-made">6.2 PostgreSQL: how the tables were made</h3>
+<p>The tables are <strong>not</strong> created by hand. They are described in one file, <code>3-application-logic/backend/prisma/schema.prisma</code>. This is the part that describes a user account:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="schema.prisma: the User model" src="img/code-backend-prisma-user.png" /></figure>
+<p>From that file, the tool <strong>Prisma</strong> generates:
+- <strong>migrations:</strong> SQL files in <code>5-data-persistence/postgresql/migrations/</code>, one folder per change, in date order. They are the history of the database, and they are in Git.
+- <strong>the Prisma client:</strong> the typed code the backend uses to read and write (<code>this.prisma.user.findUnique(…)</code>).</p>
+<p><strong>To change the database:</strong></p>
+<ol>
+<li>Edit <code>schema.prisma</code>.</li>
+<li>Create the migration and apply it to your database:
+   <code>powershell
+   cd 3-application-logic\backend
+   npm run db:migrate:dev -- --name describe_the_change</code></li>
+<li>Read the new SQL file in the migrations folder. Special rules (such as the audit triggers) are written into it by hand.</li>
+<li>Commit the schema and the migration together.</li>
+</ol>
+<p><strong>To apply existing migrations</strong> (done by <code>dev-up.ps1</code>): <code>npx prisma migrate deploy</code>. It only ever adds what is missing.</p>
+<p><strong>To check:</strong></p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="prisma migrate status" src="img/term-migrate.png" /></figure>
+<blockquote>
+<p><strong>Never run <code>prisma migrate reset</code>.</strong> It deletes every table and all data.</p>
+</blockquote>
+<h3 id="63-mongodb-collections-with-rules">6.3 MongoDB: collections with rules</h3>
+<p>MongoDB would accept anything, so each collection has a validator: a rule the server checks on every write. They are defined in <code>src/persistence/mongo/collections.ts</code> and applied with:</p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>npm run db:mongo:migrate
+</code></pre></div></div>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Collection</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ai_reports</code></td>
+<td>the result of each AI analysis, with its "MOCK" or "RESEARCH_MODEL" label</td>
+</tr>
+<tr>
+<td><code>ai_inference_logs</code></td>
+<td>a technical log of each model run</td>
+</tr>
+<tr>
+<td><code>imaging_metadata</code></td>
+<td>technical fields of uploaded scans (never the patient's name)</td>
+</tr>
+<tr>
+<td><code>chatbot_conversations</code></td>
+<td>chats; deleted automatically 180 days after the last message</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="64-looking-at-the-data">6.4 Looking at the data</h3>
+<ul>
+<li><strong>PostgreSQL:</strong> open <strong>pgAdmin 4</strong> › Servers › PostgreSQL 18 › Databases › <code>pca_mhealth</code> › Schemas › public › Tables. Right-click a table › View/Edit Data › All Rows.</li>
+<li><strong>MongoDB:</strong> open <strong>MongoDB Compass</strong>, connect to <code>mongodb://localhost:27017</code>, open <code>pca_mhealth</code>.</li>
+</ul>
+<p>Reading is always safe. <strong>Do not add, change or delete rows by hand:</strong>
+- A typed-in account cannot sign in, because passwords are stored as hashes and some fields are encrypted.
+- A hand-deleted row breaks links between records.
+- A hand-edited audit log fails its integrity check.</p>
+<p>Use the admin website or the API instead. The full guide is <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/local-databases.md" target="_blank" rel="noopener">local-databases.md</a>.</p>
+<h3 id="65-backups">6.5 Backups</h3>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code># PostgreSQL: one file
+&amp; &quot;C:\Program Files\PostgreSQL\18\bin\pg_dump.exe&quot; -h localhost -U pca -d pca_mhealth -Fc -f D:\backups\pca_mhealth.dump
+
+# Restore into an empty database
+&amp; &quot;C:\Program Files\PostgreSQL\18\bin\pg_restore.exe&quot; -h localhost -U pca -d pca_mhealth --no-owner --no-privileges D:\backups\pca_mhealth.dump
+</code></pre></div></div>
+<ul>
+<li><strong>MongoDB:</strong> copy it to another server or database name with the project's tool (below), or install the free <em>MongoDB Database Tools</em> for <code>mongodump</code> and <code>mongorestore</code>.</li>
+<li><strong>Files:</strong> copy the folder <code>3-application-logic/backend/var/objects</code>.</li>
+<li><strong><code>.env</code>:</strong> keep a copy somewhere safe. Without its encryption keys, the encrypted fields in a backup cannot be read.</li>
+</ul>
+<p>The copy tool walks through every collection and copies its rules, its indexes and its documents:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="copy-mongo.ts" src="img/code-db-copy-mongo.png" /></figure>
+<h3 id="66-how-the-databases-were-moved-onto-this-pc">6.6 How the databases were moved onto this PC</h3>
+<p>Until 29 September 2026 PostgreSQL and MongoDB ran inside Docker. They were moved to the servers installed on the PC in six steps: create the login and database, dump and restore PostgreSQL, create the MongoDB login, copy the collections, change two lines in <code>.env</code>, and switch the Docker copies off. Every table had the same number of rows afterwards, and the audit chain still verified. The exact commands, and how to switch back, are in <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/local-databases.md" target="_blank" rel="noopener">local-databases.md</a>.</p>
+<h2 id="7-docker">7. Docker</h2>
+<p>Docker runs a program in a sealed box called a <strong>container</strong>, with its data in a <strong>volume</strong> that survives restarts. This project uses Docker only for helper services, so nothing has to be installed for them.</p>
+<p><code>6-infrastructure/docker/docker-compose.yml</code> lists the containers:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="docker-compose.yml" src="img/code-docker-compose.png" /></figure>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>What it is</th>
+<th>Port</th>
+<th>Used now?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>redis</code></td>
+<td>fast counters for rate limits</td>
+<td>6379</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>minio</code></td>
+<td>S3-style file storage, with a web console on 9001</td>
+<td>9000, 9001</td>
+<td>by the database tests; by the app only when <code>STORAGE_DRIVER=s3</code></td>
+</tr>
+<tr>
+<td><code>qdrant</code></td>
+<td>vector search</td>
+<td>6333</td>
+<td>not yet (<code>VECTOR_STORE=memory</code>)</td>
+</tr>
+<tr>
+<td><code>postgres</code>, <code>mongo</code></td>
+<td>the old Docker databases, kept as a backup</td>
+<td>5433, 27018</td>
+<td>no: they are in the optional <code>docker-db</code> profile and stay off</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Commands</strong> (Docker Desktop must be running; wait for "Engine running"):</p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>$compose = &quot;6-infrastructure\docker\docker-compose.yml&quot;
+
+docker compose -f $compose --env-file .env up -d        # start
+docker compose -f $compose --env-file .env ps           # what is running
+docker compose -f $compose --env-file .env logs redis   # one service's messages
+docker compose -f $compose --env-file .env restart minio
+docker compose -f $compose --env-file .env stop         # stop, keep the data
+</code></pre></div></div>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="docker compose ps" src="img/term-docker.png" /></figure>
+<ul>
+<li><strong><code>stop</code> keeps everything.</strong> <code>down</code> removes the containers but keeps the volumes. <strong><code>down -v</code> deletes the volumes and their data: do not use it</strong> unless you mean to.</li>
+<li><strong>To use the Docker databases again:</strong> set the ports in <code>DATABASE_URL</code> and <code>MONGO_URL</code> to 5433 and 27018, then run <code>dev-up.ps1 -DockerDatabases</code>.</li>
+<li><strong>A password change</strong> for Redis or MinIO needs the container recreated: <code>docker compose -f $compose --env-file .env up -d --force-recreate redis minio</code>.</li>
+</ul>
+<h2 id="8-the-ai-service">8. The AI service</h2>
+<p>A separate Python program (FastAPI) in <code>4-ai-intelligence-layer/ai-services</code>. Only the backend may call it, with the shared <code>AI_SERVICE_TOKEN</code>.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Route</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /v1/health</code></td>
+<td>says it is up, that the models are <strong>development mocks</strong>, and whether Claude writes chat answers</td>
+</tr>
+<tr>
+<td><code>GET /v1/models</code></td>
+<td>the list of models and their versions</td>
+</tr>
+<tr>
+<td><code>POST /v1/infer</code></td>
+<td>runs an analysis (MRI, slide, risk score)</td>
+</tr>
+<tr>
+<td><code>POST /v1/chat/answer</code></td>
+<td>finds the reviewed passages for a question and returns the answer</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The models are mocks.</strong> No trained model exists yet, so the service returns labelled development data (<em>"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT"</em>), and the app shows that label. When real models are trained, only this service changes: see <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/ai-model-integration-guide.md" target="_blank" rel="noopener">ai-model-integration-guide.md</a>.</p>
+<p><strong>Commands</strong> (in <code>4-ai-intelligence-layer\ai-services</code>):</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Install (first time)</td>
+<td><code>py -3 -m venv .venv</code> then <code>.venv\Scripts\python -m pip install -e ".[dev]"</code></td>
+</tr>
+<tr>
+<td>Run</td>
+<td><code>.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000</code></td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><code>.venv\Scripts\python -m pytest -q</code></td>
+</tr>
+<tr>
+<td>Lint and types</td>
+<td><code>.venv\Scripts\python -m ruff check .</code> and <code>.venv\Scripts\python -m mypy</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="9-the-chatbot-end-to-end">9. The chatbot, end to end</h2>
+<h3 id="91-the-path-of-one-question">9.1 The path of one question</h3>
+<ol>
+<li>The person types or speaks a question in the app. Speech is turned into text by the phone.</li>
+<li>The app sends the text to the backend: <code>POST /api/v1/chat/conversations/{id}/messages</code>.</li>
+<li>The backend checks the permission (<code>chatbot:use</code>) and the limit (30 questions an hour per account).</li>
+<li><strong>Safety rules</strong> look at the question. An emergency, self-harm, a medicine dose, or a patient asking what their own results mean gets a fixed, careful reply. Nothing is looked up.</li>
+<li><strong>Small talk</strong> ("hello", "how are you", "tell me a joke") gets a friendly fixed reply.</li>
+<li>Otherwise the backend asks the AI service, which <strong>searches the reviewed knowledge base</strong> for the passages that match.</li>
+<li>If Claude is switched on, Claude writes a short answer <strong>from those passages only</strong>. If not, or if anything fails, the passages are quoted word for word.</li>
+<li>The backend checks the answer: it must have a source and must not contain a dose.</li>
+<li>Question and answer are stored in MongoDB. The audit log records that a question was asked, never its words.</li>
+<li>The app shows the answer with its sources, the content's review status and a disclaimer.</li>
+</ol>
+<p>Steps 4 to 8 are this one function:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="chatbot.service.ts: answer()" src="img/code-chat-answer-flow.png" /></figure>
+<h3 id="92-the-safety-rules">9.2 The safety rules</h3>
+<p>They are plain pattern checks in <code>src/services/chatbot/chat-safety.ts</code>, so they behave the same every time and can be tested:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="chat-safety.ts: checkQuestion" src="img/code-chat-safety-rules.png" /></figure>
+<h3 id="93-small-talk">9.3 Small talk</h3>
+<p>There are 18 kinds of casual message, each with a reply for patients and one for clinicians:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="chat-safety.ts: two small-talk intents" src="img/code-chat-small-talk.png" /></figure>
+<p><strong>To add a phrase,</strong> add it to the <code>pattern</code> of the right intent, or add a new block to the <code>INTENTS</code> list in <code>chat-safety.ts</code>. Then add a line to the table in <code>chat-safety.spec.ts</code> and run:</p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>cd 3-application-logic\backend
+node node_modules\jest\bin\jest.js src/services/chatbot
+</code></pre></div></div>
+<p>Only a message that is <em>nothing but</em> small talk counts: "hello, is my PSA bad?" still gets the safety reply.</p>
+<h3 id="94-the-knowledge-base">9.4 The knowledge base</h3>
+<p>The assistant can only say what is in two files in <code>4-ai-intelligence-layer/knowledge-base/en/</code>:
+- <code>patient-learn.json</code>: the app's Learn articles, word for word;
+- <code>clinician-reference.json</code>: reference cards (PI-RADS, grade groups, PSA density, DRE findings, reading the AI report).</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="patient-learn.json" src="img/code-ai-knowledge-base.png" /></figure>
+<p>Every section of every article is one <strong>passage</strong> the assistant can use. The search is classic keyword matching (BM25): it needs no internet and no model, and every result can be explained by the words it shares with the question.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="retrieve.py" src="img/code-ai-retrieve.png" /></figure>
+<p><code>answer.py</code> then decides: no good match means "no reviewed information"; with Claude, Claude writes from the three best passages; otherwise the best passages are quoted.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="answer.py" src="img/code-ai-answer.png" /></figure>
+<p><strong>To change what the assistant knows:</strong></p>
+<ol>
+<li>Edit the JSON file. Keep each section short and complete in itself, and give every article a source.</li>
+<li>If you changed <code>patient-learn.json</code>, copy it over <code>1-presentation-layer/mobile-app/assets/education/en/articles.json</code>. A test fails if the two differ.</li>
+<li>Restart the AI service (it reads the files when it starts).</li>
+<li>Run its tests: <code>.venv\Scripts\python -m pytest -q</code>.</li>
+</ol>
+<p>The content says <em>"Draft for review by a qualified clinician"</em> until a clinician signs it off. Record a sign-off by changing <code>reviewStatus</code> in the file and noting the reviewer and date in the development log.</p>
+<h3 id="95-claude-optional-costs-money">9.5 Claude (optional, costs money)</h3>
+<p>Claude is <strong>off</strong> on this PC: the health check says <code>chat_writer: quotes</code>. To switch it on:</p>
+<ol>
+<li>Create an API key at console.anthropic.com.</li>
+<li>Open <code>.env</code> and put the key after <code>ANTHROPIC_API_KEY=</code>. Never put it in a chat, an email or the code.</li>
+<li>Restart the AI service. The health check then says <code>chat_writer: claude:claude-haiku-4-5-20251001</code>.</li>
+</ol>
+<p>What Claude is told:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="generate.py: the instructions" src="img/code-ai-claude-instructions.png" /></figure>
+<ul>
+<li>Claude only receives the three best passages, the last three questions and answers, and the question. Email addresses, NRC numbers and phone numbers are removed first.</li>
+<li>It must answer through a fixed form (<code>covered</code>, <code>answer</code>, <code>citations</code>). Only passages it cites become the sources.</li>
+<li>Limits: 8 seconds, no retries, at most <code>CHAT_LLM_DAILY_LIMIT</code> (2,000) answers a day. On any problem the passages are quoted instead, so the chat works without Claude.</li>
+<li>Answers written by Claude are labelled <em>"Written by AI (Claude) from the sources below"</em>.</li>
+<li><strong>Before real patients:</strong> questions would be sent to Anthropic in the United States. That needs a data-protection review first (ADR-010).</li>
+</ul>
+<h3 id="96-what-the-person-sees">9.6 What the person sees</h3>
+<div class="phones"><figure><img class="phone" loading="lazy" decoding="async" alt="Empty chat" src="img/app-chat-empty.jpg" /><figcaption>Empty chat</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Answer" src="img/app-chat-answer.jpg" /><figcaption>An answer with its source</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Casual chat" src="img/app-chat-casual.jpg" /><figcaption>Casual chat</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Past chats" src="img/app-chat-history.jpg" /><figcaption>Past chats</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Recording" src="img/app-chat-recording.jpg" /><figcaption>Speaking a question</figcaption></figure></div>
+<p>These screens are drawn by the app's own code with synthetic data. The answer is the AI service's real answer to that question (quoted, because Claude is off), and the casual replies are the backend's real replies. In the recording picture a stand-in plays the part of the phone's speech service.</p>
+<h3 id="97-testing-the-chatbot">9.7 Testing the chatbot</h3>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Command</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Safety rules and small talk (89 tests)</td>
+<td><code>node node_modules\jest\bin\jest.js src/services/chatbot</code></td>
+<td><code>3-application-logic\backend</code></td>
+</tr>
+<tr>
+<td>The whole chat through the API and MongoDB (11 tests)</td>
+<td><code>node node_modules\jest\bin\jest.js --config ./test/jest-db.json --runInBand test/db/chatbot.int-spec.ts</code></td>
+<td><code>3-application-logic\backend</code></td>
+</tr>
+<tr>
+<td>Search quality and Claude with a stand-in</td>
+<td><code>.venv\Scripts\python -m pytest -q</code></td>
+<td><code>4-ai-intelligence-layer\ai-services</code></td>
+</tr>
+<tr>
+<td>The chat screens</td>
+<td><code>flutter test test/features/chat</code></td>
+<td><code>1-presentation-layer\mobile-app</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="10-the-phone-app">10. The phone app</h2>
+<h3 id="101-how-it-is-organised">10.1 How it is organised</h3>
+<p><code>1-presentation-layer/mobile-app/lib</code>:</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>What is inside</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main.dart</code></td>
+<td>the first code that runs</td>
+</tr>
+<tr>
+<td><code>app/</code></td>
+<td>the routes (which screen is at which address, and who may open it) and the theme (colours, type, shapes)</td>
+</tr>
+<tr>
+<td><code>core/</code></td>
+<td>shared machinery: <code>network</code> (talking to the API), <code>db</code> (the encrypted database on the phone), <code>sync</code> (sending offline work later), <code>storage</code> (the session tokens), <code>uploads</code></td>
+</tr>
+<tr>
+<td><code>features/</code></td>
+<td>one folder per feature: <code>auth</code>, <code>home</code>, <code>patients</code>, <code>clinical_server</code>, <code>patient</code>, <code>chat</code>, <code>sync</code>, <code>settings</code></td>
+</tr>
+<tr>
+<td><code>shared/</code></td>
+<td>widgets used everywhere (the header, tiles, the assistant's face) and <code>audio</code> (read-aloud)</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>main.dart</code> opens the phone's encrypted database and the saved preferences, then starts the app:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="main.dart" src="img/code-app-main.png" /></figure>
+<p>The only setting built into the app is the server's address. No secret is ever compiled in:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="app_env.dart" src="img/code-app-env.png" /></figure>
+<h3 id="102-running-the-app">10.2 Running the app</h3>
+<p><strong>On the emulator</strong> (the backend must be running):</p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>flutter emulators --launch Galaxy_S9_Plus_API_29
+cd 1-presentation-layer\mobile-app
+flutter pub get      # only after pubspec.yaml changed
+flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000
+</code></pre></div></div>
+<p><code>10.0.2.2</code> is how the emulator reaches this PC. While <code>flutter run</code> is open, press <strong>r</strong> to reload after a code change, <strong>R</strong> to restart the app, <strong>q</strong> to quit. In Android Studio, the run configuration <strong>App - S9+ emulator</strong> does the same.</p>
+<p><strong>On a real Android phone by USB:</strong></p>
+<ol>
+<li>On the phone: Settings › Developer options › USB debugging on. Plug it in and tap <strong>Allow</strong>.</li>
+<li><code>powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\phone-usb.ps1</code> (it lets the phone reach the PC's port 3000).</li>
+<li><code>flutter run --dart-define=API_BASE_URL=http://localhost:3000</code>, or the Android Studio configuration <strong>App - USB phone</strong>.</li>
+</ol>
+<p><strong>To make an installable file (APK):</strong></p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>flutter build apk --release --dart-define=API_BASE_URL=https://your-server.example
+</code></pre></div></div>
+<p>The file appears in <code>build\app\outputs\flutter-apk\app-release.apk</code>. A release build for the public also needs a signing key and an HTTPS server address.</p>
+<h3 id="103-how-the-app-is-put-together">10.3 How the app is put together</h3>
+<ul>
+<li><strong>State</strong> is managed with Riverpod: a <em>controller</em> holds the state of one screen and the screen redraws when it changes. The chat controller is a typical example:</li>
+</ul>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="chat_controller.dart" src="img/code-app-chat-controller.png" /></figure>
+<ul>
+<li><strong>Talking to the server:</strong> <code>core/network/api_client.dart</code> adds the session token to every request, renews it when it has expired, and turns server errors into plain messages.</li>
+<li><strong>Offline:</strong> clinicians' work is saved first in an encrypted database on the phone (Drift with SQLCipher) and sent when the connection returns (<code>core/sync</code>). The server re-checks every change with the same rules as online.</li>
+<li><strong>Session tokens</strong> are kept in the phone's secure storage, never in plain files.</li>
+<li><strong>Permissions:</strong> the app only asks for the internet and, when the microphone is first tapped, the microphone.</li>
+</ul>
+<h3 id="104-voice-and-reading-aloud">10.4 Voice and reading aloud</h3>
+<p>Both use the phone's own speech services, behind small interfaces, so tests can replace them with stand-ins.</p>
+<p><strong>Voice</strong> (<code>features/chat/application/voice_input.dart</code>): the phone turns speech into text, and the app only receives the words.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="voice_input.dart" src="img/code-app-voice.png" /></figure>
+<p><strong>Read-aloud</strong> (<code>shared/audio/read_aloud.dart</code>): an article is read part by part, so the screen can highlight the part being read.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="read_aloud.dart" src="img/code-app-read-aloud.png" /></figure>
+<p>The assistant's face is not a picture file. It is drawn by code, so it is sharp at every size:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="assistant_avatar.dart" src="img/code-app-bot-painter.png" /></figure>
+<h3 id="105-what-it-looks-like">10.5 What it looks like</h3>
+<div class="phones"><figure><img class="phone" loading="lazy" decoding="async" alt="Sign-in" src="img/app-signin.jpg" /><figcaption>Sign-in</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Home" src="img/app-home-device.jpg" /><figcaption>Patient home (emulator)</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Learn" src="img/app-learn.jpg" /><figcaption>Learn, dark mode</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Article" src="img/app-article-device.jpg" /><figcaption>An article being read aloud (emulator)</figcaption></figure><figure><img class="phone" loading="lazy" decoding="async" alt="Clinician" src="img/app-clinician.jpg" /><figcaption>Clinician home, dark mode</figcaption></figure></div>
+<h3 id="106-app-commands">10.6 App commands</h3>
+<p>Run these in <code>1-presentation-layer\mobile-app</code>:</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Get packages</td>
+<td><code>flutter pub get</code></td>
+</tr>
+<tr>
+<td>Check the code</td>
+<td><code>flutter analyze</code></td>
+</tr>
+<tr>
+<td>Format</td>
+<td><code>dart format lib test</code></td>
+</tr>
+<tr>
+<td>All tests</td>
+<td><code>flutter test</code></td>
+</tr>
+<tr>
+<td>One test file</td>
+<td><code>flutter test test/features/chat/chat_test.dart</code></td>
+</tr>
+<tr>
+<td>Build a debug APK</td>
+<td><code>flutter build apk --debug</code></td>
+</tr>
+<tr>
+<td>List devices</td>
+<td><code>flutter devices</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="11-the-admin-website">11. The admin website</h2>
+<p><code>1-presentation-layer/admin-panel-web</code>, a React application. Only administrators can sign in.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Page</th>
+<th>What it is for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard</td>
+<td>what is happening in the phone app: sign-ins, records, sync health (counts only, no patient names)</td>
+</tr>
+<tr>
+<td>Users</td>
+<td>every account: roles, facility, switch off, unlock, reset password, <strong>delete</strong></td>
+</tr>
+<tr>
+<td>Roles &amp; permissions</td>
+<td>what each role may do</td>
+</tr>
+<tr>
+<td>Patient accounts</td>
+<td>link a patient's sign-in to their clinic record</td>
+</tr>
+<tr>
+<td>FHIR export</td>
+<td>export records for SmartCare Pro</td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>who did what, and <strong>Check integrity</strong></td>
+</tr>
+</tbody>
+</table></div>
+<figure class="wide"><img class="web" loading="lazy" decoding="async" alt="The dashboard" src="img/admin-dashboard.png" /></figure>
+<figure class="wide"><img class="web" loading="lazy" decoding="async" alt="Users" src="img/admin-users.png" /></figure>
+<figure class="wide"><img class="web" loading="lazy" decoding="async" alt="Delete this account?" src="img/admin-delete.png" /></figure>
+<p>These pictures show the real website, but the API's answers were replaced with synthetic ones while they were taken: the accounts are not real, and the dashboard's numbers were made up for the picture.</p>
+<p>The dialog in that picture is this code in <code>src/pages/UsersPages.tsx</code>:</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="UsersPages.tsx: the delete dialog" src="img/code-admin-delete-dialog.png" /></figure>
+<p><strong>Commands</strong> (in <code>1-presentation-layer\admin-panel-web</code>):</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run for development</td>
+<td><code>npm run dev</code></td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><code>npm test</code></td>
+</tr>
+<tr>
+<td>Tests with coverage</td>
+<td><code>npm run test:cov</code></td>
+</tr>
+<tr>
+<td>Lint, types</td>
+<td><code>npm run lint</code>, <code>npm run typecheck</code></td>
+</tr>
+<tr>
+<td>Build the files for a web server</td>
+<td><code>npm run build</code> (output in <code>dist/</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="12-tests-and-the-quality-gate">12. Tests and the quality gate</h2>
+<p>One script checks a whole part: formatting, lint, types, tests, build and a scan of the packages for known problems.</p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>$gate = &quot;6-infrastructure\scripts\quality-gate.ps1&quot;
+powershell -ExecutionPolicy Bypass -File $gate backend
+powershell -ExecutionPolicy Bypass -File $gate mobile
+powershell -ExecutionPolicy Bypass -File $gate admin-web
+powershell -ExecutionPolicy Bypass -File $gate ai
+# The databases' tests (needs the databases and Docker):
+powershell -ExecutionPolicy Bypass -File $gate db
+# Every link in the docs works; are the manual's pictures current?
+powershell -ExecutionPolicy Bypass -File $gate docs
+# No password or key in Git:
+powershell -ExecutionPolicy Bypass -File $gate secrets
+powershell -ExecutionPolicy Bypass -File $gate all
+</code></pre></div></div>
+<p><code>quality-gate.ps1</code> runs the real script, <code>quality-gate.sh</code>, with the <code>bash</code> that comes with Git for Windows. In <strong>Git Bash</strong> you can run that directly: <code>bash 6-infrastructure/scripts/quality-gate.sh backend</code>. Do not type <code>bash …</code> in PowerShell: on this PC it starts Windows' WSL, not Git Bash.</p>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="The backend gate" src="img/term-gate.png" /></figure>
+<p><strong>Where things stood on 30 September 2026:</strong></p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend unit tests</td>
+<td>307</td>
+</tr>
+<tr>
+<td>Backend end-to-end tests</td>
+<td>20</td>
+</tr>
+<tr>
+<td>Backend database tests</td>
+<td>230</td>
+</tr>
+<tr>
+<td>AI service</td>
+<td>65, and 1 skipped (it would call the real Claude)</td>
+</tr>
+<tr>
+<td>Phone app</td>
+<td>280 (line coverage 90.9%)</td>
+</tr>
+<tr>
+<td>Admin website</td>
+<td>81 (coverage 87.8%)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The rule the project has followed:</strong> no commit unless the gate for the changed part passes. If a test fails, fix the code or, if the behaviour really should change, change the test and say why in the commit.</p>
+<h2 id="13-git-and-github">13. Git and GitHub</h2>
+<ul>
+<li>The code is in a <strong>private</strong> GitHub repository, <code>deedeestephen/final-year-project</code>, branch <code>main</code>.</li>
+<li>The history is one commit per finished piece of work, with a message that says what and why.</li>
+</ul>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>git status                       # what changed
+git diff                         # the changes, line by line
+git add -A                       # stage everything
+git commit -m &quot;What changed and why&quot;
+git push origin main             # send to GitHub
+git log --oneline -10            # the last ten commits
+git pull origin main             # get changes from GitHub
+</code></pre></div></div>
+<p><strong>Never commit</strong> <code>.env</code>, passwords, keys or real patient data. Before committing, run <code>powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\quality-gate.ps1 secrets</code>.</p>
+<h2 id="14-when-something-goes-wrong">14. When something goes wrong</h2>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>Likely cause</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dev-up.ps1</code>: <em>The .env file is missing</em></td>
+<td>new folder or new PC</td>
+<td><code>node 6-infrastructure\scripts\gen-keys.mjs --init-env</code>, then set the database passwords</td>
+</tr>
+<tr>
+<td><code>dev-up.ps1</code>: <em>Database migration failed</em></td>
+<td>PostgreSQL is stopped, or <code>DATABASE_URL</code> is wrong</td>
+<td><code>Get-Service postgresql-x64-18</code>; check the port (5432) and password in <code>.env</code></td>
+</tr>
+<tr>
+<td><code>dev-up.ps1</code>: <em>docker compose failed</em></td>
+<td>Docker Desktop is not running</td>
+<td>open Docker Desktop, wait for "Engine running", run again</td>
+</tr>
+<tr>
+<td>Backend window: <code>EADDRINUSE :::3000</code></td>
+<td>an old backend still runs</td>
+<td>run <code>dev-down.ps1</code>, then <code>dev-up.ps1</code></td>
+</tr>
+<tr>
+<td>Backend window: MongoDB <code>Authentication failed</code></td>
+<td><code>MONGO_URL</code> and the <code>pca</code> password differ</td>
+<td>see the troubleshooting table in <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/local-databases.md" target="_blank" rel="noopener">local-databases.md</a></td>
+</tr>
+<tr>
+<td>Admin website: <em>Email or password is incorrect</em></td>
+<td>wrong password, or it was changed</td>
+<td>use <code>SEED_DEMO_PASSWORD</code> from <code>.env</code> (not <code>.env.example</code>), or <code>dev-up.ps1 -ResetDemoPasswords</code></td>
+</tr>
+<tr>
+<td><em>This account is temporarily locked</em></td>
+<td>5 wrong tries</td>
+<td>wait 15 minutes, or <code>dev-up.ps1 -ResetDemoPasswords</code></td>
+</tr>
+<tr>
+<td>Admin website: <em>Cannot reach the server</em></td>
+<td>the backend is not running</td>
+<td>check http://localhost:3000/api/v1/health</td>
+</tr>
+<tr>
+<td>App: <em>Cannot reach the server</em> on the emulator</td>
+<td>the backend is not running, or the wrong address</td>
+<td>the address must be <code>http://10.0.2.2:3000</code> on the emulator</td>
+</tr>
+<tr>
+<td>App shows a white screen after the PC restarted</td>
+<td>a debug build needs <code>flutter run</code></td>
+<td>run <code>flutter run</code> again (section 10.2)</td>
+</tr>
+<tr>
+<td>Chat: <em>The assistant is not available right now</em></td>
+<td>the AI service is not running</td>
+<td>start it (section 3.4) and check http://127.0.0.1:8000/v1/health</td>
+</tr>
+<tr>
+<td>Chat always answers <em>No reviewed information</em></td>
+<td>the question is outside the knowledge base</td>
+<td>expected; add content (section 9.4)</td>
+</tr>
+<tr>
+<td>Voice: <em>I did not hear anything</em> on the emulator</td>
+<td>the emulator's microphone is off</td>
+<td>emulator › ⋮ › Microphone › <em>Virtual microphone uses host audio input</em>, or use a real phone</td>
+</tr>
+<tr>
+<td>A test run ends at once with exit code 127 and no output</td>
+<td>the PC ran out of memory</td>
+<td>close Android Studio or the emulator, run <code>cd android; .\gradlew --stop</code>, try again</td>
+</tr>
+<tr>
+<td>Docker prints <em>The "…" variable is not set</em></td>
+<td>a <code>.env</code> value contains <code>$</code> without quotes</td>
+<td>put the value in single quotes</td>
+</tr>
+<tr>
+<td>pgAdmin does not open</td>
+<td>it must be started from the Start menu</td>
+<td>Start › PostgreSQL 18 › pgAdmin 4</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Where the messages are</strong>
+- Backend: its PowerShell window.
+- AI service: its PowerShell window.
+- Admin website: the browser's console (press F12).
+- App: the <code>flutter run</code> window.
+- Docker: <code>docker compose … logs &lt;service&gt;</code>.
+- What happened in the system: the <strong>Audit log</strong> page on the admin website.</p>
+<h2 id="15-before-real-patients">15. Before real patients</h2>
+<p>The prototype runs on synthetic data. These are still needed before any real use, and none of them is a programming task alone:</p>
+<ul>
+<li><strong>Trained and evaluated AI models.</strong> The mocks stay labelled until then.</li>
+<li><strong>A clinician's sign-off</strong> of the knowledge base, and <strong>human-verified Bemba and Nyanja</strong> translations.</li>
+<li><strong>A data-protection review</strong> under Zambia's Data Protection Act (2021) and ethics approval, covering the speech service and, if used, Claude.</li>
+<li><strong>MongoDB access control switched on</strong>, and a proper server with HTTPS, backups and monitoring. The list is in <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/security-review.md" target="_blank" rel="noopener">security-review.md</a>, items R-1 to R-8.</li>
+</ul>
+<h2 id="16-where-to-read-more">16. Where to read more</h2>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How do I test every feature by hand?</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/how-to-test.md" target="_blank" rel="noopener">how-to-test.md</a></td>
+</tr>
+<tr>
+<td>Why was it built this way?</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/architecture.md" target="_blank" rel="noopener">architecture.md</a> and <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/" target="_blank" rel="noopener">decisions/</a></td>
+</tr>
+<tr>
+<td>What was done, when, and what was found?</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/development-log.md" target="_blank" rel="noopener">development-log.md</a></td>
+</tr>
+<tr>
+<td>Which requirement is met by what, and how is it tested?</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/requirements-traceability.md" target="_blank" rel="noopener">requirements-traceability.md</a></td>
+</tr>
+<tr>
+<td>The databases on this PC</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/local-databases.md" target="_blank" rel="noopener">local-databases.md</a> and <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/database.md" target="_blank" rel="noopener">database.md</a></td>
+</tr>
+<tr>
+<td>The phone app in depth</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/mobile.md" target="_blank" rel="noopener">mobile.md</a></td>
+</tr>
+<tr>
+<td>Security</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/security.md" target="_blank" rel="noopener">security.md</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/security-review.md" target="_blank" rel="noopener">security-review.md</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/access-matrix.md" target="_blank" rel="noopener">access-matrix.md</a></td>
+</tr>
+<tr>
+<td>The chatbot's design</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/chatbot-plan.md" target="_blank" rel="noopener">chatbot-plan.md</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-009-offline-extractive-chatbot.md" target="_blank" rel="noopener">ADR-009</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-010-claude-for-chat-answers.md" target="_blank" rel="noopener">ADR-010</a></td>
+</tr>
+<tr>
+<td>Swapping the mock AI models for real ones</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/ai-model-integration-guide.md" target="_blank" rel="noopener">ai-model-integration-guide.md</a></td>
+</tr>
+<tr>
+<td>Speed and load</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/performance.md" target="_blank" rel="noopener">performance.md</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/scalability.md" target="_blank" rel="noopener">scalability.md</a></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="17-updating-this-manual">17. Updating this manual</h2>
+<p>This text is <code>docs/operations-manual.md</code>: change it in any editor. Its pictures, its PDF and its web page are made by a tool in <code>docs/report/tools</code>, from this text and from the code, so they can be made again whenever either changes:</p>
+<div class="cmd"><button class="copy" type="button">Copy</button><div class="cmd plain"><pre><code>$report = &quot;docs\report\tools\report.ps1&quot;
+# What is out of date:
+powershell -ExecutionPolicy Bypass -File $report check
+# After changing only the text:
+powershell -ExecutionPolicy Bypass -File $report pdf html
+# After changing code that a picture shows:
+powershell -ExecutionPolicy Bypass -File $report code images pdf html
+# Everything (start dev-up.ps1 first):
+powershell -ExecutionPolicy Bypass -File $report all
+</code></pre></div></div>
+<ul>
+<li>It needs Python, Node and Chrome (or Edge). The first run installs three small Python packages.</li>
+<li><code>docs/report/tools/contents.py</code> lists what each picture shows: which file and lines, which command, which phone screen.</li>
+<li>The quality gate's <code>docs</code> target runs <code>check</code>. It warns when a code picture shows code that has changed since the picture was taken.</li>
+<li>Every step, what it needs, and what to do when one stops: <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/report/tools/README.md" target="_blank" rel="noopener">report/tools/README.md</a>.</li>
+</ul>
+<p>The same manual is in the project as <code>docs/operations-manual.md</code>, and as a PDF in <code>docs/report/</code>.</p>
+  </main>
+</div>
+<footer>PCa mHealth, final-year research prototype. The code pictures show the project's real files with their line numbers. Made from docs/operations-manual.md by docs/report/tools/report.py.</footer>
+
+<script>
+  // The contents list starts open on a wide screen and closed on a phone.
+  document.getElementById('toc').open = window.matchMedia('(min-width: 56rem)').matches;
+  for (const button of document.querySelectorAll('.copy')) {
+    button.addEventListener('click', async () => {
+      const code = button.parentElement.querySelector('code');
+      try {
+        await navigator.clipboard.writeText(code.textContent);
+        button.textContent = 'Copied';
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        const selection = getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        button.textContent = 'Selected';
+      }
+      setTimeout(() => { button.textContent = 'Copy'; }, 1600);
+    });
+  }
+</script>
+</body>
+</html>

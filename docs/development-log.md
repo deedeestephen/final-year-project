@@ -1235,3 +1235,37 @@ The laptop had been restarted, so the backend, the AI service and the admin webs
   - The test question was played through the laptop's own speakers with Windows text-to-speech, at 15% and then at 60% volume. The service recognised nothing, and the app said "I did not hear anything", as it should when nothing is recognised.
   - Why the speaker sound was not recognised is not known. Laptop microphone arrays often filter out the laptop's own speaker sound.
   - So the path up to the recogniser works on the emulator, but **speech becoming text still has to be confirmed by a person speaking**, on the emulator or on the phone.
+
+## 2026-10-01: The operations manual can be rebuilt without an assistant
+
+The manual's pictures, its PDF and its web page had been made with throwaway scripts that were not in the project, so nobody could update them when the code changed. They are now a tool in `docs/report/tools`, with a README, and section 17 of the manual explains it.
+
+**What it does** (`report.ps1 <steps>`, which also sets up its own Python environment):
+- `terminals` runs the five commands of the terminal pictures and photographs their real output. It refuses output that contains a value from `.env`.
+- `code` cuts the 25 code excerpts listed in `contents.py` from the files and photographs them with headless Chrome. It records what each picture showed in `state.json`.
+- `admin` photographs the admin website, with synthetic answers in place of the API.
+- `app` draws the eight phone screens with the app's own code (`mobile-app/tool/report/app_screens_test.dart`).
+- `phone NAME` saves the emulator's or the phone's screen.
+- `images`, `pdf` and `html` shrink the pictures and make the PDF and the web page (`docs/report/operations-manual.html`, new).
+- `check` needs only Python and runs in the quality gate's `docs` target. It warns when a code picture shows code that has changed since it was taken, or when the PDF or the web page is older than the manual. It only warns, because code that has moved on is not a fault.
+
+**Found and fixed on the way:**
+- **The "answer" phone picture showed an answer the system does not give.** It had been drawn with a made-up answer labelled *Written by AI (Claude)*. But Claude is off (there is no API key), so the assistant quotes the knowledge base. The `app` step now asks the AI service's own code the same question and draws its real answer: a quoted passage with two sources. The casual-chat picture likewise shows the backend's real small-talk replies. The joke at that turn is a different one from the one the old picture had.
+- **In the code pictures the font joined `!=` and `=>` into single signs** (≠, ⇒), so a reader copying them would type the wrong characters. Joined signs are now off.
+- **The voice picture started at a fixed line number,** which breaks as soon as a line above it changes. It now starts at the `listen` method of `PhoneSpeechService`.
+- **The manual said to type `bash 6-infrastructure/scripts/quality-gate.sh …` in PowerShell.** On this PC, `bash` in PowerShell starts WSL, not Git Bash. The manual now uses `quality-gate.ps1`, which finds Git Bash itself.
+- The gate picture showed npm audit's notes (the last 12 lines). It now shows the summary lines: every PASS, and the test counts.
+- The PDF has page numbers. Printing it through Chrome's DevTools hung when the whole PDF came back in one message, so it is now read in pieces.
+- The admin dashboard's sidebar stopped after the first screenful in the picture.
+- The manual now says where each kind of picture comes from, including that the dashboard's numbers are made up for the picture.
+
+**Checked:**
+- Every step ran on this PC; the backend gate inside `terminals` passed (307 unit and 20 end-to-end tests).
+- `check` passes when everything is current, and warned correctly about a changed excerpt, moved lines and an older PDF (tested on an altered copy of its record).
+- The docs gate passes with the new check.
+- The PDF has 48 pages; its cover names the commit the code pictures come from.
+- Three pictures came out byte for byte the same as before (sign-in, Learn, the delete dialog), so the drawing is repeatable.
+
+**Not done:** the two emulator pictures (`app-home-device`, `app-article-device`) were not retaken, because the emulator was not running. They still show the app as it was on 30 September.
+
+**Noticed, not changed:** `npm audit` now reports 2 moderate findings in `js-yaml`, reached through `@nestjs/swagger`. The gate only fails on high ones, so it passed.

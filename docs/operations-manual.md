@@ -5,7 +5,7 @@ This manual explains every part of the system (the backend, the databases, Docke
 - **Who it is for:** the project owner, and anyone who takes the project over.
 - **What you need to know already:** how to open PowerShell and how to open a file in an editor. Everything else is written out.
 - **Where commands are run:** in PowerShell, from the project folder `D:\Final Year Project\pca-mhealth`, unless a step says otherwise.
-- **The code screenshots** show the real files as they were on 30 September 2026 (commit `3fae63c`). Each one names its file and line numbers, so you can open the same place yourself.
+- **The pictures are made from the project itself** (section 17). The code pictures show the real files, each with its file name and line numbers, so you can open the same place yourself; the cover of the PDF says from which commit they were taken. The terminal pictures show the real output of the commands. The phone and admin pictures use synthetic data.
 - **All data is synthetic.** The system is a research prototype, not a medical device.
 
 **Contents**
@@ -26,6 +26,7 @@ This manual explains every part of the system (the backend, the databases, Docke
 14. [When something goes wrong](#14-when-something-goes-wrong)
 15. [Before real patients](#15-before-real-patients)
 16. [Where to read more](#16-where-to-read-more)
+17. [Updating this manual](#17-updating-this-manual)
 
 ---
 
@@ -336,7 +337,7 @@ http://localhost:3000/api/docs lists every route with its inputs and outputs. To
 4. Add the route to the controller with `@RequirePermissions('…')`.
 5. Write a test: a unit test next to the file (`*.spec.ts`), or a database test in `test/db/`.
 6. Run `npm run openapi:export` and `npm run access:matrix`.
-7. Run the gate: `bash 6-infrastructure/scripts/quality-gate.sh backend`.
+7. Run the gate: `powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\quality-gate.ps1 backend`.
 
 ## 6. The databases
 
@@ -577,6 +578,8 @@ What Claude is told:
 |---|---|
 | ![Past chats](report/img/app-chat-history.jpg) | ![Recording](report/img/app-chat-recording.jpg) |
 
+These screens are drawn by the app's own code with synthetic data. The answer is the AI service's real answer to that question (quoted, because Claude is off), and the casual replies are the backend's real replies. In the recording picture a stand-in plays the part of the phone's speech service.
+
 ### 9.7 Testing the chatbot
 
 | What | Command | Where |
@@ -705,6 +708,8 @@ Run these in `1-presentation-layer\mobile-app`:
 
 ![Delete this account?](report/img/admin-delete.png)
 
+These pictures show the real website, but the API's answers were replaced with synthetic ones while they were taken: the accounts are not real, and the dashboard's numbers were made up for the picture.
+
 The dialog in that picture is this code in `src/pages/UsersPages.tsx`:
 
 ![UsersPages.tsx: the delete dialog](report/img/code-admin-delete-dialog.png)
@@ -724,17 +729,21 @@ The dialog in that picture is this code in `src/pages/UsersPages.tsx`:
 One script checks a whole part: formatting, lint, types, tests, build and a scan of the packages for known problems.
 
 ```powershell
-bash 6-infrastructure/scripts/quality-gate.sh backend
-bash 6-infrastructure/scripts/quality-gate.sh mobile
-bash 6-infrastructure/scripts/quality-gate.sh admin-web
-bash 6-infrastructure/scripts/quality-gate.sh ai
-bash 6-infrastructure/scripts/quality-gate.sh db         # needs the databases and Docker
-bash 6-infrastructure/scripts/quality-gate.sh docs       # every link in the docs works
-bash 6-infrastructure/scripts/quality-gate.sh secrets    # no password or key in Git
-bash 6-infrastructure/scripts/quality-gate.sh all
+$gate = "6-infrastructure\scripts\quality-gate.ps1"
+powershell -ExecutionPolicy Bypass -File $gate backend
+powershell -ExecutionPolicy Bypass -File $gate mobile
+powershell -ExecutionPolicy Bypass -File $gate admin-web
+powershell -ExecutionPolicy Bypass -File $gate ai
+# The databases' tests (needs the databases and Docker):
+powershell -ExecutionPolicy Bypass -File $gate db
+# Every link in the docs works; are the manual's pictures current?
+powershell -ExecutionPolicy Bypass -File $gate docs
+# No password or key in Git:
+powershell -ExecutionPolicy Bypass -File $gate secrets
+powershell -ExecutionPolicy Bypass -File $gate all
 ```
 
-(`bash` comes with Git for Windows. Run these in **Git Bash**, or in PowerShell if `bash` is on the path.)
+`quality-gate.ps1` runs the real script, `quality-gate.sh`, with the `bash` that comes with Git for Windows. In **Git Bash** you can run that directly: `bash 6-infrastructure/scripts/quality-gate.sh backend`. Do not type `bash …` in PowerShell: on this PC it starts Windows' WSL, not Git Bash.
 
 ![The backend gate](report/img/term-gate.png)
 
@@ -766,7 +775,7 @@ git log --oneline -10            # the last ten commits
 git pull origin main             # get changes from GitHub
 ```
 
-**Never commit** `.env`, passwords, keys or real patient data. Before committing, run `bash 6-infrastructure/scripts/quality-gate.sh secrets`.
+**Never commit** `.env`, passwords, keys or real patient data. Before committing, run `powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\quality-gate.ps1 secrets`.
 
 ## 14. When something goes wrong
 
@@ -821,4 +830,25 @@ The prototype runs on synthetic data. These are still needed before any real use
 | Swapping the mock AI models for real ones | [ai-model-integration-guide.md](ai-model-integration-guide.md) |
 | Speed and load | [performance.md](performance.md), [scalability.md](scalability.md) |
 
-A PDF of this manual is in [report/PCa-mHealth-operations-manual.pdf](report/PCa-mHealth-operations-manual.pdf).
+## 17. Updating this manual
+
+This text is `docs/operations-manual.md`: change it in any editor. Its pictures, its PDF and its web page are made by a tool in `docs/report/tools`, from this text and from the code, so they can be made again whenever either changes:
+
+```powershell
+$report = "docs\report\tools\report.ps1"
+# What is out of date:
+powershell -ExecutionPolicy Bypass -File $report check
+# After changing only the text:
+powershell -ExecutionPolicy Bypass -File $report pdf html
+# After changing code that a picture shows:
+powershell -ExecutionPolicy Bypass -File $report code images pdf html
+# Everything (start dev-up.ps1 first):
+powershell -ExecutionPolicy Bypass -File $report all
+```
+
+- It needs Python, Node and Chrome (or Edge). The first run installs three small Python packages.
+- `docs/report/tools/contents.py` lists what each picture shows: which file and lines, which command, which phone screen.
+- The quality gate's `docs` target runs `check`. It warns when a code picture shows code that has changed since the picture was taken.
+- Every step, what it needs, and what to do when one stops: [report/tools/README.md](report/tools/README.md).
+
+A PDF of this manual is in [report/PCa-mHealth-operations-manual.pdf](report/PCa-mHealth-operations-manual.pdf), and a web page (open it in a browser) in [report/operations-manual.html](report/operations-manual.html).

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCa mHealth Operations Manual</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap">
+<style>
+{{css}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="eyebrow">Operations manual</div>
+  <h1>PCa mHealth: how it was built, and how to run it yourself</h1>
+  <p>The backend, the databases, Docker, the AI service, the chatbot, the phone app and the admin website:
+  how each was made, and how to start, check, change and repair it without an AI assistant.</p>
+  <div class="meta"><span>Made on {{date}}</span><span>Code pictures from {{code}}</span><span>Synthetic data only</span><span>Not a medical device</span></div>
+</header>
+<div class="rule"></div>
+
+<div class="shell">
+  <nav class="toc" aria-label="Contents">
+    <details id="toc">
+      <summary>Contents</summary>
+      <ol>{{toc}}</ol>
+    </details>
+  </nav>
+  <main>
+    <section class="start" aria-labelledby="start-h">
+      <h2 id="start-h">Start everything</h2>
+      <p>In PowerShell, from the project folder. Keep the three windows it opens.</p>
+      <div class="cmd"><button class="copy" type="button">Copy</button><pre><code>cd "D:\Final Year Project\pca-mhealth"
+powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1</code></pre></div>
+      <dl class="ports">
+        <div><dt>Backend (API)</dt><dd>localhost:3000/api/v1/health</dd></div>
+        <div><dt>API explorer</dt><dd>localhost:3000/api/docs</dd></div>
+        <div><dt>Admin website</dt><dd>localhost:5173</dd></div>
+        <div><dt>AI service</dt><dd>127.0.0.1:8000/v1/health</dd></div>
+        <div><dt>PostgreSQL 18</dt><dd>localhost:5432</dd></div>
+        <div><dt>MongoDB 8.3</dt><dd>localhost:27017</dd></div>
+      </dl>
+    </section>
+    {{body}}
+  </main>
+</div>
+<footer>PCa mHealth, final-year research prototype. The code pictures show the project's real files with their line numbers. Made from docs/operations-manual.md by docs/report/tools/report.py.</footer>
+
+<script>
+  // The contents list starts open on a wide screen and closed on a phone.
+  document.getElementById('toc').open = window.matchMedia('(min-width: 56rem)').matches;
+  for (const button of document.querySelectorAll('.copy')) {
+    button.addEventListener('click', async () => {
+      const code = button.parentElement.querySelector('code');
+      try {
+        await navigator.clipboard.writeText(code.textContent);
+        button.textContent = 'Copied';
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        const selection = getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        button.textContent = 'Selected';
+      }
+      setTimeout(() => { button.textContent = 'Copy'; }, 1600);
+    });
+  }
+</script>
+</body>
+</html>

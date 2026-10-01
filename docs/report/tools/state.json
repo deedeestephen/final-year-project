@@ -1,0 +1,167 @@
+{
+ "code": {
+  "date": "2026-10-01",
+  "commit": "9cdccac",
+  "uncommitted": false,
+  "shots": {
+   "backend-main": {
+    "file": "3-application-logic/backend/src/main.ts",
+    "first": 1,
+    "last": 24,
+    "sha256": "3a50bb6d6d204bfd"
+   },
+   "backend-guards": {
+    "file": "3-application-logic/backend/src/app.module.ts",
+    "first": 86,
+    "last": 98,
+    "sha256": "0d8927d71780a359"
+   },
+   "backend-permissions-guard": {
+    "file": "3-application-logic/backend/src/gateway/access/permissions.guard.ts",
+    "first": 29,
+    "last": 44,
+    "sha256": "6188bf8db1e4a80d"
+   },
+   "backend-delete-route": {
+    "file": "3-application-logic/backend/src/services/users/users.controller.ts",
+    "first": 103,
+    "last": 119,
+    "sha256": "d2a56f56b82a1fee"
+   },
+   "backend-delete-service": {
+    "file": "3-application-logic/backend/src/services/users/users.service.ts",
+    "first": 373,
+    "last": 428,
+    "sha256": "357a0541e79b0b48"
+   },
+   "backend-prisma-user": {
+    "file": "3-application-logic/backend/prisma/schema.prisma",
+    "first": 24,
+    "last": 53,
+    "sha256": "dcf2d52ae212d14e"
+   },
+   "db-audit-chain": {
+    "file": "5-data-persistence/postgresql/migrations/20260923203337_constraints_and_audit/migration.sql",
+    "first": 75,
+    "last": 92,
+    "sha256": "fd23f4d7c873840b"
+   },
+   "db-copy-mongo": {
+    "file": "3-application-logic/backend/tools/copy-mongo.ts",
+    "first": 30,
+    "last": 67,
+    "sha256": "68cc70f90969da98"
+   },
+   "docker-compose": {
+    "file": "6-infrastructure/docker/docker-compose.yml",
+    "first": 1,
+    "last": 50,
+    "sha256": "e9739e2ad4a13c1a"
+   },
+   "dev-up-databases": {
+    "file": "6-infrastructure/scripts/dev-up.ps1",
+    "first": 30,
+    "last": 43,
+    "sha256": "88aa1816a0cdaaac"
+   },
+   "env-example": {
+    "file": ".env.example",
+    "first": 13,
+    "last": 33,
+    "sha256": "3ce88bd6448d3693"
+   },
+   "chat-safety-rules": {
+    "file": "3-application-logic/backend/src/services/chatbot/chat-safety.ts",
+    "first": 52,
+    "last": 87,
+    "sha256": "997a7801413f1c9b"
+   },
+   "chat-small-talk": {
+    "file": "3-application-logic/backend/src/services/chatbot/chat-safety.ts",
+    "first": 141,
+    "last": 170,
+    "sha256": "47ff5b26644bd970"
+   },
+   "chat-answer-flow": {
+    "file": "3-application-logic/backend/src/services/chatbot/chatbot.service.ts",
+    "first": 270,
+    "last": 327,
+    "sha256": "551a03e88457dbfe"
+   },
+   "ai-retrieve": {
+    "file": "4-ai-intelligence-layer/ai-services/app/chat/retrieve.py",
+    "first": 65,
+    "last": 100,
+    "sha256": "d6fbdde0875830fe"
+   },
+   "ai-answer": {
+    "file": "4-ai-intelligence-layer/ai-services/app/chat/answer.py",
+    "first": 119,
+    "last": 172,
+    "sha256": "63ae8acc7a9c27c0"
+   },
+   "ai-claude-instructions": {
+    "file": "4-ai-intelligence-layer/ai-services/app/chat/generate.py",
+    "first": 50,
+    "last": 64,
+    "sha256": "4c00921d8b2d7001"
+   },
+   "ai-knowledge-base": {
+    "file": "4-ai-intelligence-layer/knowledge-base/en/patient-learn.json",
+    "first": 1,
+    "last": 26,
+    "sha256": "9ce465d9a9edb9ae"
+   },
+   "app-main": {
+    "file": "1-presentation-layer/mobile-app/lib/main.dart",
+    "first": 12,
+    "last": 26,
+    "sha256": "0d99266312c0fe1f"
+   },
+   "app-env": {
+    "file": "1-presentation-layer/mobile-app/lib/core/config/app_env.dart",
+    "first": 1,
+    "last": 18,
+    "sha256": "6c33ec336c8021e3"
+   },
+   "app-chat-controller": {
+    "file": "1-presentation-layer/mobile-app/lib/features/chat/application/chat_controller.dart",
+    "first": 82,
+    "last": 117,
+    "sha256": "552ac48cbf8c904f"
+   },
+   "app-voice": {
+    "file": "1-presentation-layer/mobile-app/lib/features/chat/application/voice_input.dart",
+    "first": 74,
+    "last": 102,
+    "sha256": "b5225824236597ea"
+   },
+   "app-read-aloud": {
+    "file": "1-presentation-layer/mobile-app/lib/shared/audio/read_aloud.dart",
+    "first": 110,
+    "last": 139,
+    "sha256": "dcd04cf42a491593"
+   },
+   "app-bot-painter": {
+    "file": "1-presentation-layer/mobile-app/lib/shared/widgets/assistant_avatar.dart",
+    "first": 110,
+    "last": 153,
+    "sha256": "4152d00231f27472"
+   },
+   "admin-delete-dialog": {
+    "file": "1-presentation-layer/admin-panel-web/src/pages/UsersPages.tsx",
+    "first": 405,
+    "last": 438,
+    "sha256": "bf42ef99f9135c6c"
+   }
+  }
+ },
+ "pdf": {
+  "date": "2026-10-01",
+  "manual": "ae9a9e543f58fd24"
+ },
+ "html": {
+  "date": "2026-10-01",
+  "manual": "ae9a9e543f58fd24"
+ }
+}

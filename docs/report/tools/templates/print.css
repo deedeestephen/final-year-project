@@ -1,0 +1,31 @@
+/* The PDF: A4, awareness blue (ADR-011). The page numbers are added by print-pdf.mjs. */
+@page { size: A4; margin: 16mm 15mm 18mm; }
+* { box-sizing: border-box; }
+body { font: 10.5pt/1.5 'Segoe UI', system-ui, sans-serif; color: #0f172a; margin: 0; }
+h1 { font-size: 22pt; line-height: 1.2; margin: 0 0 10pt; color: #1e3a8a; }
+h2 { font-size: 15pt; margin: 22pt 0 8pt; padding-bottom: 4pt; border-bottom: 2px solid #2563eb;
+  color: #1e3a8a; break-after: avoid; }
+h3 { font-size: 12pt; margin: 16pt 0 6pt; color: #1d4ed8; break-after: avoid; }
+p, li { orphans: 3; widows: 3; }
+a { color: #1d4ed8; text-decoration: none; }
+code { font: 9pt Consolas, 'Cascadia Code', monospace; background: #eef3ff; padding: 1px 4px; border-radius: 3px; }
+pre { background: #0d1117; color: #e6edf3; padding: 9pt 11pt; border-radius: 6px; white-space: pre-wrap;
+  word-break: break-word; break-inside: avoid; }
+pre code { background: none; color: inherit; padding: 0; font-size: 8.8pt; }
+table { border-collapse: collapse; width: 100%; margin: 8pt 0; font-size: 9.5pt; }
+th, td { border: 1px solid #cbd5e1; padding: 5pt 7pt; vertical-align: top; text-align: left; }
+th { background: #eef3ff; }
+tr { break-inside: avoid; }
+img { max-width: 100%; border-radius: 8px; display: block; margin: 6pt 0; }
+img[src*="/app-"] { max-height: 118mm; width: auto; margin: 0 auto; border: 1px solid #cbd5e1; }
+img[src*="/code-"], img[src*="/term-"] { max-height: 225mm; width: auto; max-width: 100%; }
+img[src*="/admin-"] { border: 1px solid #cbd5e1; }
+p:has(> img) { break-inside: avoid; }
+blockquote { margin: 8pt 0; padding: 6pt 10pt; border-left: 4px solid #d97706; background: #fffbeb; }
+hr { border: 0; border-top: 1px solid #cbd5e1; margin: 14pt 0; }
+.cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; break-after: page; }
+.cover .kicker { color: #2563eb; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 10pt; }
+.cover h1 { font-size: 30pt; margin: 8pt 0 12pt; }
+.cover p { font-size: 12pt; color: #334155; max-width: 140mm; }
+.cover .line { height: 5px; width: 120mm; background: linear-gradient(90deg, #2563eb, #38bdf8); border-radius: 3px; margin: 14pt 0; }
+.cover .meta { font-size: 10pt; color: #52627a; margin-top: 30pt; }

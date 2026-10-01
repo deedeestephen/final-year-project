@@ -32,6 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+# Phone screens drawn for the operations manual (docs/report/tools).
+/tool/report/out/
 
 # Symbolication related
 app.*.symbols

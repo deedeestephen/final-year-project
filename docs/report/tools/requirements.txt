@@ -1,0 +1,4 @@
+# The Python packages report.py uses (report.ps1 installs them into .venv).
+Markdown==3.11        # operations-manual.md to HTML
+Pygments==2.21.0      # colours in the code pictures
+pillow==12.3.0        # shrinks the pictures
