@@ -1,0 +1,52 @@
+@startuml activity-ai-analysis
+!include style.iuml
+title Requesting an AI analysis (activity, UC-05)
+
+|Clinician or pathologist|
+start
+:Open the patient's "AI analyses" and tap Request;
+|Backend|
+if (Patient has an active AI_ANALYSIS consent?) then (no)
+  :Refuse: CONSENT_REQUIRED;
+  stop
+endif
+if (At least one screening record?) then (no)
+  :Refuse: CLINICAL_RECORD_REQUIRED;
+  stop
+endif
+if (An analysis already queued or running?) then (yes)
+  :Refuse: AI_JOB_IN_PROGRESS;
+  stop
+endif
+:Collect the inputs: a keyed pseudonym (no name or NRC),
+clinical values, de-identified copies of the scans;
+note right: files without a de-identified\ncopy are listed, never sent
+:Create the job (QUEUED), audit it,
+and answer 202 at once;
+:Queue worker: job RUNNING;
+|AI service|
+:Model router runs each module whose input exists:
+imaging (U-Net, ResNet-50), clinical ANN, slides,
+then the fusion step;
+note right
+  Today every module is a labelled MOCK:
+  its numbers come from a hash of the job id,
+  never from the patient's values or images.
+end note
+:Explanations for each module, or the reason
+there is none (never invented);
+|Backend|
+if (Valid answer within the time limit?) then (yes)
+  :Store the report in MongoDB (ai_reports, with
+  provenance MOCK and the disclaimer);
+  :Job SUCCEEDED;
+else (no)
+  :Job FAILED or TIMED_OUT, with the reason;
+endif
+|Clinician or pathologist|
+:The app polls the job and shows the report:
+"DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT"
+first, then probability range, grade group,
+modules used or skipped, explanations;
+stop
+@enduml

@@ -1,0 +1,57 @@
+@startuml sequence-offline-sync
+!include style.iuml
+title Offline capture and synchronisation (sequence, UC-02, FR-03)
+autonumber
+
+actor "Clinician" as user
+box "Phone app" #f8fafc
+  participant "Form screen" as form
+  participant "LocalStore" as local
+  database "Encrypted database\n(SQLCipher): rows,\noutbox, conflicts" as sqlite
+  participant "SyncEngine" as engine
+end box
+box "Backend" #f8fafc
+  participant "SyncService" as sync
+end box
+database "PostgreSQL\npatients, clinical_records,\nsync_operations" as pg
+
+user -> form : save a patient or a screening
+form -> local : save(...)
+local -> sqlite : row ("Saved on device") +\noutbox operation (idempotency key)
+form --> user : saved, even without internet
+
+... straight after sign-in, when the connection returns, when the app comes back\nto the foreground, every 5 minutes, or when "Sync now" is tapped ...
+
+engine -> local : takeBatch(50)
+local -> sqlite : oldest pending operations → "sending"
+engine -> sync : POST /sync { deviceId, operations[] }
+loop each operation, in order
+  sync -> pg : idempotency key already stored?
+  alt seen before
+    sync -> sync : return the stored result
+  else new
+    sync -> sync : permission, facility,\nversion check
+    alt applied
+      sync -> pg : save; version + 1; audit
+    else conflict (patient edit on an old version)
+      sync -> sync : include the server's copy
+    else rejected
+      sync -> sync : include the reason
+    end
+    sync -> pg : store the result under the key
+  end
+end
+sync --> engine : results[] (APPLIED, CONFLICT or REJECTED)
+loop each result
+  engine -> local : applyResult(op, result)
+  local -> sqlite : APPLIED: remove from outbox, "Synced"\nCONFLICT: keep both copies, "Needs attention"\nREJECTED: keep with the reason, "Needs attention"
+end
+engine -> sync : GET /sync/changes?cursor=...
+sync --> engine : patients and records of the facility,\nnext cursor
+engine -> local : mergePulled(...)
+
+alt network failure during the batch
+  engine -> local : releaseBatch: back to "pending",\nattempts + 1
+  engine -> engine : wait 2 s, 4 s, 8 s ... (max 15 min, jitter),\nor longer if the server says Retry-After
+end
+@enduml

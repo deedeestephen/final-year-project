@@ -3,6 +3,26 @@
 Source: research proposal §3.4 (use cases, FR, NFR), §3.3 (architecture), §3.7 (ethics). Status values:
 `Planned` → `In progress` → `Implemented` (code exists) → `Verified` (tests pass). Nothing is marked Verified without a passing test.
 
+## Gaps against the proposal: the phone app and the assistant (review of 1 October 2026)
+
+The proposal was read again against what is built, for the mobile application (objective 1, §3.3.2) and the chatbot (objective 3, §3.3.5). What it promises and the prototype does not do:
+
+| Proposal | Prototype | What closing it needs |
+|---|---|---|
+| React Native app (§3.3.2) | Flutter app (ADR-001) | Nothing to build; the report must explain the change of framework |
+| Android **and iOS** from one code base | Android only is built and tested; the iOS settings exist (microphone and speech usage texts) | A Mac with Xcode to build and test |
+| Push notification engine (§3.3 layer 1) | In-app notifications only (list, unread count) | A push provider (Firebase Cloud Messaging) and an account for it: the owner's decision |
+| Patients see their AI report (UC-06) | "My reports" is an empty shell | Trained models and a clinician's sign-off, by design |
+| Grad-CAM heatmaps and SHAP values on the report screen (FR-06, FR-08) | The screen shows the reason each is unavailable | Trained models |
+| UAT: at least five people per user group, SUS ≥ 75 (NFR-04, §3.8.2); a screen-reader test (NFR-11) | Not done | Ethics approval and participants |
+| Speech to text, checked with a real voice | Works with a stand-in in tests; on the emulator the recogniser opened but heard no speech from the laptop's speakers | A person speaking to the phone |
+| RAG retrieval with **semantic embeddings** (BioBERT/PubMedBERT, 768 dimensions, cosine similarity, k = 5) in a vector database, and a fine-tuned generative model (§3.3.5) | Keyword retrieval (BM25) over the reviewed knowledge base, quoting whole passages (ADR-009); Claude can write from the passages when a key is set (ADR-010; off). The vector store (memory, Qdrant) exists but the chat does not use it | Add embedding search next to BM25 (an open biomedical sentence model, about 400 MB), measure it on the retrieval quality set, and decide: the owner's decision |
+| Answers in English, **Bemba and Nyanja** (FR-07) | English only; the other two answer "not available yet" | Human-verified translations of the knowledge base |
+| Knowledge base of clinical guidelines and patient material **validated by clinicians**, structured around the Health Belief Model (§2.7) | Six patient articles and a clinician reference, all marked "draft for review"; some HBM themes (who is at higher risk, benefits and downsides of screening), none on practical barriers (cost, distance, fear of biopsy) | Content written or reviewed by a clinician, with the HBM constructs in mind |
+| Chatbot usability test with think-aloud (§3.8.2) | Not done | Participants |
+
+Met and not gaps: the 2-second answer time (P95 43 ms, Phase 13), offline-first capture, AES-256 on the phone, TLS 1.3, RBAC, FHIR R4. Objective 4 (data collection and model training) and the trained models of objective 2 are outside what the prototype could do without data and ethics approval.
+
 ## Functional requirements
 
 | ID | Requirement (summary) | Component | Implementation | Test | Phase | Status |

@@ -1,0 +1,91 @@
+@startuml class-app-offline
+!include style.iuml
+title Phone app: offline storage and synchronisation (class diagram)
+skinparam nodesep 30
+hide empty members
+
+class SyncEngine {
+  +batchSize : int = 50
+  +maxBackoff : Duration = 15 min
+  +activity : SyncActivity
+  +activityStream : Stream<SyncActivity>
+  +sync(force) : Future<SyncOutcome>
+  +backoffFor(failures) : Duration
+  -_push(deviceId, ops)
+  -_pull()
+}
+class SyncActivity {
+  +phase : SyncPhase
+  +lastSyncAt : DateTime?
+  +lastError : String?
+  +nextAttemptAt : DateTime?
+}
+enum SyncPhase {
+  idle
+  syncing
+  offline
+  failed
+}
+enum SyncOutcome {
+  completed
+  skipped
+  offline
+  failed
+}
+class LocalStore {
+  +registerPatient(...)
+  +updatePatient(id, changes)
+  +addRecord(...)
+  +takeBatch(limit) : List<OutboxData>
+  +releaseBatch(seqs)
+  +applyResult(op, result)
+  +mergePulled(patients, records)
+  +recoverInterrupted()
+  +resolveKeepServer(conflictId)
+  +resolveKeepMine(conflictId)
+  +discardRejected(seq)
+}
+class AppDatabase <<Drift + SQLCipher>> {
+  localPatients
+  localClinicalRecords
+  outbox
+  syncConflicts
+  meta
+  pendingUploads
+}
+class ApiClient {
+  +get(path, query)
+  +post(path, data)
+  -refreshSession()
+}
+class ConnectivityService {
+  +watchOnline() : Stream<bool>
+}
+class "syncSchedulerProvider" as scheduler <<Riverpod provider>> {
+  runs sync, then uploads:
+  after sign-in, when back online,
+  when the app resumes, every 5 min
+}
+class UploadQueue {
+  +process()
+  scans picked offline,
+  uploaded once each
+}
+class SyncStatusBadge <<widget>> {
+  "Saved on device" | "Syncing"
+  "Synced" | "Needs attention"
+}
+
+SyncEngine --> LocalStore
+SyncEngine --> ApiClient : POST /sync\nGET /sync/changes
+SyncEngine --> SyncActivity : emits
+SyncActivity --> SyncPhase
+SyncEngine ..> SyncOutcome
+LocalStore --> AppDatabase
+UploadQueue --> AppDatabase
+UploadQueue --> ApiClient
+scheduler --> SyncEngine : sync()
+scheduler --> UploadQueue : process()
+scheduler --> ConnectivityService : listens
+SyncStatusBadge ..> LocalStore : watches row state
+@enduml

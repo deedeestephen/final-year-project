@@ -1,0 +1,90 @@
+@startuml database-mongodb
+!include style.iuml
+title MongoDB 8.3: the four document collections and their rules (pca_mhealth)
+hide circle
+hide empty methods
+skinparam nodesep 40
+
+entity "ai_reports" as reports {
+  * _id : ObjectId
+  --
+  * jobId : string <<unique>>
+  * patientRef : string (pseudonym)
+  * provenance : MOCK | RESEARCH_MODEL
+  * disclaimer : string (≥ 20 characters)
+  * modelVersions : object
+  * outputs : object
+  explanations : array
+  * createdAt : date
+  ..
+  index patient_recent (patientRef, createdAt desc)
+}
+
+entity "ai_inference_logs" as logs {
+  * _id : ObjectId
+  --
+  * jobId : string
+  * event : string
+  * at : date
+  durationMs : number
+  ..
+  index job_timeline (jobId, at)
+}
+
+entity "imaging_metadata" as imaging {
+  * _id : ObjectId
+  --
+  * imagingStudyId : string <<unique>>
+  * modality : MRI | TRUS | CT | WSI
+  dicom : object (technical fields only)
+  * createdAt : date
+}
+
+entity "chatbot_conversations" as chats {
+  * _id : string (UUID)
+  --
+  * userId : string
+  * language : en | bem | nya
+  * audience : patient | clinician
+  * messages : array of message
+  * createdAt : date
+  * updatedAt : date
+  * expiresAt : date
+  ..
+  index user_recent (userId, updatedAt desc)
+  TTL index retention_ttl: deleted at expiresAt
+  (180 days after the last message)
+}
+
+entity "message (inside chatbot_conversations)" as message {
+  * role : user | assistant
+  * text : string
+  * at : date
+  sources : array of {name, url}
+  safety, mode, reviewStatus,
+  kbVersion, model (assistant only)
+}
+
+chats *-- "0..*" message
+
+entity "ai_jobs (PostgreSQL)" as pgjob #f1f5f9 {
+  id
+  report_id: the report's _id
+}
+entity "imaging_studies (PostgreSQL)" as pgimg #f1f5f9 {
+  id
+}
+entity "users (PostgreSQL)" as pguser #f1f5f9 {
+  id
+}
+reports .. pgjob : jobId
+logs .. pgjob : jobId
+imaging .. pgimg : imagingStudyId
+chats .. pguser : userId
+
+note bottom of reports
+  Every write is checked by a $jsonSchema validator
+  (src/persistence/mongo/collections.ts).
+  Starred fields are required.
+end note
+@enduml

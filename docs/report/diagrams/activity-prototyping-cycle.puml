@@ -1,0 +1,33 @@
+@startuml activity-prototyping-cycle
+!include style.iuml
+title How each prototype iteration was built (iterative prototyping, proposal §3.2)
+
+start
+:Phase 0: analyse the proposal, plan the
+architecture and the phases, record decisions as ADRs;
+repeat
+  :Design refinement: requirements for this phase
+  (traceability matrix), interface and data changes;
+  :Development: backend, AI service, phone app,
+  admin website;
+  :Internal testing: unit, database and widget tests,
+  then the quality gate for each changed part
+  (format, lint, types, tests, coverage of 80 % or more,
+  build, audit);
+  if (Gate passes?) then (no)
+    :Fix the code, or the test if the behaviour
+    should change (and say why);
+  else (yes)
+    :Commit and push, and CI runs the same gate;
+    :Evaluation: check on the emulator or phone,
+    owner's review and requests;
+    :Record what was done and found
+    (development log, traceability matrix);
+  endif
+repeat while (More phases or owner requests?) is (yes)
+->no;
+:End-to-end workflows on the live system (Phase 16),
+performance against the targets (Phase 17),
+final audit (Phase 18);
+stop
+@enduml

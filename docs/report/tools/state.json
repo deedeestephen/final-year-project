@@ -1,7 +1,7 @@
 {
  "code": {
   "date": "2026-10-01",
-  "commit": "9cdccac",
+  "commit": "dd1813e",
   "uncommitted": false,
   "shots": {
    "backend-main": {
@@ -153,15 +153,119 @@
     "first": 405,
     "last": 438,
     "sha256": "bf42ef99f9135c6c"
+   },
+   "app-open-database": {
+    "file": "1-presentation-layer/mobile-app/lib/core/db/open_database.dart",
+    "first": 16,
+    "last": 57,
+    "sha256": "8fa6eda9e4eaec4a"
+   },
+   "app-sync-engine": {
+    "file": "1-presentation-layer/mobile-app/lib/core/sync/sync_engine.dart",
+    "first": 85,
+    "last": 130,
+    "sha256": "01e904a95d8cf7ee"
+   },
+   "backend-sync-apply": {
+    "file": "3-application-logic/backend/src/services/sync/sync.service.ts",
+    "first": 124,
+    "last": 196,
+    "sha256": "96247ba1412718a5"
+   },
+   "backend-field-crypto": {
+    "file": "3-application-logic/backend/src/persistence/crypto/field-crypto.ts",
+    "first": 21,
+    "last": 82,
+    "sha256": "884b2cc2a55530ea"
+   },
+   "backend-login": {
+    "file": "3-application-logic/backend/src/services/auth/auth.service.ts",
+    "first": 189,
+    "last": 253,
+    "sha256": "d5184e228f0b12dd"
+   },
+   "tls-nginx": {
+    "file": "2-api-gateway/reverse-proxy/nginx.conf",
+    "first": 33,
+    "last": 66,
+    "sha256": "af63760a7b49e371"
+   },
+   "backend-ai-request": {
+    "file": "3-application-logic/backend/src/services/ai/ai.service.ts",
+    "first": 204,
+    "last": 242,
+    "sha256": "3c3a2847d6a940e7"
+   },
+   "ai-router": {
+    "file": "4-ai-intelligence-layer/ai-services/app/router.py",
+    "first": 43,
+    "last": 76,
+    "sha256": "3b6adc54f99c7182"
+   },
+   "backend-fairness": {
+    "file": "3-application-logic/backend/src/services/ai/fairness.ts",
+    "first": 68,
+    "last": 107,
+    "sha256": "0af9252764097a0c"
+   },
+   "fhir-safe-harbor": {
+    "file": "3-application-logic/backend/src/services/fhir/deidentify.ts",
+    "first": 17,
+    "last": 46,
+    "sha256": "fd65ab7fe4dda758"
    }
   }
  },
  "pdf": {
   "date": "2026-10-01",
-  "manual": "ae9a9e543f58fd24"
+  "manual": "8a1b9f41577cb4a3"
  },
  "html": {
   "date": "2026-10-01",
-  "manual": "ae9a9e543f58fd24"
+  "manual": "8a1b9f41577cb4a3"
+ },
+ "diagrams": {
+  "date": "2026-10-01",
+  "sources": {
+   "docs/report/diagrams/activity-ai-analysis.puml": "c4dd124aa41762e1",
+   "docs/report/diagrams/activity-chat-answer.puml": "a11c736e0e0d9e17",
+   "docs/report/diagrams/activity-offline-capture.puml": "45dda64964f90377",
+   "docs/report/diagrams/activity-prototyping-cycle.puml": "707df99c8493a62a",
+   "docs/report/diagrams/activity-quality-gate.puml": "5156a0695a39ce83",
+   "docs/report/diagrams/activity-voice-question.puml": "34f546609409dceb",
+   "docs/report/diagrams/architecture-layers.puml": "bda8f5c01bbb3f7f",
+   "docs/report/diagrams/class-app-chat-audio.puml": "701e8a5705dcd972",
+   "docs/report/diagrams/class-app-offline.puml": "283988e3a9624536",
+   "docs/report/diagrams/class-chat-server.puml": "bc6f3e57fadd7930",
+   "docs/report/diagrams/component-backend.puml": "a94a4321a1608d5e",
+   "docs/report/diagrams/context-diagram.puml": "eeba169c7c0e1731",
+   "docs/report/diagrams/database-mongodb.puml": "b86b2b2d9890fe84",
+   "docs/report/diagrams/database-phone.puml": "3bda62e443da3410",
+   "docs/report/diagrams/deployment.puml": "9749d926ed6e38a3",
+   "docs/report/diagrams/dfd-level-1.puml": "67ee6ed294b35519",
+   "docs/report/diagrams/dfd-level-2-chatbot.puml": "8aaa04091ba39191",
+   "docs/report/diagrams/gantt-planned.puml": "6a76501c25d42fd1",
+   "docs/report/diagrams/navigation-app.puml": "a571740f0d70a6db",
+   "docs/report/diagrams/sequence-ai-analysis.puml": "839db637981a0a9f",
+   "docs/report/diagrams/sequence-chat.puml": "ea0f6b6e147be34d",
+   "docs/report/diagrams/sequence-fhir-export.puml": "c321b3be9cbc0507",
+   "docs/report/diagrams/sequence-offline-sync.puml": "216e68e394396648",
+   "docs/report/diagrams/sequence-sign-in.puml": "0e8f579b448d3b6d",
+   "docs/report/diagrams/state-ai-job.puml": "68d7105f08464490",
+   "docs/report/diagrams/state-offline-change.puml": "59192d7cf0a2a953",
+   "docs/report/diagrams/state-voice-input.puml": "63c9fa7894b8b5de",
+   "docs/report/diagrams/usecase-chatbot.puml": "d63a1621c8f2054b",
+   "docs/report/diagrams/usecase-mobile-app.puml": "f3353dbae364610e",
+   "docs/report/diagrams/usecase-system.puml": "53f0990ee578326b"
+  },
+  "inputs": {
+   "3-application-logic/backend/prisma/schema.prisma": "5069f27653c2f4e6",
+   "docs/access-matrix.md": "0c227dc34731b975",
+   "2-api-gateway/openapi/ai-contract.yaml": "bc2a57b70ead397d"
+  }
+ },
+ "figures": {
+  "date": "2026-10-01",
+  "document": "34fa3730e3e03558"
  }
 }

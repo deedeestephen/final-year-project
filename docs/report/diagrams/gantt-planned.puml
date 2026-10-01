@@ -1,0 +1,32 @@
+@startgantt gantt-planned
+!include style.iuml
+<style>
+ganttDiagram {
+  task {
+    BackGroundColor #93c5fd
+    LineColor #1d4ed8
+  }
+}
+</style>
+title Planned timeline from the research proposal (§3.10, Figure 3): 12 months
+printscale monthly zoom 3
+Project starts 2026-01-01
+saturday are open
+sunday are open
+hide footbox
+
+[Phase 1: Planning and requirements analysis] starts 2026-01-01 and ends 2026-02-28
+[Phase 2: System architecture and design] starts 2026-02-01 and ends 2026-04-30
+[Phase 3: Data collection and preparation] starts 2026-03-01 and ends 2026-06-30
+[Phase 4: AI model development and training] starts 2026-04-01 and ends 2026-08-31
+[Phase 5: Mobile app and chatbot development] starts 2026-05-01 and ends 2026-08-31
+[Phase 6: System integration and API wiring] starts 2026-07-01 and ends 2026-09-30
+[Phase 7: User acceptance testing (UAT)] starts 2026-08-01 and ends 2026-10-31
+[Phase 8: Ethical compliance and security audit] starts 2026-03-01 and ends 2026-10-31
+[Phase 9: Evaluation, writing and documentation] starts 2026-09-01 and ends 2026-12-31
+
+legend
+  The proposal gives months M1 to M12, not dates;
+  M1 is drawn as January only to place the bars.
+endlegend
+@endgantt

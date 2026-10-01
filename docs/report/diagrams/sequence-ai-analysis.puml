@@ -1,0 +1,51 @@
+@startuml sequence-ai-analysis
+!include style.iuml
+title Requesting and reading an AI analysis (sequence, UC-05, UC-06)
+autonumber
+
+actor "Clinician or\npathologist" as user
+participant "Phone app\n(AI screens)" as app
+box "Backend" #f8fafc
+  participant "AiService" as svc
+  queue "In-process\njob queue" as queue
+  participant "AiBrokerService" as broker
+end box
+participant "AI service (FastAPI)\nPOST /v1/infer" as ai
+database "PostgreSQL\nai_jobs, explainability_artifacts" as pg
+database "MongoDB\nai_reports, ai_inference_logs" as mongo
+
+user -> app : Request analysis
+app -> svc : POST /patients/{id}/ai-jobs
+svc -> pg : active AI_ANALYSIS consent?\nscreening record? no job running?
+alt a check fails
+  svc --> app : 409 CONSENT_REQUIRED, CLINICAL_RECORD_REQUIRED\nor AI_JOB_IN_PROGRESS
+else all pass
+  svc -> pg : job QUEUED (inputs are references only)
+  svc -> queue : enqueue(jobId)
+  svc --> app : 202 Accepted { job }
+end
+
+queue -> svc : run(jobId)
+svc -> pg : QUEUED → RUNNING
+svc -> broker : infer(pseudonym, clinical values,\nkeys of de-identified files)
+broker -> ai : HTTP + service token, time limit
+ai -> ai : model router: each module with inputs,\nthen fusion; explanation or reason per module
+note right of ai
+  Today every module is a labelled MOCK:
+  its numbers come from a hash of the job id,
+  never from the patient's values or images.
+  A trained model would read the de-identified
+  copies by the keys it is given.
+end note
+ai --> broker : result (provenance MOCK, disclaimer)
+broker -> broker : validate against the AI contract
+broker --> svc : result
+svc -> mongo : insert ai_report; inference log
+svc -> pg : explanations or reasons;\njob SUCCEEDED (or FAILED, TIMED_OUT)
+
+loop while the screen is open
+  app -> svc : GET /ai-jobs/{id}
+  svc --> app : status, and the report when ready
+end
+app --> user : "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT",\nprobability range, grade group, modules, explanations
+@enduml

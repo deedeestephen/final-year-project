@@ -850,5 +850,6 @@ powershell -ExecutionPolicy Bypass -File $report all
 - `docs/report/tools/contents.py` lists what each picture shows: which file and lines, which command, which phone screen.
 - The quality gate's `docs` target runs `check`. It warns when a code picture shows code that has changed since the picture was taken.
 - Every step, what it needs, and what to do when one stops: [report/tools/README.md](report/tools/README.md).
+- The same tool draws the **diagrams for the final-year report** (use cases, data flow, activity, sequence, state, class, database, API, architecture, timelines) from text files in `docs/report/diagrams`: `report.ps1 diagrams figures`. They are listed, with captions, in [report-figures.md](report-figures.md).
 
 A PDF of this manual is in [report/PCa-mHealth-operations-manual.pdf](report/PCa-mHealth-operations-manual.pdf), and a web page (open it in a browser) in [report/operations-manual.html](report/operations-manual.html).

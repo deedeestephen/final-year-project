@@ -1,0 +1,49 @@
+@startuml usecase-chatbot
+!include style.iuml
+title The assistant (chatbot): use cases (UC-07)
+left to right direction
+
+actor "Patient" as patient
+actor "Clinician" as clinician
+actor "Chat user" as user
+patient -|> user
+clinician -|> user
+
+rectangle "PCa mHealth assistant (phone app + backend)" {
+  usecase "Ask a question\n(type it)" as UCask
+  usecase "Start a new chat" as UCnew
+  usecase "Continue a past chat" as UCpast
+  usecase "Delete a chat" as UCdelete
+  usecase "Check the question's\nsafety first" as UCsafety
+  usecase "Ask by voice" as UCvoice
+  usecase "Chat casually\n(greetings, thanks, jokes)" as UCtalk
+  usecase "Get urgent-care guidance\n(danger signs)" as UCurgent
+  usecase "Be told it cannot answer\n(own results, doses)" as UCdecline
+  usecase "Get an answer quoted\nfrom reviewed sources" as UCanswer
+  usecase "See the sources\nand review status" as UCsources
+  usecase "Listen to an answer" as UClisten
+}
+
+actor "Phone's speech service\n(speech to text)" as stt <<system>>
+actor "AI service\n(knowledge base search)" as ai <<system>>
+actor "Phone's text-to-speech" as tts <<system>>
+
+user --> UCask
+user --> UCnew
+user --> UCpast
+user --> UCdelete
+
+' Written base <.. extension, so the layout reads from left to right.
+UCask ..> UCsafety : <<include>>
+UCask <.. UCvoice : <<extend>>
+UCask <.. UCtalk : <<extend>>
+UCask <.. UCurgent : <<extend>>
+UCask <.. UCdecline : <<extend>>
+UCask <.. UCanswer : <<extend>>
+UCanswer <.. UCsources : <<extend>>
+UCanswer <.. UClisten : <<extend>>
+
+UCvoice --> stt
+UCanswer --> ai
+UClisten --> tts
+@enduml

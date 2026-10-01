@@ -1,0 +1,38 @@
+@startuml sequence-fhir-export
+!include style.iuml
+title Exporting de-identified records to SmartCare Pro (sequence, UC-08)
+autonumber
+
+actor "Administrator" as admin
+participant "Admin website\n(FHIR export page)" as web
+box "Backend" #f8fafc
+  participant "FhirExportService" as svc
+  participant "FhirBundleBuilder\n(de-identification)" as builder
+  participant "SmartCareClient" as client
+end box
+database "PostgreSQL" as pg
+participant "SmartCare Pro\n(a mock in the prototype)" as smartcare
+
+admin -> web : choose facility and scope
+web -> svc : GET /fhir/export/summary
+svc -> pg : count patients, records, consents
+svc --> web : counts; is a SmartCare Pro address set?
+alt download a bundle
+  admin -> web : Download
+  web -> svc : POST /fhir/export
+  svc -> pg : read records
+  svc -> builder : build a FHIR R4 Bundle
+  builder -> builder : Safe Harbor, all 18 identifier classes:\nnames, phone and NRC removed; dates to the year;\nplace to country + urban/rural class;\nkeyed export id instead of the patient id
+  svc -> pg : audit fhir.export (counts only)
+  svc --> web : Bundle (JSON)
+else send to SmartCare Pro
+  admin -> web : Send
+  web -> svc : POST /fhir/export/push
+  svc -> builder : build the bundle
+  svc -> client : POST over HTTPS
+  client -> smartcare : Bundle
+  smartcare --> client : response
+  svc -> pg : audit fhir.push (outcome)
+  svc --> web : sent, or the reason it failed
+end
+@enduml

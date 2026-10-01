@@ -1,0 +1,62 @@
+@startuml component-backend
+!include style.iuml
+title Backend modules and their dependencies (NestJS, component diagram)
+skinparam nodesep 22
+skinparam ranksep 45
+
+package "gateway" {
+  component "Guards, in order:\nAppThrottlerGuard → JwtAuthGuard →\nUserRateLimitGuard → PermissionsGuard" as guards
+  component "Validation, error bodies,\nsecurity headers, OpenAPI" as http
+  component "Health\n/health, /health/ready" as health
+}
+
+package "services" {
+  component "Auth\n(sign-in, tokens,\npassword reset)" as auth
+  component "Users" as users
+  component "Admin\n(roles, links,\nactivity, audit viewer)" as admin
+  component "Patients" as patients
+  component "Clinical\n(records, consent)" as clinical
+  component "Sync" as sync
+  component "Imaging\n(scans, slides, review)" as imaging
+  component "AI\n(broker, job queue,\nfairness)" as ai
+  component "Chatbot" as chatbot
+  component "FHIR export\n(+ SmartCare Pro client)" as fhir
+  component "Notifications" as notifications
+}
+
+package "persistence and shared" {
+  component "Audit\n(append-only, hash chain)" as audit
+  component "Crypto\n(AES-256-GCM fields,\nHMAC lookups)" as crypto
+  component "Storage\n(local or S3 / MinIO)" as storage
+  component "Database\n(Prisma → PostgreSQL,\nMongoService → MongoDB)" as db
+  component "Config\n(.env, validated at start)" as config
+}
+
+guards ..> auth : verifies the access token
+users --> auth : password hashing
+admin --> notifications
+clinical --> patients
+clinical --> notifications
+sync --> patients
+sync --> clinical
+imaging --> patients
+ai --> patients
+ai --> clinical : consent check
+chatbot --> ai : AI broker
+patients --> crypto
+auth --> crypto
+admin --> crypto
+imaging --> crypto
+ai --> crypto
+fhir --> crypto
+imaging --> storage
+ai --> storage
+audit --> db
+db --> config
+
+note right of audit
+  Used by every service module except
+  Notifications. Database and Config are
+  used by all of them (arrows left out).
+end note
+@enduml

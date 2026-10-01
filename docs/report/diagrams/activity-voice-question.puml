@@ -1,0 +1,48 @@
+@startuml activity-voice-question
+!include style.iuml
+title Asking by voice and listening to the answer (activity, ADR-012)
+
+|Person|
+start
+:Tap the microphone (the text box is empty);
+|Phone app|
+:Ask the phone's speech service if it can listen;
+if (Ready?) then (no permission)
+  :Say how to allow the microphone;
+  stop
+elseif () then (not available)
+  :Hide the microphone; typing still works;
+  stop
+else (ready)
+endif
+:Listen in English: show the words as they
+are recognised and a sound-level bar;
+|Person|
+if (What next?) then (tap ✕)
+  |Phone app|
+  :Throw the words away;
+  stop
+else (tap ✓, or 3 s of silence, or 60 s)
+endif
+|Phone app|
+:Put the words in the text box;
+note right
+  Only text leaves the phone:
+  the voice is turned into text
+  by the phone's speech service.
+end note
+|Person|
+:Read the words, correct them if needed,
+then tap Send;
+|Phone app|
+:Send the question (see "How the assistant
+answers a message");
+:Show the answer;
+|Person|
+if (Tap "Listen"?) then (yes)
+  |Phone app|
+  :Phone's text-to-speech reads the answer;
+  :Tap again to stop;
+endif
+stop
+@enduml

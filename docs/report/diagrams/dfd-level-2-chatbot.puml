@@ -1,0 +1,46 @@
+@startuml dfd-level-2-chatbot
+!include style.iuml
+title Data flow diagram, level 2: process 6.0 "Educate and answer questions"
+hide stereotype
+
+rectangle "Patient or\nclinician" <<entity>> as user
+rectangle "Phone speech\nservices" <<entity>> as phone
+rectangle "Anthropic Claude\n(optional, off)" <<entity>> as claude
+
+rectangle "6.1\nTurn speech\ninto text\n(on the phone)" <<process>> as p61
+rectangle "6.2\nCheck the\nquestion's safety" <<process>> as p62
+rectangle "6.3\nRecognise\nsmall talk" <<process>> as p63
+rectangle "6.4\nFind the best\npassages (BM25)" <<process>> as p64
+rectangle "6.5\nWrite the answer:\nquote the passages,\nor Claude cites them" <<process>> as p65
+rectangle "6.6\nCheck the answer\n(source, no dose,\nlength)" <<process>> as p66
+rectangle "6.7\nStore the chat\nand audit it" <<process>> as p67
+rectangle "6.8\nShow and read\narticles aloud\n(on the phone)" <<process>> as p68
+
+database "D5 Chat\nconversations" <<store>> as d5
+database "D6a Knowledge base\n(reviewed passages)" <<store>> as d6a
+database "D6b Education library\n(bundled in the app)" <<store>> as d6b
+database "D7 Audit log" <<store>> as d7
+
+user --> p61 : spoken question
+phone <-- p61 : audio
+phone --> p61 : recognised words
+p61 --> p62 : question text
+user --> p62 : typed question
+p62 --> user : urgent-care text, or\n"cannot answer that"
+p62 --> p63 : safe question
+p63 --> user : friendly fixed reply
+p63 --> p64 : health question
+d6a --> p64 : passages
+d5 --> p64 : last 6 messages\n(for follow-ups)
+p64 --> p65 : best passages
+p65 --> claude : passages + question
+claude --> p65 : answer + citations
+p65 --> p66 : answer, sources
+p66 --> p67 : checked answer
+p67 --> d5 : question + answer\n(kept 180 days)
+p67 --> d7 : event (no text)
+p67 --> user : answer, sources,\ndisclaimer
+d6b --> p68 : articles
+p68 --> user : article text
+p68 --> phone : text to speak
+@enduml

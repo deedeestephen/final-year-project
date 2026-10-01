@@ -1,0 +1,64 @@
+@startuml usecase-mobile-app
+!include style.iuml
+title The phone app: use cases by role
+left to right direction
+
+actor "Patient" as patient
+actor "Clinician" as clinician
+actor "Pathologist" as pathologist
+actor "Server (backend)" as server <<system>>
+
+rectangle "PCa mHealth phone app" {
+  package "Every signed-in person" {
+    usecase "Sign in; change password;\nchoose light or dark" as UCsign
+    usecase "Ask the assistant\n(typed or spoken)" as UCchat
+  }
+  package "Patients" {
+    usecase "Create an account\n(phone and NRC or passport)" as UCregister
+    usecase "See own screening\nhistory and messages" as UCresults
+    usecase "Read health articles" as UCread
+    usecase "Listen to an article\n(read aloud)" as UClisten
+    usecase "Withdraw a consent" as UCwithdraw
+  }
+  package "Clinicians and pathologists" {
+    usecase "Register a patient" as UCpatient
+    usecase "Record a screening\n(PSA, DRE, PI-RADS)" as UCrecord
+    usecase "Save on the phone and\nsync when online" as UCsync
+    usecase "Resolve a sync conflict" as UCconflict
+    usecase "Record consent" as UCconsent
+    usecase "Upload a scan" as UCscan
+    usecase "Request an AI analysis" as UCai
+    usecase "Check AI consent" as UCaiconsent
+    usecase "Read the labelled\nAI report" as UCreport
+    usecase "Review a slide\n(Gleason score)" as UCreview
+  }
+}
+
+patient --> UCsign
+patient --> UCchat
+patient --> UCregister
+patient --> UCresults
+patient --> UCread
+patient --> UCwithdraw
+clinician --> UCsign
+clinician --> UCchat
+clinician --> UCpatient
+clinician --> UCrecord
+clinician --> UCconsent
+clinician --> UCscan
+clinician --> UCai
+clinician --> UCreport
+pathologist --> UCsign
+pathologist --> UCscan
+pathologist --> UCai
+pathologist --> UCreport
+pathologist --> UCreview
+
+UClisten ..> UCread : <<extend>>
+UCpatient ..> UCsync : <<include>>
+UCrecord ..> UCsync : <<include>>
+UCconflict ..> UCsync : <<extend>>
+UCai ..> UCaiconsent : <<include>>
+UCsync --> server
+UCai --> server
+@enduml

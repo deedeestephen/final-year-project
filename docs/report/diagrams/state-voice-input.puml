@@ -1,0 +1,23 @@
+@startuml state-voice-input
+!include style.iuml
+title The chat's message box with voice input (state machine, ADR-012)
+hide empty description
+
+state "Empty\n(microphone shown)" as Empty
+state "Typing\n(send shown)" as Typing
+state "Listening\n(words appear, sound level,\n✓ and ✕ shown)" as Listening
+state "Sending" as Sending
+state "Voice unavailable\n(microphone hidden)" as NoVoice
+
+[*] --> Empty
+Empty --> Typing : person types
+Typing --> Empty : text cleared
+Empty --> Listening : tap microphone;\nspeech service ready
+Empty --> Empty : no microphone permission:\nnote says how to allow it
+Empty --> NoVoice : phone has no\nspeech service
+NoVoice --> Typing : person types
+Listening --> Typing : ✓, 3 s of silence or 60 s:\nthe words stay in the box
+Listening --> Empty : ✕ (words thrown away)
+Typing --> Sending : tap send
+Sending --> Empty : answer shown\n(or the error in words)
+@enduml

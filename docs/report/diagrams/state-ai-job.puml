@@ -1,0 +1,16 @@
+@startuml state-ai-job
+!include style.iuml
+title An AI analysis job (state machine, ai_jobs.status)
+hide empty description
+
+[*] --> QUEUED : request accepted (202):\nconsent, screening record,\nno other job running
+QUEUED --> RUNNING : queue worker\ntakes it
+RUNNING --> SUCCEEDED : valid result: report saved in\nMongoDB, explanations or reasons
+RUNNING --> FAILED : AI service error or\ninvalid answer
+RUNNING --> TIMED_OUT : no answer within\nthe time limit
+RUNNING --> FAILED : backend restarted while\nit ran too long ago
+QUEUED --> QUEUED : backend restarted:\nqueued again
+SUCCEEDED --> [*]
+FAILED --> [*]
+TIMED_OUT --> [*]
+@enduml

@@ -1,0 +1,63 @@
+@startuml sequence-sign-in
+!include style.iuml
+title Signing in, and renewing the session (sequence, UC-01)
+autonumber
+
+actor "User" as user
+box "Phone app" #f8fafc
+  participant "LoginScreen /\nSessionController" as app
+  participant "ApiClient\n(auth interceptor)" as client
+  participant "Secure storage\n(Android Keystore)" as store
+end box
+box "Backend" #f8fafc
+  participant "Gateway\n(stricter sign-in\nrate limit)" as gw
+  participant "AuthService" as auth
+end box
+database "PostgreSQL\nusers, refresh_tokens" as pg
+database "PostgreSQL\naudit_logs" as audit
+
+user -> app : email and password
+app -> client : login(email, password)
+client -> gw : POST /auth/login
+gw -> auth : login()
+auth -> pg : find the account by e-mail
+alt no account, or account switched off
+  auth -> auth : check a dummy hash\n(same time as a real check)
+  auth -> audit : auth.login FAILURE
+  auth --> client : 401 INVALID_CREDENTIALS
+else locked (locked_until is in the future)
+  auth -> audit : auth.login DENIED
+  auth --> client : 423 ACCOUNT_LOCKED
+else wrong password
+  auth -> pg : failed_login_count + 1
+  opt 5th failure in a row
+    auth -> pg : locked_until = now + 15 min
+    auth -> audit : auth.lockout
+  end
+  auth --> client : 401 INVALID_CREDENTIALS
+else password matches (Argon2id)
+  auth -> pg : reset the counter; store the SHA-256 of a new\nrefresh token (new session family, 14 days)
+  auth -> audit : auth.login SUCCESS
+  auth --> client : 200 access token (JWT, Ed25519, 15 min),\nrefresh token, user and roles
+  client -> store : save both tokens
+  client --> app : signed in
+  app --> user : home screen for the role\n(or "change your password" first)
+end
+
+== Later: the access token has expired ==
+client -> gw : any request → 401
+client -> gw : POST /auth/refresh (refresh token)\n(one refresh at a time)
+gw -> auth : refresh()
+auth -> pg : find the token by its hash
+alt token already used before (possible theft)
+  auth -> pg : revoke the whole family
+  auth -> audit : auth.refresh_reuse
+  auth --> client : 401: sign in again
+  client -> store : clear the tokens
+else valid
+  auth -> pg : revoke it; store its replacement\n(only one request can rotate it)
+  auth --> client : new access + refresh tokens
+  client -> store : save
+  client -> gw : repeat the original request once
+end
+@enduml

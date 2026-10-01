@@ -1269,3 +1269,37 @@ The manual's pictures, its PDF and its web page had been made with throwaway scr
 **Not done:** the two emulator pictures (`app-home-device`, `app-article-device`) were not retaken, because the emulator was not running. They still show the app as it was on 30 September.
 
 **Noticed, not changed:** `npm audit` now reports 2 moderate findings in `js-yaml`, reached through `@nestjs/swagger`. The gate only fails on high ones, so it passed.
+
+## 2026-10-01 (later): Diagrams and figures for the final-year report; the proposal read again
+
+The owner asked what was still missing from the research proposal for the phone app and the chatbot, and for the diagrams the report needs (use cases, database, API and the others), with code screenshots, drawn in Figma or Canva.
+
+**Figma and Canva:** the Figma connector was not authorised in this session and there is no Canva connector, so neither could be used. The diagrams were made as text (PlantUML) in the project instead, drawn to PNG for Word and to SVG, which Figma and Canva can import and restyle.
+
+**What was made:**
+- **30 hand-written diagram sources** in `docs/report/diagrams`, drawn into `docs/report/figures` with the 6 generated ones below (36 diagrams, each as PNG and SVG):
+  - context diagram and data flow diagrams (levels 1 and 2);
+  - three use case diagrams (whole system UC-01 to UC-12 with built, partial and later marked; the phone app; the assistant);
+  - six activity diagrams (including the prototyping cycle and the quality gate), five sequence diagrams, three state diagrams;
+  - architecture, deployment and backend components;
+  - three class diagrams; the MongoDB collections; the phone's database; the app's screen map;
+  - the planned Gantt chart (read cell by cell from the proposal's table).
+- **Generated, so they cannot drift from the code** (`docs/report/tools/diagrams.py`): four PostgreSQL entity-relationship diagrams from `schema.prisma` (19 tables, the 18 foreign keys, enums), the API map from `docs/access-matrix.md` (73 routes, their permissions and default roles, and the AI service's internal API), and the actual timeline from the Git history.
+- **10 more code pictures** for the report's "main function codes", one set per proposal objective (35 in all), and a picture of the API explorer.
+- `docs/report-figures.md`: every figure with a suggested number and caption, in the chapters of the ZCAS project guide, and facts for the normalisation section; its PDF has wide diagrams on landscape pages.
+- The report tool has two new steps, `diagrams` and `figures`. PlantUML and a portable Graphviz are downloaded once into `docs/report/tools/.cache` and checked against pinned SHA-256 sums; nothing is installed in Windows. `check` also warns when a diagram source, the schema, the access matrix or the AI contract changed after the figures were drawn.
+
+**Checked against the code while drawing** (and corrected where a first draft was wrong):
+- The backend's module dependencies come from the services' constructors.
+- The AI mock modules' numbers come from a hash of the job id, never from the patient's data; the diagrams say so.
+- Only patient edits can conflict when syncing; new screenings cannot.
+- No notification is sent when an AI job finishes.
+- The safety rules are self-harm and emergency signs (urgent care), medicines and doses, and patients' own results (declined).
+- The app's sync labels are "Saved on device", "Synced" and "Needs attention".
+
+**The proposal read again:** the gaps for the phone app and the chatbot are now listed at the top of [requirements-traceability.md](requirements-traceability.md):
+- semantic (embedding) retrieval instead of BM25;
+- Bemba and Nyanja;
+- a clinician-validated, HBM-structured knowledge base;
+- iOS, push notifications, UAT and the SUS score, a screen-reader test;
+- speech to text checked by a person.

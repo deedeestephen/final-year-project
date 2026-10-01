@@ -1,0 +1,71 @@
+@startuml activity-chat-answer
+!include style.iuml
+title How the assistant answers a message (activity)
+
+|Phone app|
+start
+:Person types a question, or speaks it
+and checks the recognised words;
+:Send it with the access token;
+|Backend|
+:Gateway: valid token, permission chatbot:use,
+per-address and per-account request limits;
+:Find the person's own conversation;
+if (More questions in the last hour\nthan the chat limit?) then (yes)
+  :Answer "try again in N minutes"
+  (429 with Retry-After);
+  |Phone app|
+  :Show the wait time;
+  stop
+endif
+|Backend|
+:checkQuestion (safety rules, always first);
+if (Self-harm or emergency signs?) then (yes)
+  :Fixed urgent-care text
+  (URGENT_CARE);
+elseif (Doses, prescriptions or\nwhich medicine to take?) then (yes)
+  :Fixed "ask your clinician" text
+  (DECLINED);
+elseif (A patient asking what their\nown result means?) then (yes)
+  :Fixed "your clinician explains
+  your results" text (DECLINED);
+elseif (Small talk? (18 kinds, whole\nmessage only)) then (yes)
+  :Friendly fixed reply,
+  varied by turn;
+else (a health question)
+  |AI service|
+  :BM25 search of the reviewed knowledge base
+  (short follow-ups are read with the previous question);
+  if (Best passage scores at least 2.0?) then (yes)
+    if (Claude switched on, and it answers\nonly from passages it cites?) then (yes)
+      :Answer written by Claude
+      from the passages ("GENERATED");
+    else (no: the default)
+      :Quote the best passage, and a second
+      one if it scores almost as well ("EXTRACTIVE");
+    endif
+    |Backend|
+    if (checkAnswer: has a source, no dose,\nnot too long?) then (passes)
+      :Answer with its sources
+      and review status;
+    else (fails)
+      :Fixed "no reviewed information"
+      text (NO_SOURCE);
+    endif
+  else (no)
+    |Backend|
+    :Fixed "no reviewed information"
+    text (NO_SOURCE);
+  endif
+endif
+|Backend|
+:Save the question and the answer in MongoDB
+(deleted 180 days after the last message);
+:Audit event chat.asked: safety, mode,
+number of sources (never the text);
+:Add the disclaimer and return both messages;
+|Phone app|
+:Show the answer, with "Listen"
+to have it read aloud;
+stop
+@enduml

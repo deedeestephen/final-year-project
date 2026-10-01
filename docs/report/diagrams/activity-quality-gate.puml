@@ -1,0 +1,59 @@
+@startuml activity-quality-gate
+!include style.iuml
+title The quality gate: what runs before every commit (quality-gate.sh)
+
+start
+:Choose a target: backend, db, workflows, ai, mobile,
+admin-web, fhir, tls, docs, secrets, or all;
+note right
+  One target runs its own steps; "all" runs
+  every target one after another. In CI each
+  target is a separate job, run in parallel.
+end note
+fork
+  :**backend**
+  Prettier, ESLint, TypeScript
+  Prisma validate
+  unit tests, end-to-end tests
+  OpenAPI, FHIR definitions and
+  access matrix up to date
+  build, npm audit (high);
+fork again
+  :**db**
+  migrations applied
+  all tests with PostgreSQL, MongoDB,
+  MinIO (coverage ≥ 80 %);
+fork again
+  :**ai**
+  ruff format and lint, mypy
+  pytest (coverage ≥ 80 %)
+  pip-audit;
+fork again
+  :**mobile**
+  dart format, flutter analyze
+  flutter test (line coverage ≥ 80 %)
+  debug APK build
+  package audit (OSV);
+fork again
+  :**admin-web**
+  format, oxlint, typecheck
+  Vitest (coverage ≥ 80 %)
+  build, npm audit;
+fork again
+  :**docs, secrets, fhir, tls, workflows**
+  links resolve; manual pictures current
+  gitleaks (history and staged)
+  HL7 FHIR validator; TLS 1.3 at nginx
+  six workflows on the live system;
+end fork
+if (Any step failed?) then (yes)
+  :QUALITY GATE FAILED: names the steps;
+  :Fix, then run the gate again;
+  stop
+else (no)
+  :QUALITY GATE PASSED;
+  :Commit and push. GitHub Actions
+  runs the same gate in 8 jobs;
+  stop
+endif
+@enduml

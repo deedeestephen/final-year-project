@@ -1,15 +1,17 @@
-// Prints a page to an A4 PDF, with the page number at the foot of each page.
-//   node print-pdf.mjs <page.html> <output.pdf>
+// Prints a page to an A4 PDF, with a title and the page number at the foot
+// of each page.
+//   node print-pdf.mjs <page.html> <output.pdf> [footer title]
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { withBrowser } from './chrome.mjs';
 
-const [page, out] = process.argv.slice(2);
+const [page, out, title = 'PCa mHealth'] = process.argv.slice(2);
+const escaped = title.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 
 const footer = `
 <div style="width: 100%; padding: 0 15mm; display: flex; justify-content: space-between;
   font: 8px 'Segoe UI', system-ui, sans-serif; color: #52627a;">
-  <span>PCa mHealth operations manual</span>
+  <span>${escaped}</span>
   <span><span class="pageNumber"></span> / <span class="totalPages"></span></span>
 </div>`;
 

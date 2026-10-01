@@ -1,0 +1,102 @@
+@startuml class-chat-server
+!include style.iuml
+title The assistant on the server: backend chatbot and AI service chat module (class diagram)
+skinparam nodesep 30
+hide empty members
+
+package "Backend (TypeScript): services/chatbot" {
+  class ChatbotController <<REST>> {
+    POST /chat/conversations
+    GET /chat/conversations
+    GET /chat/conversations/{id}
+    POST /chat/conversations/{id}/messages
+    DELETE /chat/conversations/{id}
+  }
+  class ChatbotService {
+    +create(language, user, ctx)
+    +list(query, user)
+    +get(id, user)
+    +ask(id, text, user, ctx) : AskResponse
+    +remove(id, user, ctx)
+    -answer(text, audience, language, earlier)
+    -checkRate(user)
+    -requireOwn(id, user)
+  }
+  class "chat-safety" as safety <<module>> {
+    +checkQuestion(text, audience) : SafetyDecision
+    +smallTalk(text, audience, turn) : string | null
+    +checkAnswer(text, sources) : {ok, reason}
+    +DISCLAIMER
+    +FIXED_TEXT
+    -INTENTS (18 small-talk kinds)
+  }
+  class AiBrokerService {
+    +chatAnswer(request) : ChatAnswerResult
+    +infer(request) : InferenceResult
+  }
+  class StoredConversation <<MongoDB document>> {
+    _id : string
+    userId : string
+    language : en
+    audience : patient | clinician
+    messages : StoredMessage[]
+    createdAt, updatedAt
+    expiresAt (TTL)
+  }
+  class StoredMessage {
+    id, role, text, at
+    sources[], safety, mode
+    reviewStatus, kbVersion, model
+  }
+}
+
+package "AI service (Python): app/chat" {
+  class "answer()" as answer <<function>> {
+    MIN_SCORE = 2.0
+    SECOND_PASSAGE_RATIO = 0.75
+    MAX_CHARS = 700
+    PASSAGES_FOR_CLAUDE = 3
+  }
+  class Retriever {
+    +search(text) : list[Hit]
+  }
+  class KnowledgeBase {
+    +passages : tuple[Passage]
+    +version : str
+    +review_status : str
+    +languages()
+  }
+  class Passage {
+    article_id, title, heading
+    body, sources, review_status
+    audience, language
+  }
+  class Hit {
+    passage : Passage
+    score : float
+  }
+  class ClaudeWriter {
+    +write(question, audience,\npassages, history)
+  }
+  class ChatAnswerResult {
+    mode : EXTRACTIVE | GENERATED
+    matched : bool
+    text, passages, sources
+    knowledgeBase, model
+  }
+}
+
+ChatbotController --> ChatbotService
+ChatbotService --> safety
+ChatbotService --> AiBrokerService
+ChatbotService --> StoredConversation : MongoDB
+StoredConversation *-- "0..*" StoredMessage
+AiBrokerService ..> answer : HTTP POST /v1/chat/answer\n(service token)
+answer --> Retriever
+answer --> ClaudeWriter : only when a key is set
+answer ..> ChatAnswerResult : returns
+Retriever --> KnowledgeBase : BM25 over
+KnowledgeBase *-- "1..*" Passage
+Retriever ..> Hit
+Hit --> Passage
+@enduml

@@ -1,8 +1,8 @@
-// Photographs the admin website: the dashboard, the Users list and the
-// "Delete this account?" dialog. The browser answers the website's calls to
-// the API itself, with the synthetic data below, so no real account, and no
-// real number, appears in a picture. The website must be running
-// (dev-up.ps1, or "npm run dev" in 1-presentation-layer/admin-panel-web).
+// Photographs the backend's API explorer (Swagger UI, the API's description
+// only), then the admin website: the dashboard, the Users list and the
+// "Delete this account?" dialog. For the website, the browser answers its
+// calls to the API itself, with the synthetic data below, so no real account,
+// and no real number, appears in a picture. Both must be running (dev-up.ps1).
 //   node shoot-admin.mjs <output folder>
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -104,6 +104,18 @@ const answers = {
 // --- the pictures -----------------------------------------------------------
 
 await withBrowser(async (browser) => {
+  // The API explorer (Swagger UI) first, from the real backend: it shows
+  // the API's description, not data. Then the browser starts answering
+  // for the API.
+  await browser.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await browser.navigate(`${API}/api/docs`);
+  await sleep(3000);
+  const explorer = await browser.evaluate(`Boolean(document.querySelector('.swagger-ui .opblock'))`);
+  if (!explorer) throw new Error(`The API explorer did not load from ${API}/api/docs. Is the backend running?`);
+  const shotExplorer = await browser.send('Page.captureScreenshot', { format: 'png' });
+  writeFileSync(join(out, 'web-api-explorer.png'), Buffer.from(shotExplorer.data, 'base64'));
+  console.log('  web-api-explorer.png');
+
   const headers = [
     { name: 'Access-Control-Allow-Origin', value: SITE },
     { name: 'Access-Control-Allow-Credentials', value: 'true' },

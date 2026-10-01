@@ -1,4 +1,5 @@
-"""Rebuilds the operations manual's pictures, its PDF and its web page.
+"""Rebuilds the operations manual's pictures, its PDF and its web page, and
+the diagrams and figures for the final-year report.
 
     report.ps1 <step> [<step> ...]     sets up the Python packages, then runs this
     python report.py check             needs nothing but Python
@@ -6,15 +7,18 @@
 Steps, in the order "all" runs them:
   terminals    run the commands of the terminal pictures and photograph the output
   code         photograph the code excerpts listed in contents.py
-  admin        photograph the admin website (it must be running on localhost:5173)
+  admin        photograph the admin website and the API explorer (both running)
   app          draw the phone screens with the app's own code (flutter test)
+  diagrams     draw docs/report/diagrams/*.puml (UML, data flow, database, API)
+               into docs/report/figures, with PlantUML and Graphviz
   images       shrink the new pictures into docs/report/img
   pdf          docs/report/PCa-mHealth-operations-manual.pdf
   html         docs/report/operations-manual.html
+  figures      docs/report/PCa-mHealth-report-figures.pdf (docs/report-figures.md)
 Other steps:
   phone NAME   save what the connected phone or emulator shows, as NAME
-  check        which code pictures are out of date, and whether the PDF and
-               the web page are older than operations-manual.md
+  check        which pictures and diagrams are out of date, and whether the
+               PDFs and the web page are older than their text
 
 README.md explains each step and what it needs.
 """
@@ -47,6 +51,11 @@ STATE = HERE / "state.json"
 TEMPLATES = HERE / "templates"
 WORK = HERE / "work"
 RAW = WORK / "raw"
+CACHE = HERE / ".cache"
+DIAGRAMS = REPORT / "diagrams"
+FIGURES = REPORT / "figures"
+FIGURES_MD = DOCS / "report-figures.md"
+FIGURES_PDF = REPORT / "PCa-mHealth-report-figures.pdf"
 BACKEND = ROOT / "3-application-logic" / "backend"
 AI = ROOT / "4-ai-intelligence-layer" / "ai-services"
 MOBILE = ROOT / "1-presentation-layer" / "mobile-app"
@@ -59,6 +68,7 @@ PROGRAMS = {
     "docker": ["C:/Program Files/Docker/Docker/resources/bin/docker.exe"],
     "adb": [os.environ.get("LOCALAPPDATA", "") + "/Android/Sdk/platform-tools/adb.exe"],
     "flutter": ["C:/flutter/bin/flutter.bat"],
+    "java": [os.environ.get("JAVA_HOME", "") + "/bin/java.exe", "C:/Program Files/Eclipse Adoptium/*/bin/java.exe"],
 }
 
 
@@ -359,6 +369,95 @@ def step_phone(name: str) -> None:
     print(f"  {name}.png")
 
 
+def file_digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def download(spec: dict, name: str) -> Path:
+    """A pinned download into .cache, used only if its SHA-256 matches."""
+    target = CACHE / name
+    if target.exists() and file_digest(target) == spec["sha256"]:
+        return target
+    import urllib.request
+
+    CACHE.mkdir(parents=True, exist_ok=True)
+    print(f"  downloading {spec['url']} (once)")
+    part = target.with_name(target.name + ".part")
+    try:
+        urllib.request.urlretrieve(spec["url"], part)
+    except OSError as problem:
+        raise Stop(f"The download failed ({problem}). Is the internet on?") from problem
+    if file_digest(part) != spec["sha256"]:
+        part.unlink()
+        raise Stop(f"{name} does not have the expected checksum, so it was not used.")
+    part.replace(target)
+    return target
+
+
+def graphviz_dot() -> str:
+    """Graphviz's dot: on the PATH, or a pinned portable copy on Windows."""
+    found = shutil.which("dot")
+    if found:
+        return found
+    if os.name != "nt":
+        raise Stop("Graphviz is needed for the diagrams: install it (for example: sudo apt install graphviz).")
+    version = C.GRAPHVIZ_WINDOWS["version"]
+    archive = download(C.GRAPHVIZ_WINDOWS, f"graphviz-{version}.zip")
+    folder = CACHE / f"graphviz-{version}"
+    if not folder.exists():
+        import zipfile
+
+        with zipfile.ZipFile(archive) as z:
+            z.extractall(folder)
+    return str(next(folder.rglob("dot.exe")))
+
+
+def diagram_sources() -> list[Path]:
+    return sorted(DIAGRAMS.glob("*.puml")) + sorted((DIAGRAMS / "generated").glob("*.puml"))
+
+
+def step_diagrams() -> None:
+    import diagrams as D
+
+    made = D.generate(ROOT, DIAGRAMS / "generated")
+    print(f"  generated: {', '.join(made)}")
+    sources = diagram_sources()
+    for source in sources:
+        first = source.read_text(encoding="utf8").split("\n", 1)[0]
+        if first.split()[-1] != source.stem:
+            raise Stop(f"{source.name}: its first line must be '@startuml {source.stem}' (the picture takes that name).")
+    jar = download(C.PLANTUML, f"plantuml-{C.PLANTUML['version']}.jar")
+    env = dict(os.environ, GRAPHVIZ_DOT=graphviz_dot(), PLANTUML_LIMIT_SIZE="8192")
+    FIGURES.mkdir(parents=True, exist_ok=True)
+    for fmt in ("svg", "png"):
+        done = subprocess.run(
+            [program("java"), "-jar", str(jar), "-charset", "UTF-8", f"-t{fmt}", "-o", str(FIGURES),
+             *(str(s) for s in sources)],
+            env=env, capture_output=True, text=True, encoding="utf8", errors="replace",
+        )
+        if done.returncode != 0:
+            print(done.stdout + done.stderr)
+            raise Stop("PlantUML found errors in the diagrams above (the line numbers say where).")
+    names = {s.stem for s in sources}
+    for old in FIGURES.iterdir():
+        if old.stem not in names:
+            old.unlink()
+    from PIL import Image
+
+    for png in sorted(FIGURES.glob("*.png")):
+        # Few colours keep lines and text sharp and the files small.
+        im = Image.open(png).convert("RGB")
+        im.quantize(colors=96, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(png, optimize=True)
+        print(f"  {png.name}: {im.width} x {im.height}, {round(png.stat().st_size / 1024)} KB")
+    state = load_state()
+    state["diagrams"] = {
+        "date": today(),
+        "sources": {s.relative_to(ROOT).as_posix(): digest(s.read_text(encoding="utf8")) for s in DIAGRAMS.glob("*.puml")},
+        "inputs": {p: digest((ROOT / p).read_text(encoding="utf8")) for p in D.INPUTS},
+    }
+    save_state(state)
+
+
 def step_images() -> None:
     from PIL import Image
 
@@ -386,24 +485,65 @@ def step_images() -> None:
         print(f"  {out.name}: {round(out.stat().st_size / 1024)} KB{note}")
 
 
-def step_pdf() -> None:
-    state = load_state()
-    text = MANUAL.read_text(encoding="utf8")
-    # The PDF does not point to itself.
-    body = manual_body(re.sub(r"\nA PDF of this manual is in .*\n", "\n", text))
+def landscape_sections(body: str) -> str:
+    """Keeps each figure with its heading and text on one page, and puts wide
+    diagrams on a landscape page."""
+    from PIL import Image
+
+    parts = re.split(r"(?=<h[234])", body)
+    for i, part in enumerate(parts):
+        if "<img" not in part:
+            continue
+        kind = "figure"
+        m = re.search(r'<img[^>]+src="report/figures/([^"]+\.png)"', part)
+        if m and (FIGURES / m.group(1)).exists():
+            with Image.open(FIGURES / m.group(1)) as im:
+                if im.width / im.height > 1.25:
+                    kind = "landscape"
+        parts[i] = f'<section class="{kind}">{part}</section>'
+    return "".join(parts)
+
+
+def print_document(markdown_text: str, cover: str, title: str, footer: str, pdf: Path, transform=None) -> None:
+    """Markdown → print page (images relative to docs/) → A4 PDF."""
+    body = manual_body(markdown_text)
     body = re.sub(r"^<h1[^>]*>.*?</h1>", "", body, count=1, flags=re.S)
-    cover = (TEMPLATES / "print-cover.html").read_text(encoding="utf8")
-    cover = cover.replace("{{date}}", long_date(today())).replace("{{code}}", code_version(state))
+    if transform:
+        body = transform(body)
     css = (TEMPLATES / "print.css").read_text(encoding="utf8")
     page = (
-        '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>PCa mHealth operations manual</title>'
+        f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{html.escape(title)}</title>'
         f'<base href="{DOCS.as_uri()}/"><style>{css}</style></head><body>{cover}{body}</body></html>'
     )
     WORK.mkdir(parents=True, exist_ok=True)
-    (WORK / "print.html").write_text(page, encoding="utf8")
-    node("print-pdf.mjs", str(WORK / "print.html"), str(PDF))
-    print(f"  {PDF.relative_to(ROOT)}: {round(PDF.stat().st_size / 1024)} KB")
+    page_file = WORK / f"{pdf.stem}.html"
+    page_file.write_text(page, encoding="utf8")
+    node("print-pdf.mjs", str(page_file), str(pdf), footer)
+    print(f"  {pdf.relative_to(ROOT)}: {round(pdf.stat().st_size / 1024)} KB")
+
+
+def step_pdf() -> None:
+    state = load_state()
+    text = MANUAL.read_text(encoding="utf8")
+    cover = (TEMPLATES / "print-cover.html").read_text(encoding="utf8")
+    cover = cover.replace("{{date}}", long_date(today())).replace("{{code}}", code_version(state))
+    # The PDF does not point to itself.
+    print_document(re.sub(r"\nA PDF of this manual is in .*\n", "\n", text), cover,
+                   "PCa mHealth operations manual", "PCa mHealth operations manual", PDF)
     state["pdf"] = {"date": today(), "manual": digest(text)}
+    save_state(state)
+
+
+def step_figures() -> None:
+    """The figures for the final-year report, with their captions, as a PDF."""
+    state = load_state()
+    text = FIGURES_MD.read_text(encoding="utf8")
+    cover = (TEMPLATES / "figures-cover.html").read_text(encoding="utf8")
+    cover = cover.replace("{{date}}", long_date(today())).replace("{{code}}", code_version(state))
+    print_document(re.sub(r"\nA PDF of these figures is in .*\n", "\n", text), cover,
+                   "PCa mHealth report figures", "PCa mHealth: figures for the report", FIGURES_PDF,
+                   transform=landscape_sections)
+    state["figures"] = {"date": today(), "document": digest(text)}
     save_state(state)
 
 
@@ -500,12 +640,31 @@ def step_check() -> int:
         print(f"        To remake {pronoun}: {SELF} pdf html")
     else:
         print("  OK: the PDF and the web page match operations-manual.md.")
+
+    import diagrams as D
+
+    made = state.get("diagrams", {})
+    redraw = [s.name for s in sorted(DIAGRAMS.glob("*.puml"))
+              if made.get("sources", {}).get(s.relative_to(ROOT).as_posix()) != digest(s.read_text(encoding="utf8"))]
+    redraw += [f"{p} (database, API or AI contract)" for p in D.INPUTS
+               if made.get("inputs", {}).get(p) != digest((ROOT / p).read_text(encoding="utf8"))]
+    if redraw:
+        print(f"  WARN: {len(redraw)} diagram source(s) changed since the figures were drawn:")
+        for item in redraw:
+            print(f"        {item}")
+        print(f"        To redraw them: {SELF} diagrams figures")
+    else:
+        print("  OK: the diagrams match their sources.")
+    if FIGURES_MD.exists() and state.get("figures", {}).get("document") != digest(FIGURES_MD.read_text(encoding="utf8")):
+        print("  WARN: the figures PDF was made from an older report-figures.md.")
+        print(f"        To remake it: {SELF} figures")
     return 0
 
 
 STEPS = {
     "terminals": step_terminals, "code": step_code, "admin": step_admin, "app": step_app,
-    "images": step_images, "pdf": step_pdf, "html": step_html,
+    "diagrams": step_diagrams, "images": step_images, "pdf": step_pdf, "html": step_html,
+    "figures": step_figures,
 }
 
 

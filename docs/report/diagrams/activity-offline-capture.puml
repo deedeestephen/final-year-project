@@ -1,0 +1,60 @@
+@startuml activity-offline-capture
+!include style.iuml
+title Saving patients and screenings with or without internet (activity, FR-03)
+
+|Clinician|
+start
+:Register or edit a patient, or record a screening
+for one (registered on this phone, or downloaded
+earlier): PSA, free PSA, DRE, PI-RADS, volume, notes;
+|Phone app|
+:Check the values (ranges, required fields);
+:Save in the phone's encrypted database (SQLCipher)
+and add an operation to the outbox,
+with a new idempotency key;
+:Show it as "Saved on device";
+if (Online?) then (no)
+  :Keep it on the phone;
+  :Retry later (2 s, doubling, at most 15 min,
+  with jitter), or at once with "Sync now";
+  detach
+endif
+:Send the oldest operations in batches of 50
+(POST /sync), marked "sending";
+|Backend|
+:For each operation, in order:
+was this idempotency key seen before?;
+if (Seen?) then (yes)
+  :Return the stored result again
+  (a retry never saves twice);
+else (no)
+  :Check the permission and the facility;
+  if (Valid and allowed?) then (no)
+    :REJECTED, with a reason;
+  elseif (A patient edit based on an\nolder server version?) then (yes)
+    :CONFLICT, with the server's copy;
+  else
+    :APPLIED: save in PostgreSQL,
+    version + 1, audit event;
+  endif
+  :Store the result under the key;
+endif
+|Phone app|
+switch (Result?)
+case (APPLIED)
+  :Remove from the outbox,
+  show "Synced";
+case (CONFLICT)
+  :Keep both copies,
+  show "Needs attention";
+  :Clinician keeps the server's
+  copy or their own;
+case (REJECTED)
+  :Show the reason,
+  "Needs attention";
+  :Clinician discards it;
+endswitch
+:Download changes for the facility
+(GET /sync/changes, by cursor);
+stop
+@enduml

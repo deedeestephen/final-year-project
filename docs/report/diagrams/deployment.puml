@@ -1,0 +1,48 @@
+@startuml deployment
+!include style.iuml
+title Deployment of the prototype (development laptop and phone)
+skinparam nodesep 30
+
+node "Android phone or emulator\n(Galaxy S9+ class, Android 10)" as phone {
+  artifact "PCa mHealth app\n(debug APK)" as apk
+  database "SQLCipher database\n(key in Android Keystore)" as sqlite
+  component "Phone speech and\ntext-to-speech services" as speech
+}
+
+node "Windows 11 laptop" as pc {
+  node "Windows services" {
+    database "PostgreSQL 18\n:5432" as pg
+    database "MongoDB 8.3\n:27017" as mongo
+  }
+  node "Node.js 24" {
+    component "Backend (NestJS)\n:3000  /api/v1" as backend
+    component "Admin website (Vite)\n:5173" as admin
+  }
+  node "Python 3 virtual environment" {
+    component "AI service (FastAPI)\n127.0.0.1:8000" as ai
+  }
+  node "Docker Desktop" {
+    database "Redis :6379" as redis
+    database "MinIO :9000/9001\n(used by the database tests)" as minio
+    database "Qdrant :6333\n(not used yet)" as qdrant
+  }
+  folder "backend/var/objects\n(uploaded files)" as objects
+}
+
+node "Web browser" as browser
+cloud "GitHub\n(private repository, Actions CI)" as github
+cloud "Anthropic API\n(only if a key is set; off)" as anthropic
+
+apk --> backend : HTTPS/HTTP :3000\n(emulator: 10.0.2.2;\nUSB phone: adb reverse)
+apk --> sqlite
+apk --> speech
+browser --> admin
+admin --> backend
+backend --> pg : Prisma
+backend --> mongo
+backend --> redis
+backend --> objects
+backend --> ai : service token
+ai ..> anthropic : optional
+pc ..> github : git push
+@enduml

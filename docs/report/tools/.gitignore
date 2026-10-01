@@ -1,3 +1,5 @@
 # Pages, raw screenshots and the print page made on the way; only the
 # finished pictures (docs/report/img), the PDF and the web page are kept.
 work/
+# PlantUML and Graphviz, downloaded once by the diagrams step.
+.cache/

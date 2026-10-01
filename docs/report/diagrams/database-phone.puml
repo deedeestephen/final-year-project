@@ -1,0 +1,96 @@
+@startuml database-phone
+!include style.iuml
+title The phone's encrypted database (Drift + SQLCipher, AES-256; key in the Android Keystore)
+hide circle
+hide empty methods
+skinparam nodesep 40
+
+entity "local_patients" as patients {
+  * id : text <<PK>> (device clientUuid or server id)
+  --
+  server_id : text <<unique>>
+  mrn : text
+  * given_name, family_name : text
+  * date_of_birth : text (YYYY-MM-DD)
+  * region_class : text
+  district, phone : text
+  national_id_masked : text
+  * version : int (server version, 0 until synced)
+  * sync_state : pending | synced | conflict | rejected
+  * updated_at : datetime
+}
+
+entity "local_clinical_records" as records {
+  * id : text <<PK>>
+  --
+  server_id : text <<unique>>
+  * patient_id : text <<FK local_patients>>
+  patient_server_id : text
+  * encounter_date : text
+  psa_ng_ml, free_psa_ng_ml : real
+  * dre_finding : text
+  pirads_score : int
+  prostate_volume_ml : real
+  notes : text
+  * sync_state : text
+  * created_at : datetime
+}
+
+entity "outbox" as outbox {
+  * seq : int <<PK>> (order of sending)
+  --
+  * idempotency_key : text <<unique>>
+  * entity_type : patient | clinical_record
+  * operation : CREATE | UPDATE
+  * entity_local_id : text
+  patient_local_id : text
+  base_version : int
+  * payload : text (JSON for the API)
+  * created_at : datetime
+  * status : pending | sending | rejected
+  * attempts : int
+  last_error_code, last_error_message : text
+}
+
+entity "sync_conflicts" as conflicts {
+  * id : int <<PK>>
+  --
+  * patient_local_id : text
+  * local_changes : text (JSON)
+  * server_copy : text (JSON)
+  * server_version : int
+  * created_at : datetime
+}
+
+entity "pending_uploads" as uploads {
+  * id : text <<PK>> (also the upload's clientUuid)
+  --
+  * patient_local_id, patient_server_id : text
+  * kind : imaging | slide
+  modality : MRI | TRUS | CT
+  slide_format : SVS | TIFF | NDPI
+  stain : text
+  * file_path, file_name : text
+  * size_bytes : int
+  * status : pending | uploading | rejected
+  * attempts : int
+  next_attempt_at : datetime
+  last_error : text
+  * created_at : datetime
+}
+
+entity "meta" as meta {
+  * key : text <<PK>>
+  --
+  * value : text
+  ..
+  device id, owner, pull cursor,
+  last sync time, cached profile
+}
+
+patients ||--o{ records
+patients ||..o{ outbox : changes waiting
+records ||..o{ outbox
+patients ||..o{ conflicts
+patients ||..o{ uploads
+@enduml

@@ -1,0 +1,57 @@
+@startuml sequence-chat
+!include style.iuml
+title Asking the assistant a question (sequence)
+autonumber
+
+actor "Patient or\nclinician" as user
+box "Phone app (Flutter)" #f8fafc
+  participant "ChatScreen" as screen
+  participant "ChatController" as ctrl
+  participant "ChatApi /\nApiClient" as api
+end box
+box "Backend (NestJS)" #f8fafc
+  participant "Gateway guards\n(throttle, JWT,\nuser limit, permission)" as guards
+  participant "ChatbotService" as svc
+  participant "chat-safety\n(rules, small talk)" as safety
+  participant "AiBrokerService" as broker
+end box
+participant "AI service\n(FastAPI)\nPOST /v1/chat/answer" as aisvc
+database "MongoDB\nchatbot_conversations" as mongo
+database "PostgreSQL\naudit_logs" as audit
+
+user -> screen : types or speaks a question
+screen -> ctrl : ask(text)
+alt first question of a new chat
+  ctrl -> api : start()
+  api -> guards : POST /chat/conversations
+  guards -> svc : create(language, user)
+  svc -> mongo : insertOne(conversation)
+  svc -> audit : chat.conversation.created
+  svc --> api : 201 { id }
+end
+ctrl -> api : ask(id, text)
+api -> guards : POST /chat/conversations/{id}/messages\nBearer access token
+guards -> svc : ask(id, text, user)
+svc -> mongo : find own conversation
+svc -> svc : checkRate (questions in the last hour)
+svc -> safety : checkQuestion(text)
+alt urgent-care sign or not allowed
+  safety --> svc : fixed text (URGENT_CARE or DECLINED)
+else greeting or casual message
+  svc -> safety : smallTalk(text, turn)
+  safety --> svc : friendly fixed reply
+else a health question
+  svc -> broker : chatAnswer(question, audience, last 6 messages)
+  broker -> aisvc : HTTP + service token, timeout
+  aisvc -> aisvc : BM25 search of the reviewed\nknowledge base; quote the best passages
+  aisvc --> broker : text, sources, review status\n(or "not covered")
+  broker --> svc : validated answer
+  svc -> safety : checkAnswer(text, sources)
+end
+svc -> mongo : $push question + answer;\nexpiresAt = now + 180 days
+svc -> audit : chat.asked (safety, mode, number of sources;\nnever the text)
+svc --> api : 200 { question, answer + disclaimer }
+api --> ctrl : (question, answer)
+ctrl --> screen : new state
+screen --> user : answer with sources,\n"Listen" button
+@enduml

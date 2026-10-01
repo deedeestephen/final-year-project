@@ -1,0 +1,66 @@
+@startuml usecase-system
+!include style.iuml
+title The whole system: use cases UC-01 to UC-12 (research proposal §3.4)
+left to right direction
+
+actor "User" as user
+actor "Patient" as patient
+actor "Clinician" as clinician
+actor "Pathologist" as pathologist
+actor "Administrator" as admin
+patient -|> user
+clinician -|> user
+pathologist -|> user
+admin -|> user
+
+actor "AI service" as ai <<system>>
+actor "SmartCare Pro\n(national EHR)" as smartcare <<system>>
+actor "AI engineer" as engineer
+actor "Research\ncoordinator" as researcher
+
+rectangle "PCa mHealth platform" {
+  usecase "UC-01 Register and sign in" as UC01
+  usecase "UC-02 Capture clinical data\n(also offline)" as UC02
+  usecase "UC-03 Upload and validate\nscans (MRI, TRUS, CT)" as UC03
+  usecase "UC-04 Submit and review\nhistopathology slides" as UC04 <<partial>>
+  usecase "UC-05 Run AI multi-modal\nanalysis (mock models)" as UC05
+  usecase "UC-06 Read the AI report" as UC06 <<partial>>
+  usecase "UC-07 Chat with the assistant" as UC07
+  usecase "UC-08 Export to the\nnational EHR (FHIR R4)" as UC08
+  usecase "UC-09 Administer accounts,\nroles and the audit log" as UC09
+  usecase "UC-10 Monitor activity\n(dashboard)" as UC10 <<partial>>
+  usecase "UC-11 Population\nanalytics" as UC11 <<future>>
+  usecase "UC-12 Retrain and\ndeploy AI models" as UC12 <<future>>
+  usecase "Read or listen to\nhealth articles" as UClearn
+  usecase "See own screening\nhistory; withdraw consent" as UCself
+}
+
+user --> UC01
+patient --> UClearn
+patient --> UCself
+patient --> UC07
+clinician --> UC02
+clinician --> UC03
+clinician --> UC05
+clinician --> UC06
+clinician --> UC07
+pathologist --> UC03
+pathologist --> UC04
+pathologist --> UC05
+pathologist --> UC06
+admin --> UC08
+admin --> UC09
+admin --> UC10
+researcher --> UC11
+engineer --> UC12
+
+UC05 --> ai
+UC07 --> ai
+UC08 --> smartcare
+
+legend right
+  Plain: built and tested
+  Yellow: partly built (see the traceability matrix)
+  Grey, dashed: left for later work
+endlegend
+@enduml

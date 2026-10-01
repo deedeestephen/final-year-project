@@ -1,0 +1,157 @@
+' The look of every diagram: awareness blue (ADR-011), plain and readable when
+' printed in black and white. Included by each diagram with !include style.iuml.
+' Layouts use Graphviz, which report.py downloads (docs/report/tools/README.md).
+skinparam dpi 170
+skinparam shadowing false
+skinparam roundCorner 12
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 13
+skinparam defaultFontColor #0f172a
+skinparam titleFontSize 17
+skinparam titleFontColor #1e3a8a
+skinparam titleFontStyle bold
+skinparam ArrowColor #475569
+skinparam ArrowThickness 1.2
+skinparam ArrowFontSize 11
+skinparam ArrowFontColor #334155
+skinparam nodesep 40
+skinparam ranksep 50
+
+skinparam actor {
+  BorderColor #1d4ed8
+  BackgroundColor #dbeafe
+  FontStyle bold
+}
+skinparam usecase {
+  BackgroundColor #eff6ff
+  BorderColor #2563eb
+  BorderThickness 1.4
+}
+skinparam rectangle {
+  BackgroundColor #ffffff
+  BorderColor #94a3b8
+  FontStyle bold
+}
+skinparam package {
+  BackgroundColor #f8fafc
+  BorderColor #94a3b8
+  FontColor #1e3a8a
+}
+skinparam frame {
+  BorderColor #94a3b8
+  FontColor #1e3a8a
+}
+skinparam node {
+  BackgroundColor #f8fafc
+  BorderColor #64748b
+}
+skinparam component {
+  BackgroundColor #eff6ff
+  BorderColor #2563eb
+}
+skinparam database {
+  BackgroundColor #ecfeff
+  BorderColor #0e7490
+}
+skinparam storage {
+  BackgroundColor #ecfeff
+  BorderColor #0e7490
+}
+skinparam collections {
+  BackgroundColor #ecfeff
+  BorderColor #0e7490
+}
+skinparam queue {
+  BackgroundColor #ecfeff
+  BorderColor #0e7490
+}
+skinparam agent {
+  BackgroundColor #f1f5f9
+  BorderColor #334155
+}
+skinparam cloud {
+  BackgroundColor #f8fafc
+  BorderColor #64748b
+}
+skinparam class {
+  BackgroundColor #ffffff
+  BorderColor #2563eb
+  HeaderBackgroundColor #dbeafe
+  AttributeFontSize 12
+  StereotypeFontColor #475569
+}
+skinparam entity {
+  BackgroundColor #ffffff
+  BorderColor #2563eb
+}
+skinparam note {
+  BackgroundColor #fffbeb
+  BorderColor #d97706
+  FontSize 12
+}
+skinparam sequence {
+  ParticipantBackgroundColor #eff6ff
+  ParticipantBorderColor #2563eb
+  ActorBackgroundColor #dbeafe
+  ActorBorderColor #1d4ed8
+  LifeLineBorderColor #94a3b8
+  LifeLineBackgroundColor #dbeafe
+  GroupBorderColor #94a3b8
+  GroupBackgroundColor #f1f5f9
+  BoxBackgroundColor #f8fafc
+  BoxBorderColor #cbd5e1
+  DividerBackgroundColor #f1f5f9
+  MessageAlign center
+}
+skinparam activity {
+  BackgroundColor #eff6ff
+  BorderColor #2563eb
+  DiamondBackgroundColor #fef3c7
+  DiamondBorderColor #b45309
+  StartColor #1d4ed8
+  EndColor #1d4ed8
+  BarColor #1d4ed8
+}
+skinparam partition {
+  BorderColor #94a3b8
+  FontColor #1e3a8a
+}
+skinparam state {
+  BackgroundColor #eff6ff
+  BorderColor #2563eb
+  StartColor #1d4ed8
+  EndColor #1d4ed8
+}
+' Data flow diagrams: external entities, processes and data stores.
+skinparam rectangle<<entity>> {
+  BackgroundColor #f1f5f9
+  BorderColor #334155
+  RoundCorner 0
+}
+skinparam rectangle<<process>> {
+  BackgroundColor #eff6ff
+  BorderColor #2563eb
+  RoundCorner 28
+  FontStyle normal
+}
+skinparam database<<store>> {
+  BackgroundColor #ecfeff
+  BorderColor #0e7490
+}
+' Use cases that the prototype only partly covers, or leaves for later.
+skinparam usecase<<partial>> {
+  BackgroundColor #fef9c3
+  BorderColor #a16207
+}
+skinparam usecase<<future>> {
+  BackgroundColor #f1f5f9
+  BorderColor #94a3b8
+  FontColor #475569
+  BorderStyle dashed
+}
+skinparam legend {
+  BackgroundColor #f8fafc
+  BorderColor #cbd5e1
+  FontSize 12
+}

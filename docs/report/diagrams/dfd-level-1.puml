@@ -1,0 +1,79 @@
+@startuml dfd-level-1
+!include style.iuml
+title Data flow diagram, level 1
+hide stereotype
+skinparam nodesep 30
+skinparam ranksep 60
+
+rectangle "All users\n(any role)" <<entity>> as users
+rectangle "Patient" <<entity>> as patient
+rectangle "Clinician" <<entity>> as clinician
+rectangle "Pathologist" <<entity>> as pathologist
+rectangle "Administrator" <<entity>> as admin
+
+rectangle "1.0\nAuthenticate\nusers" <<process>> as p1
+rectangle "6.0\nEducate and\nanswer questions" <<process>> as p6
+rectangle "3.0\nRegister patients,\nrecord screenings\nand consent" <<process>> as p3
+rectangle "4.0\nManage scans\nand slides" <<process>> as p4
+rectangle "5.0\nRun AI analysis\n(labelled mock\nmodels)" <<process>> as p5
+rectangle "2.0\nAdminister\naccounts and roles" <<process>> as p2
+rectangle "7.0\nExport to\nSmartCare Pro" <<process>> as p7
+rectangle "8.0\nAudit and\nmonitor" <<process>> as p8
+
+database "D1 Accounts,\nroles, sessions" <<store>> as d1
+database "D6 Knowledge base,\neducation library" <<store>> as d6
+database "D5 Chat\nconversations" <<store>> as d5
+database "D8 Phone's encrypted\ndatabase, outbox" <<store>> as d8
+database "D2 Patients,\nscreenings, consents" <<store>> as d2
+database "D3 Scan and slide\nfiles, details" <<store>> as d3
+database "D4 AI jobs\nand reports" <<store>> as d4
+database "D7 Audit log\n(hash chain)" <<store>> as d7
+
+rectangle "Phone speech\nservices" <<entity>> as phone
+rectangle "SmartCare Pro\n(national EHR)" <<entity>> as smartcare
+
+users --> p1 : sign-up,\ncredentials
+p1 --> d1 : account, password hash,\nrefresh tokens
+
+patient --> p6 : questions
+p6 --> patient : answers with sources,\narticles
+d6 --> p6 : passages,\narticles
+p6 --> d5 : questions and answers
+p6 --> phone : text to read aloud
+phone --> p6 : recognised words
+
+clinician --> p3 : patient details, PSA, DRE,\nPI-RADS, consent
+p3 --> d8 : saved first,\nqueued
+d8 --> p3 : queued changes\nwhen online
+p3 --> d2 : applied changes
+p3 --> patient : own history,\nnotifications
+patient --> p3 : consent\nwithdrawal
+
+clinician --> p4 : scans
+pathologist --> p4 : slides,\nGleason review
+p4 --> pathologist : review queue,\ngrade group
+p4 --> d3 : files, checksums,\nDICOM details
+
+clinician --> p5 : analysis request
+d2 --> p5 : consent,\nclinical values
+d3 --> p5 : de-identified\ncopies
+p5 --> d4 : job, labelled report,\nexplanations or reasons
+p5 --> clinician : labelled\nAI report
+
+admin --> p2 : accounts, roles,\npatient links
+p2 --> d1 : changes
+p2 --> d2 : sign-in linked\nto a patient record
+
+admin --> p7 : export request
+d2 --> p7 : records
+p7 --> smartcare : de-identified\nFHIR R4 bundle
+
+d7 --> p8 : events
+p8 --> admin : activity counts, audit log,\nintegrity check
+
+note bottom of d7
+  Every process writes its events
+  (who, what, outcome; never the
+  content of a record or a question).
+end note
+@enduml

@@ -1,0 +1,30 @@
+@startuml context-diagram
+!include style.iuml
+title Context diagram (data flow diagram, level 0)
+left to right direction
+skinparam linetype polyline
+
+agent "Patient" as patient
+agent "Clinician" as clinician
+agent "Pathologist" as pathologist
+agent "Administrator" as admin
+agent "SmartCare Pro\n(national EHR)" as smartcare
+agent "Phone speech services\n(speech to text,\ntext to speech)" as phone
+agent "Anthropic Claude\n(optional; off by default)" as claude
+
+usecase "0\nPCa mHealth\nplatform" as system #dbeafe
+
+patient --> system : sign-up, questions,\nconsent withdrawal
+system --> patient : own results, articles,\nanswers with sources,\nnotifications
+clinician --> system : patients, PSA/DRE records,\nconsents, scans, AI requests
+system --> clinician : patient lists, labelled AI reports,\nsync results and conflicts
+pathologist --> system : slides, Gleason review
+system --> pathologist : review queue,\nISUP grade group
+admin --> system : accounts, roles, links,\nexport requests
+system --> admin : activity counts, audit log,\nintegrity check
+system --> smartcare : de-identified\nFHIR R4 bundles
+phone --> system : recognised words
+system --> phone : answer and article text\nto read aloud
+system --> claude : best passages + question\n(only if switched on)
+claude --> system : answer citing the passages
+@enduml

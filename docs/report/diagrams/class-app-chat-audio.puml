@@ -1,0 +1,149 @@
+@startuml class-app-chat-audio
+!include style.iuml
+title Phone app: the assistant, voice input and read-aloud (class diagram)
+skinparam nodesep 30
+skinparam ranksep 40
+hide empty members
+
+package "features/chat/presentation" {
+  class ChatScreen <<widget>> {
+    -_newChat()
+    -_openChat(id)
+    -_showHistory()
+  }
+  class ChatComposer <<widget>> {
+    -_listening : bool
+    -_level : double
+    -_startVoice()
+    -_done()
+    -_cancel()
+  }
+}
+
+package "features/chat/application" {
+  class ChatController <<Notifier>> {
+    +build() : ChatState
+    +ask(text) : Future<void>
+    +open(conversationId) : Future<void>
+    +startOver(delete) : Future<void>
+  }
+  class ChatState {
+    +conversationId : String?
+    +messages : List<ChatMessage>
+    +sending : bool
+    +loading : bool
+    +error : String?
+    +copyWith(...)
+  }
+  interface SpeechService {
+    +initialize() : Future<VoiceAvailability>
+    +listen(onWords, onLevel, onDone)
+    +stop()
+    +cancel()
+  }
+  class PhoneSpeechService {
+    -_speech : SpeechToText
+    -_ready : bool
+  }
+  enum VoiceAvailability {
+    ready
+    noPermission
+    unavailable
+  }
+}
+
+package "features/chat/data" {
+  class ChatApi {
+    +start(language) : Future<String>
+    +ask(id, text) : Future<(ChatMessage, ChatMessage)>
+    +list(pageSize) : Future<List<ChatSummary>>
+    +messages(id) : Future<List<ChatMessage>>
+    +delete(id) : Future<void>
+  }
+  class ChatMessage {
+    +id : String
+    +fromUser : bool
+    +text : String
+    +at : DateTime
+    +sources : List<ChatSource>
+    +safety : ChatSafety
+    +disclaimer : String?
+    +reviewStatus : String?
+    +writtenBy : String?
+  }
+  class ChatSource {
+    +name : String
+    +url : String
+  }
+  enum ChatSafety {
+    ok
+    urgentCare
+    declined
+    noSource
+  }
+  class ChatSummary {
+    +id : String
+    +preview : String?
+    +messageCount : int
+    +updatedAt : DateTime
+  }
+}
+
+package "shared/audio" {
+  interface ReadAloud {
+    +speak(text) : Future<void>
+    +stop()
+    +setRate(rate)
+  }
+  class PhoneReadAloud {
+    -_tts : FlutterTts?
+  }
+  class ReadAloudController <<Notifier>> {
+    +play(id, parts, from)
+    +pause()
+    +resume()
+    +stop(prefix)
+    +setSlow(slow)
+  }
+  class ReadAloudState {
+    +id : String?
+    +part : int
+    +total : int
+    +paused : bool
+    +slow : bool
+  }
+}
+
+package "core/network" {
+  class ApiClient {
+    +get(path, query)
+    +post(path, data)
+    +delete(path)
+    -refreshSession()
+  }
+}
+
+ChatScreen --> ChatController : watches state,\ncalls ask/open/startOver
+ChatScreen *-- ChatComposer
+ChatScreen --> ReadAloudController : Listen to an answer
+ChatComposer --> SpeechService
+ChatController --> ChatState : publishes
+ChatController --> ChatApi
+ChatState o-- "0..*" ChatMessage
+ChatMessage o-- "0..*" ChatSource
+ChatMessage --> ChatSafety
+ChatApi --> ApiClient
+ChatApi ..> ChatSummary : creates
+SpeechService <|.. PhoneSpeechService
+SpeechService ..> VoiceAvailability
+ReadAloud <|.. PhoneReadAloud
+ReadAloudController --> ReadAloud
+ReadAloudController --> ReadAloudState : publishes
+
+note bottom of PhoneSpeechService
+  Riverpod providers (speechServiceProvider,
+  readAloudProvider, chatApiProvider) let the
+  tests put fakes in place of the phone's
+  services and the server.
+end note
+@enduml

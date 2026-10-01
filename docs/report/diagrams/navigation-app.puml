@@ -1,0 +1,76 @@
+@startuml navigation-app
+!include style.iuml
+title Phone app: screens and how people move between them (go_router routes)
+hide empty description
+skinparam nodesep 25
+skinparam ranksep 40
+
+state "Splash /\n(restoring the session)" as splash
+state "Sign in /login" as login
+state "Create account /register" as register
+state "Forgot password\n/forgot-password" as forgot
+state "Change password\n/change-password\n(forced on first sign-in)" as change
+
+state "Patient app (bottom tabs)" as patientapp {
+  state "Home /me/home" as myhome
+  state "Results /me/results" as results
+  state "Learn /me/learn" as learn
+  state "Article /me/learn/:id\n(?listen=1 reads it aloud)" as article
+  state "Messages /me/messages" as messages
+  state "Profile /me/profile" as profile
+  state "My consents\n/me/profile/consents" as myconsents
+  state "My reports\n/me/profile/reports" as myreports
+  learn --> article
+  profile --> myconsents
+  profile --> myreports
+}
+
+state "Clinician home /home/clinician\nPathologist home /home/pathologist" as staffhome
+state "Patients /patients" as patients
+state "Register /patients/new" as newpatient
+state "Patient /patients/:id" as patient
+state "Edit /patients/:id/edit" as edit
+state "New screening\n/patients/:id/records/new" as record
+state "Consent /patients/:id/consents" as consent
+state "Scans /patients/:id/imaging\n→ /imaging/upload" as imaging
+state "AI analyses /patients/:id/ai" as analyses
+state "Recent analyses /ai-jobs\n→ report /ai-jobs/:jobId" as aijobs
+state "Slide review /review\n→ /review/:slideId\n(pathologists)" as review
+state "Sync /sync" as sync
+state "Assistant /chat\n(patients, clinicians)" as chat
+state "Settings /settings" as settings
+
+[*] --> splash
+splash --> login : signed out
+splash --> myhome : patient
+splash --> staffhome : clinician or\npathologist
+login --> register
+login --> forgot
+login --> change : must change\npassword
+login --> myhome
+login --> staffhome
+myhome --> chat : bot button
+learn --> chat : bot button
+staffhome --> patients
+staffhome --> aijobs
+staffhome --> review
+staffhome --> sync
+staffhome --> chat
+staffhome --> settings
+patients --> newpatient
+patients --> patient
+patient --> edit
+patient --> record
+patient --> consent
+patient --> imaging
+patient --> analyses
+analyses --> aijobs
+profile --> settings
+
+note right of staffhome
+  Administrators see only "Administration
+  is on the web": they use the admin website.
+  The router sends everyone to the screens
+  of their role; the server checks again.
+end note
+@enduml

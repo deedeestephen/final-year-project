@@ -1,0 +1,23 @@
+@startuml state-offline-change
+!include style.iuml
+title A change saved on the phone: its states until the server has it (state machine)
+hide empty description
+
+state "Pending\n(Saved on device)" as Pending
+state "Sending" as Sending
+state "Synced" as Synced
+state "Conflict\n(Needs attention)" as Conflict
+state "Rejected\n(Needs attention)" as Rejected
+
+[*] --> Pending : saved in the encrypted database;\noutbox operation with a new\nidempotency key
+Pending --> Sending : sync runs (online, backoff\nover, or "Sync now")
+Sending --> Synced : APPLIED\n(removed from the outbox)
+Sending --> Pending : network failure, app closed\nduring sync, or the patient in the\nsame batch failed (attempts + 1)
+Sending --> Conflict : CONFLICT (a patient edit\nbased on an older version;\nboth copies kept)
+Sending --> Rejected : REJECTED\n(reason shown)
+Conflict --> Synced : clinician keeps\nthe server's copy
+Conflict --> Pending : clinician keeps\ntheir own (re-sent on\nthe newer version)
+Rejected --> [*] : clinician discards it
+Synced --> Pending : edited again
+Synced --> [*]
+@enduml
