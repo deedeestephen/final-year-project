@@ -190,6 +190,12 @@ API_GROUPS = [
     ("FHIR export", ["fhir"]),
     ("Health", ["health", "metrics"]),
 ]
+#: The user acceptance testing kit (docs/uat), in the order of its PDF.
+UAT_FILES = [
+    "README.md", "information-and-consent.md", "tasks-patient.md", "tasks-clinician.md",
+    "tasks-pathologist.md", "tasks-administrator.md", "sus-questionnaire.md", "results-template.md",
+]
+
 API_AI_GROUP = "AI analyses"
 API_CHAT_GROUP = "The assistant (chat)"
 API_FHIR_GROUP = "FHIR export"

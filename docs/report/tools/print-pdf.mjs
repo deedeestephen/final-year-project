@@ -41,5 +41,12 @@ await withBrowser(async (browser) => {
     if (piece.eof) break;
   }
   await browser.send('IO.close', { handle: stream });
-  writeFileSync(out, Buffer.concat(parts));
+  try {
+    writeFileSync(out, Buffer.concat(parts));
+  } catch (error) {
+    if (error.code === 'EBUSY' || error.code === 'EPERM') {
+      throw new Error(`${out} is open in another program (a PDF viewer?). Close it and run this step again.`);
+    }
+    throw error;
+  }
 });

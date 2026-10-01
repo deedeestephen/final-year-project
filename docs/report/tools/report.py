@@ -56,6 +56,8 @@ DIAGRAMS = REPORT / "diagrams"
 FIGURES = REPORT / "figures"
 FIGURES_MD = DOCS / "report-figures.md"
 FIGURES_PDF = REPORT / "PCa-mHealth-report-figures.pdf"
+UAT = DOCS / "uat"
+UAT_PDF = UAT / "PCa-mHealth-UAT-kit.pdf"
 BACKEND = ROOT / "3-application-logic" / "backend"
 AI = ROOT / "4-ai-intelligence-layer" / "ai-services"
 MOBILE = ROOT / "1-presentation-layer" / "mobile-app"
@@ -504,10 +506,12 @@ def landscape_sections(body: str) -> str:
     return "".join(parts)
 
 
-def print_document(markdown_text: str, cover: str, title: str, footer: str, pdf: Path, transform=None) -> None:
+def print_document(markdown_text: str, cover: str, title: str, footer: str, pdf: Path, transform=None,
+                   drop_title: bool = True) -> None:
     """Markdown → print page (images relative to docs/) → A4 PDF."""
     body = manual_body(markdown_text)
-    body = re.sub(r"^<h1[^>]*>.*?</h1>", "", body, count=1, flags=re.S)
+    if drop_title:
+        body = re.sub(r"^<h1[^>]*>.*?</h1>", "", body, count=1, flags=re.S)
     if transform:
         body = transform(body)
     css = (TEMPLATES / "print.css").read_text(encoding="utf8")
@@ -544,6 +548,27 @@ def step_figures() -> None:
                    "PCa mHealth report figures", "PCa mHealth: figures for the report", FIGURES_PDF,
                    transform=landscape_sections)
     state["figures"] = {"date": today(), "document": digest(text)}
+    save_state(state)
+
+
+def uat_text() -> str:
+    """The UAT documents in order, each starting on a new page."""
+    parts = [(UAT / name).read_text(encoding="utf8") for name in C.UAT_FILES]
+    text = '\n\n<div style="break-before: page"></div>\n\n'.join(parts)
+    # Markdown has no check boxes: print empty boxes to tick by hand.
+    text = re.sub(r"^(\s*)- \[ \] ", r"\1- ☐ ", text, flags=re.M)
+    # Rows tall enough to write and sign in.
+    return text + "\n\n<style>td { height: 11mm; }</style>\n"
+
+
+def step_uat() -> None:
+    """The user acceptance testing kit (docs/uat) as one printable PDF."""
+    text = uat_text()
+    cover = (TEMPLATES / "uat-cover.html").read_text(encoding="utf8").replace("{{date}}", long_date(today()))
+    print_document(text, cover, "PCa mHealth UAT kit", "PCa mHealth: user acceptance testing kit", UAT_PDF,
+                   drop_title=False)
+    state = load_state()
+    state["uat"] = {"date": today(), "documents": digest(text)}
     save_state(state)
 
 
@@ -658,13 +683,16 @@ def step_check() -> int:
     if FIGURES_MD.exists() and state.get("figures", {}).get("document") != digest(FIGURES_MD.read_text(encoding="utf8")):
         print("  WARN: the figures PDF was made from an older report-figures.md.")
         print(f"        To remake it: {SELF} figures")
+    if UAT.exists() and state.get("uat", {}).get("documents") != digest(uat_text()):
+        print("  WARN: the UAT kit PDF was made from older documents in docs/uat.")
+        print(f"        To remake it: {SELF} uat")
     return 0
 
 
 STEPS = {
     "terminals": step_terminals, "code": step_code, "admin": step_admin, "app": step_app,
     "diagrams": step_diagrams, "images": step_images, "pdf": step_pdf, "html": step_html,
-    "figures": step_figures,
+    "figures": step_figures, "uat": step_uat,
 }
 
 

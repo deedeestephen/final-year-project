@@ -1303,3 +1303,26 @@ The owner asked what was still missing from the research proposal for the phone 
 - a clinician-validated, HBM-structured knowledge base;
 - iOS, push notifications, UAT and the SUS score, a screen-reader test;
 - speech to text checked by a person.
+
+## 2026-10-01: The user acceptance testing kit
+
+The owner asked for all three items from the proposal review: a user-testing kit, semantic search for the assistant, and push notifications. This entry is the first.
+
+`docs/uat` turns the proposal's UAT design (§3.8.2, NFR-04, NFR-11) into sessions that can be run:
+- **The plan:**
+  - aims, and the ethics approvals required before any participant (ZCAS ERB and NHRA);
+  - synthetic data only, with participants recorded under codes;
+  - at least five people per group, from CDH, UTH and a rural or peri-urban facility, mapped to the app's roles;
+  - preparation, a 45-minute session, think-aloud and help levels;
+  - analysis: success rate, time on task, SUS, Nielsen's severity scale, thematic analysis;
+  - what the test cannot show (mock AI, draft knowledge base, English only).
+- **An information sheet and a consent form** (template, with a witness line for people who cannot read).
+- **Task sheets** with success criteria and observer columns:
+  - patients: 14 tasks, including read-aloud, voice and the assistant, with a think-aloud focus;
+  - clinicians: 11 tasks, including offline registration under time pressure, sync, consent, an offline upload, and reading the mock AI report;
+  - pathologists: 6 tasks;
+  - administrators: 7 tasks on the admin website.
+- **The System Usability Scale** (Brooke, 1996), with how to read it aloud and a worked scoring example.
+- **A results template** whose tables fit the report's Chapter 4.
+
+The report tool's new step `uat` prints them as one PDF (`docs/uat/PCa-mHealth-UAT-kit.pdf`), with boxes to tick and rows tall enough to write in; `check` warns when the PDF is older than the documents. The task wording was checked against the screens (for example, sign-up asks for name, e-mail, phone, NRC or passport, and a password).

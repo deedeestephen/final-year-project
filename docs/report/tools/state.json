@@ -218,11 +218,11 @@
  },
  "pdf": {
   "date": "2026-10-01",
-  "manual": "8a1b9f41577cb4a3"
+  "manual": "93519b9ad94352a0"
  },
  "html": {
   "date": "2026-10-01",
-  "manual": "8a1b9f41577cb4a3"
+  "manual": "93519b9ad94352a0"
  },
  "diagrams": {
   "date": "2026-10-01",
@@ -267,5 +267,9 @@
  "figures": {
   "date": "2026-10-01",
   "document": "34fa3730e3e03558"
+ },
+ "uat": {
+  "date": "2026-10-01",
+  "documents": "7f8ceec4f5a7bcf4"
  }
 }

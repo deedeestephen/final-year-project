@@ -362,6 +362,8 @@ The real output of the backend gate (summary lines). The testing strategy is in 
 
 ![Figure 4.2: Backend gate output](report/img/term-gate.png)
 
+**The user acceptance test** (proposal §3.8.2) has its own kit in [uat/](uat/README.md): the plan, the information sheet and consent form, task sheets for each role, the SUS questionnaire and a results template whose tables fit this section. It may only be used after ethics approval.
+
 ### 4.4 Main function codes
 
 The code that meets each objective of the proposal. Every picture shows the real file with its line numbers.

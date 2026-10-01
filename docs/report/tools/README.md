@@ -56,7 +56,8 @@ powershell -ExecutionPolicy Bypass -File docs\report\tools\report.ps1 <step> <st
 | `pdf` | makes the manual's PDF, with page numbers | Chrome |
 | `html` | makes the manual's web page | — |
 | `figures` | makes the figures PDF from `docs/report-figures.md`; wide diagrams get landscape pages | Chrome |
-| `all` | `terminals code admin app diagrams images pdf html figures`, in that order | all of the above |
+| `uat` | makes the printable user acceptance testing kit, `docs/uat/PCa-mHealth-UAT-kit.pdf`, from the documents in `docs/uat` | Chrome |
+| `all` | `terminals code admin app diagrams images pdf html figures uat`, in that order | all of the above |
 | `check` | says which code pictures and diagrams are out of date, and whether the PDFs and the web page are older than their text | only Python |
 
 Each step stops with a plain message when something it needs is missing (see the last section).

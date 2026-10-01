@@ -820,6 +820,7 @@ The prototype runs on synthetic data. These are still needed before any real use
 | Question | Read |
 |---|---|
 | How do I test every feature by hand? | [how-to-test.md](how-to-test.md) |
+| How do I run the user acceptance test with real users? | [uat/README.md](uat/README.md) (only after ethics approval) |
 | Why was it built this way? | [architecture.md](architecture.md) and [decisions/](decisions/) |
 | What was done, when, and what was found? | [development-log.md](development-log.md) |
 | Which requirement is met by what, and how is it tested? | [requirements-traceability.md](requirements-traceability.md) |
