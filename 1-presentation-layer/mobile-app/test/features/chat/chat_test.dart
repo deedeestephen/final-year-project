@@ -245,11 +245,22 @@ void main() {
     expect(find.byKey(const Key('chat.suggestion.0')), findsOneWidget);
   });
 
+  testWidgets('the header subtitle is short and read out in full', (
+    tester,
+  ) async {
+    await openChat(tester);
+    expect(find.text('Reviewed answers'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Answers come from reviewed health information'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('clinicians open "Ask the assistant" with reference questions', (
     tester,
   ) async {
     await openChat(tester, roles: ['CLINICIAN']);
-    expect(find.text('Answers from reviewed reference cards'), findsOneWidget);
+    expect(find.text('Reviewed cards'), findsOneWidget);
     expect(find.text('What does PI-RADS 4 mean?'), findsOneWidget);
     expect(
       find.textContaining('do not replace clinical judgement'),

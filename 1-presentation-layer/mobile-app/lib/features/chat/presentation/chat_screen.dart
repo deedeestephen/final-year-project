@@ -179,14 +179,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    clinician
-                        ? 'Answers from reviewed reference cards'
-                        : 'Answers from reviewed health information',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: p.onPrimary,
+                  // Short, so it fits on a 360 dp phone; the full sentence is
+                  // what a screen reader says.
+                  Semantics(
+                    label: clinician
+                        ? 'Answers come from reviewed reference cards'
+                        : 'Answers come from reviewed health information',
+                    excludeSemantics: true,
+                    child: Text(
+                      clinician ? 'Reviewed cards' : 'Reviewed answers',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: p.onPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
