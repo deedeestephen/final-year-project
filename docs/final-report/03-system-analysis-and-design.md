@@ -2,7 +2,7 @@
 
 ## 3.1 Research Design
 
-The project followed Design Science Research (DSR) (Hevner et al., 2004), which suits research whose main output is a purposeful artefact. Its contribution is twofold: the artefact, and the design knowledge about how and why it works. Here the artefact is the prototype platform, and the design knowledge is recorded in fourteen architecture decision records (ADR-001 to ADR-014) and the development log. Table 3.1 shows how each DSR activity was carried out.
+The project followed Design Science Research (DSR) (Hevner et al., 2004), which suits research whose main output is a purposeful artefact. Its contribution is the artefact and the design knowledge about how and why it works. Here the artefact is the prototype platform; the design knowledge is recorded in fourteen architecture decision records (ADR-001 to ADR-014) and the development log. Table 3.1 shows how each DSR activity was carried out.
 
 Table 3.1: The Design Science Research activities as carried out
 
@@ -15,24 +15,24 @@ Table 3.1: The Design Science Research activities as carried out
 | Evaluation | Automated tests, a security review, performance against the proposal's targets, a retrieval evaluation; user testing prepared but not run |
 | Communication | This report, the operations manual and the decision records |
 
-The proposal embedded mixed methods. Of the quantitative part, only system performance could be measured, because no trained model exists. The qualitative part, stakeholder and usability evidence, is prepared in the user acceptance testing kit but awaits ethics approval.
+Of the proposal's quantitative methods, only system performance could be measured, because no trained model exists. The qualitative part, stakeholder and usability evidence, is prepared in the user acceptance testing kit but awaits ethics approval.
 
 ## 3.2 Requirements Analysis
 
 ### 3.2.1 Users and roles
 
-The system serves four kinds of user, each with a role that decides what they may do.
+Four roles decide what each user may do.
 
 - **Patients** create an account, see their own results, read or listen to health information, receive messages, manage their consents and ask the assistant.
 - **Clinicians** (urologists, general practitioners, nurses and radiographers) register patients, record screenings with or without internet, record consent, upload scans, request and read AI analyses, and ask the assistant.
 - **Pathologists** upload slides and record their Gleason review.
 - **Administrators** manage accounts, roles and permissions, link patients' sign-ins to clinic records, read the audit log and an activity dashboard, and run the FHIR export. They have no routine access to clinical data.
 
-The research coordinator, AI engineer and IT staff of UC-10 to UC-12 were not given separate roles, because those use cases were built only in part or left for later.
+The research coordinator, AI engineer and IT staff of UC-10 to UC-12 were not given roles, because those use cases were built only in part or left for later.
 
 ### 3.2.2 Use cases
 
-Table 3.2 lists the proposal's twelve use cases with their status; Figure 3.5 shows them as a diagram.
+Table 3.2 lists the proposal's twelve use cases with their status (Figure 3.5 shows them as a diagram).
 
 Table 3.2: The twelve use cases and their status
 
@@ -53,7 +53,7 @@ Table 3.2: The twelve use cases and their status
 
 ### 3.2.3 Functional and non-functional requirements
 
-Tables 3.3 and 3.4 summarise the requirements as the proposal states them. Their status, implementation and tests are summarised in Appendix A.
+Tables 3.3 and 3.4 summarise the proposal's requirements; Appendix A gives their status, implementation and tests.
 
 Table 3.3: Functional requirements (from the proposal)
 
@@ -90,7 +90,7 @@ Table 3.4: Non-functional requirements (from the proposal)
 
 ### 3.2.4 Changes from the proposal
 
-Analysis at the start of the build, and later reviews of the proposal, led to deliberate changes, each recorded in a decision record (Table 3.5).
+Analysis at the start of the build and later reviews led to deliberate changes, each recorded in a decision record (Table 3.5).
 
 Table 3.5: Significant changes from the proposal
 
@@ -108,16 +108,16 @@ Table 3.5: Significant changes from the proposal
 
 ## 3.3 System Development Method
 
-The proposal selected the iterative prototyping model, in which each iteration passes through design refinement, development, internal testing and stakeholder evaluation. Figure 3.1 shows the cycle as it was followed.
+The proposal selected iterative prototyping, in which each iteration passes through design refinement, development, internal testing and stakeholder evaluation (Figure 3.1).
 
 ![Figure 3.1: The iterative prototyping cycle as followed](../report/figures/activity-prototyping-cycle.png)
 
-- **Design refinement.** Each phase started from the development plan and the traceability matrix. Lasting decisions were written as decision records with the options considered and the reasons. When the owner later changed the visual design, ADR-004 was superseded and the colours of ADR-006 and ADR-008 replaced; the earlier records were kept as history.
+- **Design refinement.** Each phase started from the development plan and the traceability matrix. Lasting decisions were recorded with the options considered and the reasons. When the owner changed the visual design, ADR-004 was superseded and the colours of ADR-006 and ADR-008 replaced; the earlier records were kept as history.
 - **Development.** Code was written test-first where practical, with synthetic data only, in a repository organised by the six architectural layers.
-- **Internal testing.** A quality gate ran formatting, static analysis, type checking, tests with at least 80% coverage, the build, dependency audits and a secret scan for each part. A phase could not close while the gate failed, and failing tests were fixed rather than skipped. The same script ran in continuous integration.
-- **Evaluation.** The owner reviewed each phase on the emulator, in screen renders or through the manual test guide, and the owner's requests fed the next iteration, for example the separate administration website, the redesign, voice and read-aloud, and the closing of gaps found when the proposal was read again. Evaluation with clinicians and patients is prepared but was not held (Section 4.3.8).
+- **Internal testing.** A quality gate (Section 4.3.2) checked each part, and the same script ran in continuous integration. A phase could not close while the gate failed, and failing tests were fixed, not skipped.
+- **Evaluation.** The owner reviewed each phase on the emulator, in screen renders or through the manual test guide, and the owner's requests fed the next iteration: the separate administration website, the redesign, voice and read-aloud, and the closing of gaps found when the proposal was reread. Evaluation with clinicians and patients is prepared but was not held (Section 4.3.8).
 
-Two departures from the proposal's method should be noted. The iterations were build phases of varying length, not four-week time-boxes. And the development log and the security review record that the code, tests and documentation were written with an AI coding assistant (Claude) under the student's direction, with design choices recorded as the owner's decisions; this changed the pace of development but not the method, since every phase passed the same gate. For every phase, the development log recorded the objective, decisions, files changed, tests, errors with their root causes and fixes, and known limitations.
+Two departures from the proposal's method should be noted. The iterations were build phases of varying length, not four-week time-boxes. And, as the development log and the security review record, the code, tests and documentation were written with an AI coding assistant (Claude) under the student's direction, with design choices recorded as the owner's decisions. This changed the pace of development but not the method, since every phase passed the same gate. The log recorded, for every phase, the objective, decisions, files changed, tests, errors with root causes and fixes, and known limitations.
 
 ## 3.4 Data and Process Modelling
 
@@ -135,7 +135,7 @@ Figure 3.3 decomposes the platform into eight processes (1.0 authenticate users;
 
 ### 3.4.2 Use case models
 
-Figure 3.5 shows the twelve use cases with their actors; partly built use cases are yellow, and those left for later are grey and dashed. Figure 3.6 shows what each role can do in the app, with include and extend relations (saving on the phone and synchronising is included in registering a patient). Figure 3.7 shows the assistant: asking by typing or voice, the safety check that is always included, the kinds of answer, listening, and managing chats.
+Figure 3.5 shows the use cases with their actors; partly built ones are yellow, and those left for later are grey and dashed. Figure 3.6 shows what each role can do in the app, with include and extend relations (saving and synchronising is included in registering a patient). Figure 3.7 shows the assistant: typed or spoken questions, the safety check, the kinds of answer, listening and chat management.
 
 ![Figure 3.5: Use case diagram: the whole system (UC-01 to UC-12)](../report/figures/usecase-system.png)
 
@@ -145,7 +145,7 @@ Figure 3.5 shows the twelve use cases with their actors; partly built use cases 
 
 ### 3.4.3 Activity models
 
-Figure 3.8 shows every decision taken when the assistant answers: the request limit, urgent-care signs, medicines and doses, a patient's own results, small talk, the knowledge-base search (keywords, then meaning) and the check of the answer. Figure 3.9 shows the offline-first design of FR-03: saved on the phone first, sent in batches with idempotency keys, and returned as applied, conflict or rejected. Figure 3.10 shows voice input and read-aloud, and Figure 3.11 the request for an AI analysis, with its consent, record and one-at-a-time checks, de-identified inputs, queue and labelled mock result.
+Figure 3.8 shows each decision in the assistant's answer (Section 3.5.7). Figure 3.9 shows the offline-first design of FR-03: saved on the phone, sent in batches with idempotency keys, and returned as applied, conflict or rejected. Figure 3.10 shows voice input and read-aloud, and Figure 3.11 the AI analysis request: consent, record and one-at-a-time checks, de-identified inputs, queue and labelled mock result.
 
 ![Figure 3.8: Activity diagram: how the assistant answers a message](../report/figures/activity-chat-answer.png)
 
@@ -157,7 +157,7 @@ Figure 3.8 shows every decision taken when the assistant answers: the request li
 
 ### 3.4.4 Sequence models
 
-Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token, and a refresh token replaced on every use, so that reuse of an old one reveals theft and ends the whole session family. A lockout stops new sign-ins only; it does not end sessions that are already open. Figure 3.13 follows a question through the gateway guards, the chatbot service and the AI service to MongoDB and the audit log. Figure 3.14 shows the phone's outbox, the batch, the per-operation results and the download of the facility's changes. Figures 3.15 and 3.16 show the AI analysis and the FHIR export with Safe Harbor de-identification. Figure 3.17 shows push notifications: the phone is registered after sign-in, a new notification is claimed by the server's outbox and sent through Firebase with text only, hidden on a locked phone, and sign-out removes the phone.
+Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token, and a refresh token replaced on every use, so that reuse of an old one reveals theft and ends the whole session family (Table 3.7). Figure 3.13 follows a question through the gateway guards, the chatbot service and the AI service to MongoDB and the audit log. Figure 3.14 shows the outbox, the batch, the per-operation results and the download of the facility's changes, and Figures 3.15 and 3.16 the AI analysis and the FHIR export with Safe Harbor de-identification. Figure 3.17 shows push notifications: the phone is registered after sign-in, the server's outbox claims each new notification and sends it through Firebase as text only, hidden on a locked phone, and sign-out removes the phone.
 
 ![Figure 3.12: Sequence diagram: signing in and renewing the session](../report/figures/sequence-sign-in.png)
 
@@ -173,7 +173,7 @@ Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token
 
 ### 3.4.5 State models
 
-Figure 3.18 shows a change saved on the phone: pending ("Saved on device") until sent, then synced, back to pending after a network failure, or needing attention as a conflict or rejection. Figure 3.19 shows an AI job, which is queued, then running, and ends as succeeded, failed or timed out; a job interrupted by a restart is queued again or marked failed. Figure 3.20 shows the chat's message box during voice input.
+Figure 3.18 shows a change saved on the phone: pending ("Saved on device") until sent, then synced, back to pending after a network failure, or needing attention as a conflict or rejection. Figure 3.19 shows an AI job: queued, running, then succeeded, failed or timed out; a job interrupted by a restart is queued again or marked failed. Figure 3.20 shows the message box during voice input.
 
 ![Figure 3.18: State diagram: a change saved on the phone](../report/figures/state-offline-change.png)
 
@@ -185,7 +185,7 @@ Figure 3.18 shows a change saved on the phone: pending ("Saved on device") until
 
 ### 3.5.1 Architecture
 
-The system keeps the proposal's six layers (Figure 3.21 and Table 3.6), and the repository is organised in the same layers.
+The system keeps the proposal's six layers (Figure 3.21 and Table 3.6), and the repository follows them.
 
 ![Figure 3.21: The six-layer architecture as built](../report/figures/architecture-layers.png)
 
@@ -200,21 +200,21 @@ Table 3.6: Technology of each layer
 | 5. Data persistence | PostgreSQL, MongoDB, object storage (local folder or MinIO), Redis; Qdrant available for a larger knowledge base |
 | 6. Infrastructure | Docker Compose, PowerShell start and stop scripts, the quality gate, GitHub Actions; Kubernetes and monitoring plans |
 
-The layers are separated by contracts. The app and the website never reach a database or the AI service directly: every request goes through the backend, so every rule is enforced in one place. The backend reaches the AI service only through a versioned HTTP contract with a service token, so real models can replace the mocks without changing the backend, database or app. Figure 3.22 shows where each part runs. PostgreSQL 16 and MongoDB 7 ran in Docker until 29 September 2026, when the data was moved, at the owner's request, to the PostgreSQL 18 and MongoDB 8.3 servers installed on the laptop, with identical row counts and an intact audit chain.
+Contracts separate the layers. The app and the website never reach a database or the AI service directly, so every rule is enforced in one place, the backend. The backend reaches the AI service only through a versioned HTTP contract with a service token, so real models can replace the mocks without changing the backend, database or app. Figure 3.22 shows where each part runs. PostgreSQL 16 and MongoDB 7 ran in Docker until 29 September 2026, when the data was moved, at the owner's request, to the PostgreSQL 18 and MongoDB 8.3 servers installed on the laptop, with identical row counts and an intact audit chain.
 
 ![Figure 3.22: Deployment diagram](../report/figures/deployment.png)
 
 ### 3.5.2 Program design of the backend
 
-The backend has three folders that mirror the architecture: `gateway` (what every request passes through), `services` (one module per feature: authentication, users, patients, clinical records, imaging, AI, chatbot, synchronisation, notifications, FHIR, administration and audit) and `persistence` (database clients, file storage, field encryption, seed data). Each feature has a controller that declares its routes and their permissions, data transfer objects that define exactly what may be sent and returned, and a service that holds the rules and writes the audit entry (Figure 3.23).
+The backend has three folders that mirror the architecture: `gateway` (which every request passes), `services` (one module per feature: authentication, users, patients, clinical records, imaging, AI, chatbot, synchronisation, notifications, FHIR, administration and audit) and `persistence` (database clients, file storage, field encryption, seed data). Each feature has a controller that declares its routes and permissions, data transfer objects that define what may be sent and returned, and a service that holds the rules and writes the audit entry (Figure 3.23).
 
 ![Figure 3.23: Component diagram: the backend modules](../report/figures/component-backend.png)
 
-Four guards run on every route, in order, and a route is closed unless the code explicitly opens it: a per-address rate limit (600 requests a minute), authentication of the access token, a per-account rate limit (120 requests a minute), and the permission check, which audits every refusal. Services then check the scope of each resource: a clinician sees only patients of their own facility, and a request for another facility's patient returns "not found", so its existence is not revealed.
+Four guards run on every route, in order, and a route is closed unless the code explicitly opens it: a per-address rate limit (600 requests a minute), authentication of the access token, a per-account rate limit (120 requests a minute), and the permission check, which audits every refusal. Services then check each resource's scope: a clinician sees only patients of their own facility, and a request for another facility's patient returns "not found", which hides its existence.
 
 ### 3.5.3 Class design
 
-Figure 3.24 shows the app's assistant, voice input and read-aloud, whose speech services sit behind small interfaces so that tests can replace them. Figure 3.25 shows the app's offline storage and synchronisation, and Figure 3.26 the assistant on the server: the backend's chatbot module and the AI service's retrieval, meaning search, knowledge base and optional Claude writer.
+Figure 3.24 shows the app's assistant, voice input and read-aloud, whose speech services sit behind small interfaces that tests can replace. Figure 3.25 shows the app's offline storage and synchronisation, and Figure 3.26 the server-side assistant: the backend's chatbot module and the AI service's retrieval, meaning search, knowledge base and optional Claude writer.
 
 ![Figure 3.24: Class diagram: the app's assistant, voice input and read-aloud](../report/figures/class-app-chat-audio.png)
 
@@ -224,7 +224,7 @@ Figure 3.24 shows the app's assistant, voice input and read-aloud, whose speech 
 
 ### 3.5.4 API design
 
-The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. Every error uses one envelope with a stable code and a request identifier, and never contains stack traces, SQL or submitted values. Figure 3.27 maps all 75 routes with their permissions and default roles, and the AI service's internal API. The map is generated from the access matrix, itself generated from the code, and the quality gate fails if a route breaks a review rule, such as a clinical route open to administrators. Figure 3.28 shows the API explorer served by the backend. The AI contract was frozen at version 0 in Phase 3, so that both sides could be built in parallel, and grew additively to version 0.4.
+The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. Every error uses one envelope with a stable code and a request identifier, and never contains stack traces, SQL or submitted values. Figure 3.27 maps all 75 routes with their permissions and default roles, and the AI service's internal API. The map is generated from the access matrix, itself generated from the code, and the quality gate fails if a route breaks a review rule, such as a clinical route open to administrators. Figure 3.28 shows the API explorer. The AI contract was frozen at version 0 in Phase 3, so that both sides could be built in parallel, and grew additively to version 0.4.
 
 ![Figure 3.27: API diagram: every route, its permission and its default roles](../report/figures/api-map.png)
 
@@ -232,9 +232,9 @@ The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. 
 
 ### 3.5.5 Database design
 
-**Stores.** PostgreSQL holds the structured records: accounts, roles, permissions, sessions, facilities, patients, screenings, consents, scan and slide records, AI jobs and explanation records, notifications and push phones, synchronisation results and the audit log. MongoDB holds documents whose shape varies: AI reports, inference logs, scan details and chat conversations. Large files never enter a database; a row keeps a server-generated storage key, the file's SHA-256 checksum, size and type.
+**Stores.** PostgreSQL holds the structured records: accounts, roles, permissions, sessions, facilities, patients, screenings, consents, scan and slide records, AI jobs and explanation records, notifications and push phones, synchronisation results and the audit log. MongoDB holds documents whose shape varies: AI reports, inference logs, scan details and chat conversations. Large files never enter a database; a row keeps a server-generated storage key and the file's SHA-256 checksum, size and type.
 
-**Relational design.** Figure 3.29 shows all twenty PostgreSQL tables and their keys, and Figures 3.30 to 3.32 show three groups in detail. The diagrams are generated from the Prisma schema, so they cannot drift from the code.
+**Relational design.** Figure 3.29 shows all twenty PostgreSQL tables and their keys, and Figures 3.30 to 3.32 three groups in detail. The diagrams are generated from the Prisma schema, so they cannot drift from the code.
 
 ![Figure 3.29: Entity-relationship diagram: all PostgreSQL tables and their keys](../report/figures/erd-overview.png)
 
@@ -244,20 +244,19 @@ The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. 
 
 ![Figure 3.32: ERD: AI jobs, notifications, synchronisation and the audit log](../report/figures/erd-ai-sync-audit.png)
 
-**Normalisation.** The schema was designed to third normal form, with deliberate exceptions.
+**Normalisation.** The schema follows third normal form, with exceptions.
 
 - *Keys.* Every table has a primary key, mostly a UUID `id`. The link tables `user_roles` (`user_id`, `role_id`) and `role_permissions` (`role_id`, `permission_id`) have composite keys, and `audit_logs` is keyed by a sequence number, `seq`. Unique constraints enforce alternate keys such as `users.email` and `push_devices.token`, so one phone is registered only once.
-- *First normal form.* Columns hold single values, and repeating groups, such as a patient's screening records, are child tables.
-- *Many-to-many relations* between users and roles, and roles and permissions, are resolved by the two link tables.
+- *First normal form.* Columns hold single values, and repeating groups, such as a patient's screening records, are child tables. Many-to-many relations between users and roles, and roles and permissions, are resolved by the two link tables.
 - *Second normal form.* The only composite keys are those of the link tables; `role_permissions` has no other column, and `user_roles.assigned_at` depends on the whole key.
-- *Third normal form.* Facility details are stored once in `facilities` and role names once in `roles`. Derived values are not stored: PSA density and the free-to-total ratio are calculated when a record is read.
-- *Deliberate exceptions.* Some columns hold JSON whose content varies and is read as a whole: `clinical_records.symptoms`, `ai_jobs.inputs`, `model_versions` and `input_notes`, `ai_models.evaluation`, `sync_operations.conflict_detail` and `audit_logs.details`. The ISUP grade group of a slide review is computed by the server and stored with the review, so that the review is a fixed record. AI reports, chats and scan details live in MongoDB, linked by identifier.
+- *Third normal form.* Facility details are stored once in `facilities` and role names once in `roles`. PSA density and the free-to-total ratio are calculated when a record is read, not stored.
+- *Exceptions.* Some columns hold JSON whose content varies and is read as a whole: `clinical_records.symptoms`, `ai_jobs.inputs`, `model_versions` and `input_notes`, `ai_models.evaluation`, `sync_operations.conflict_detail` and `audit_logs.details`. The ISUP grade group of a slide review is computed by the server and stored with the review, so that the review is a fixed record. AI reports, chats and scan details live in MongoDB, linked by identifier.
 
-**Integrity rules.** The database enforces the most important rules itself: 19 foreign keys (18 from the first migration and one added with the push phones), unique keys, and CHECK constraints on clinical values (non-negative PSA, free PSA not above total PSA, PI-RADS, Gleason patterns and grade groups between 1 and 5, positive prostate volume). A withdrawn consent must have a withdrawal time; every explanation record has either a stored file or a stated reason (NFR-09); every synchronisation result has a unique idempotency key.
+**Integrity rules.** The database itself enforces 19 foreign keys (18 from the first migration and one added with the push phones), unique keys, and CHECK constraints on clinical values (non-negative PSA, free PSA not above total PSA, PI-RADS, Gleason patterns and grade groups between 1 and 5, positive prostate volume). A withdrawn consent must have a withdrawal time; every explanation record has either a stored file or a stated reason (NFR-09); every synchronisation result has a unique idempotency key.
 
-**Encryption and audit.** Names, national identity numbers and phone numbers are stored encrypted with AES-256-GCM, and the national identity number also as a keyed HMAC-SHA-256 hash, so that a patient can be found by exact match without the number being in clear. The audit log is append-only: triggers refuse updates, deletes and truncation, and a trigger before each insert takes an advisory lock, assigns the next sequence number and stores a SHA-256 hash covering the previous row's hash. A database function walks the chain and reports the first broken row, so tampering is detected even if the triggers are disabled. The cost is that audited writes take turns, which Section 4.3.5 measures.
+**Encryption and audit.** Names, national identity numbers and phone numbers are stored encrypted with AES-256-GCM, and the national identity number also as a keyed HMAC-SHA-256 hash, so that a patient can be found by exact match without the number being in clear. The audit log is append-only: triggers refuse updates, deletes and truncation, and a trigger before each insert takes an advisory lock, assigns the next sequence number and stores a SHA-256 hash that covers the previous row's hash. A database function walks the chain and reports the first broken row, so tampering is detected even if the triggers are disabled. The cost, measured in Section 4.3.5, is that audited writes take turns.
 
-**MongoDB and the phone.** Each MongoDB collection has a server-side validator (Figure 3.33); every AI report must state its provenance, `MOCK` or `RESEARCH_MODEL`, and carry a disclaimer, and chats are deleted 180 days after the last message. The app keeps six tables on the phone for offline work: patients, screening records, the outbox, conflicts, files waiting to upload, and metadata such as the device identifier and synchronisation cursor (Figure 3.34). The database is encrypted with SQLCipher (AES-256), with a random 256-bit key held only in the Android Keystore, and is wiped when a different user signs in.
+**MongoDB and the phone.** Each MongoDB collection has a server-side validator (Figure 3.33): every AI report must state its provenance, `MOCK` or `RESEARCH_MODEL`, and carry a disclaimer, and chats are deleted 180 days after the last message. The app keeps six tables on the phone for offline work: patients, screening records, the outbox, conflicts, files waiting to upload, and metadata such as the device identifier and synchronisation cursor (Figure 3.34). The database is encrypted with SQLCipher (AES-256), with a random 256-bit key held only in the Android Keystore, and is wiped when a different user signs in.
 
 ![Figure 3.33: MongoDB: the four document collections and their rules](../report/figures/database-mongodb.png)
 
@@ -265,30 +264,30 @@ The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. 
 
 ### 3.5.6 Design of the AI inference engine
 
-A model router in the AI service runs every module that the available inputs allow, lists the modules it skipped with reasons, and fuses the results. The five modules of the proposal (U-Net, ResNet-50, the clinical ANN, the patch-CNN with MIL and the XGBoost fusion) sit behind one provider interface. In the prototype each provider is a labelled mock whose numbers come from a hash of the job identifier, never from the patient's values; a test changes the PSA and checks that the number does not change. Each module is mapped to its kind of explanation (Grad-CAM for ResNet-50, SHAP for the ANN and fusion, MIL attention for slides), and with mocks every explanation is an explicit "unavailable" reason; no heatmap or SHAP value is ever invented. Images from a future real model are accepted only as genuine PNG files of at most 2 MB.
+A model router in the AI service runs every module that the available inputs allow, lists the modules it skipped with reasons, and fuses the results. The five modules of the proposal (U-Net, ResNet-50, the clinical ANN, the patch-CNN with MIL and the XGBoost fusion) sit behind one provider interface. In the prototype, each provider is a labelled mock whose numbers come from a hash of the job identifier, never from the patient's values; a test changes the PSA and checks that the number does not change. Each module maps to its kind of explanation (Grad-CAM for ResNet-50, SHAP for the ANN and fusion, MIL attention for slides); with mocks, every explanation is an explicit "unavailable" reason, and no heatmap or SHAP value is invented. Images from a future real model are accepted only as genuine PNG files of at most 2 MB.
 
-The backend's broker sends only a keyed pseudonym, the clinical values and de-identified copies of scans, never names, identity numbers or record identifiers. A request needs the patient's active AI consent, a screening record, and no other analysis running for that patient. Performance and fairness figures are shown only from a stored evaluation; otherwise the system says "Evaluation data not yet available." The fairness check compares stored per-group AUC values by age (under 50, 50–64, 65 and over), region, stage and equipment, and flags a gap above 0.05; groups with fewer than 30 test cases are listed rather than compared.
+The backend's broker sends only a keyed pseudonym, the clinical values and de-identified copies of scans, never names, identity numbers or record identifiers. A request needs the patient's active AI consent, a screening record, and no other analysis running for that patient. Performance and fairness figures come only from a stored evaluation; otherwise the system says "Evaluation data not yet available." The fairness check compares stored per-group AUC values by age (under 50, 50–64, 65 and over), region, stage and equipment, and flags a gap above 0.05; groups with fewer than 30 test cases are listed rather than compared.
 
 ### 3.5.7 Design of the patient-education assistant
 
-The assistant was designed around one rule: it must never invent medical content. Every question passes through these steps:
+The assistant follows one rule: it must never invent medical content. Every question passes through these steps:
 
 1. **Limits:** up to 30 questions an hour per account.
 2. **Safety rules, before anything is looked up:** emergency and self-harm wording receives fixed urgent-care text; questions about medicines and doses are declined; a patient's questions about their own results or a diagnosis are declined with a referral to their clinician.
-3. **Small talk:** eighteen kinds of casual message, including Bemba and Nyanja greetings, receive friendly fixed replies, but only if the message is nothing else, so "hello, is my PSA bad?" still meets the safety rules.
+3. **Small talk:** eighteen kinds of casual message, including Bemba and Nyanja greetings, receive fixed friendly replies, but only if the message is nothing else; "hello, is my PSA bad?" still meets the safety rules.
 4. **Retrieval (ADR-013):** keywords decide, because BM25 must find a passage scoring at least 2.0; meaning chooses the article, because MedCPT scores those passages and the article with the closest passage comes first; inside an article the keywords choose the section, because MedCPT scores sections of one article too closely to tell them apart, and if the best scores below a floor of 52.0 the answer is "no reviewed information". A short follow-up is read with the previous question but must also reach the floor on its own, so a new topic is not answered from the old one.
-5. **Writing:** by default the best passages are quoted word for word. If enabled, Claude writes from the three best passages through a fixed tool form, and its answers are labelled "Written by AI (Claude) from the sources below". Claude is off in the prototype.
+5. **Writing:** by default, the best passages are quoted word for word. If Claude is enabled, which it is not in the prototype, it writes from the three best passages through a fixed tool form, and its answers are labelled "Written by AI (Claude) from the sources below".
 6. **Output check and storage:** an answer without a source, or with a dose in it, is never shown; questions and answers are stored for their owner only, and the audit log records that a question was asked, never its words.
 
-The knowledge base holds the app's six Learn articles, each citing public sources (NHS, the US National Cancer Institute and WHO), and five clinician cards (ISUP grade groups, PI-RADS v2.1, PSA density and the free-to-total ratio, DRE findings, and how to read the AI report): 32 passages in all. Everything is marked "Draft for review by a qualified clinician" until a clinician signs it off, and patients never receive clinician content. The MedCPT encoders run inside the AI service, written with numpy and matching the reference implementation to within 0.0001, so questions never leave the system unless Claude is enabled. Under load, several questions are encoded side by side (six on the development laptop), and a question that waits more than half a second is answered with keywords only.
+The knowledge base holds the six Learn articles, each citing public sources (NHS, the US National Cancer Institute and WHO), and five clinician cards (ISUP grade groups, PI-RADS v2.1, PSA density and the free-to-total ratio, DRE findings, and how to read the AI report): 32 passages in all. Everything is marked "Draft for review by a qualified clinician" until a clinician signs it off, and patients never receive clinician content. The MedCPT encoders run inside the AI service, written with numpy and matching the reference implementation to within 0.0001, so questions leave the system only if Claude is enabled. Under load, questions are encoded side by side, with a keyword-only fallback (Section 4.3.5).
 
 ### 3.5.8 Interface design
 
-Figure 3.35 shows every screen of the app and how each role moves between them. Patients have a tabbed app (Home, Results, Learn, Messages, Profile); clinicians and pathologists have a home screen with their work; administrators who sign in on a phone are told that administration is on the website.
+Figure 3.35 shows every screen and how each role moves between them. Patients have a tabbed app; clinicians and pathologists have a home screen with their work; administrators who sign in on a phone are told that administration is on the website.
 
 ![Figure 3.35: The app's screens and navigation](../report/figures/navigation-app.png)
 
-The visual design went through three iterations at the owner's request: the "Clinical Trust" option with stronger legibility rules (ADR-002), a "modern health app" style (ADR-008), and finally awareness blue with modern rounded icons and a drawn assistant figure (ADR-011). Several rules held throughout: body text of at least 15 px, touch targets of at least 48 dp and 52 px inputs; every text pair at a WCAG AA contrast of at least 4.5:1, tested in light and dark mode; states written in words, never by colour alone; clinical values in neutral colours with nothing that suggests good or bad; the AI provenance banner first on every AI screen; and a notice on every sign-in screen that the app is not an official government service. Figures 3.36 to 3.39 show the main screens, with synthetic data.
+The visual design went through three iterations at the owner's request: the "Clinical Trust" option with stronger legibility rules (ADR-002), a "modern health app" style (ADR-008), and finally awareness blue with modern rounded icons and a drawn assistant figure (ADR-011). Rules held throughout: body text of at least 15 px, touch targets of at least 48 dp and 52 px inputs; every text pair at a WCAG AA contrast of at least 4.5:1, tested in light and dark mode; states written in words, never by colour alone; clinical values in neutral colours with nothing that suggests good or bad; the AI provenance banner first on every AI screen; and a notice on every sign-in screen that the app is not an official government service. Figures 3.36 to 3.39 show the main screens with synthetic data.
 
 ![Sign-in](../report/img/app-signin.jpg) ![Patient home (emulator)](../report/img/app-home-device.jpg) ![Learn, dark mode](../report/img/app-learn.jpg) ![An article read aloud (emulator)](../report/img/app-article-device.jpg)
 
@@ -298,7 +297,7 @@ Figure 3.36: Interface design: patient screens (sign-in; patient home on the emu
 
 Figure 3.37: Interface design: the assistant (empty chat; an answer with its sources; casual chat; past chats; speaking a question)
 
-The answer in Figure 3.37 is the AI service's real answer to that question, quoted from the draft knowledge base, and the casual replies are the backend's real replies; in the recording picture a stand-in plays the part of the phone's speech service.
+The answer in Figure 3.37 is the AI service's real answer, quoted from the draft knowledge base, and the casual replies are the backend's real replies; in the recording picture, a stand-in plays the phone's speech service.
 
 ![Figure 3.38: Interface design: clinician home](../report/img/app-clinician.jpg)
 
@@ -306,7 +305,7 @@ The answer in Figure 3.37 is the AI service's real answer to that question, quot
 
 Figure 3.39: Interface design: the admin website (dashboard, accounts list and delete dialog; synthetic API answers, and the dashboard's numbers were made up for the picture)
 
-Accessibility was designed in. An automated test applies Flutter's accessibility guidelines (tap-target size, labels and contrast) to twelve screens in both modes and lays each out at 200% text size, which found and fixed a real overflow in the sign-in header. Field and button outlines were later raised to at least 3:1 against their background, as WCAG 2.1 criterion 1.4.11 asks. For people who cannot read, every article and answer can be read aloud, and questions can be spoken.
+Accessibility was designed in. An automated test (Section 4.3.7) found and fixed a real overflow in the sign-in header at 200% text size. Field and button outlines were later raised to at least 3:1 against their background, as WCAG 2.1 criterion 1.4.11 asks.
 
 ### 3.5.9 Security design
 
@@ -327,4 +326,4 @@ Table 3.7: Main security controls
 
 ## 3.6 Chapter Summary
 
-The project followed Design Science Research and an iterative prototyping method, adapted to build phases closed by a quality gate. The requirements came from the proposal, and changes were recorded with their reasons. The models describe the system's context, processes and stores, use cases, key activities and interactions, and the life cycles of its key objects. The design kept the proposal's six layers, separated by contracts, and built security, safety and accessibility rules into the design itself. Chapter 4 describes the implementation and testing.
+The project followed Design Science Research and an iterative prototyping method, adapted to build phases closed by a quality gate. The requirements came from the proposal, and changes were recorded with their reasons. The models describe the system's context, processes, stores, use cases, activities, interactions and object life cycles. The design kept the proposal's six layers, separated by contracts, with security, safety and accessibility rules built in. Chapter 4 describes the implementation and testing.

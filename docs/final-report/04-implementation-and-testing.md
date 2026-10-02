@@ -1,6 +1,6 @@
 # Chapter 4: System Implementation and Testing
 
-This chapter describes the implemented system and its testing. Sections 4.1 and 4.2 are a condensed system guide and installation manual; the full versions are the project's operations manual (also available as a PDF) and a step-by-step manual test guide (Appendix D). Section 4.3 presents the testing plan and its output, and Section 4.4 the main function code for each objective.
+This chapter describes the implemented system and its testing. Sections 4.1 and 4.2 condense the system guide and installation manual; the full versions are the project's operations manual (also available as a PDF) and a step-by-step manual test guide (Appendix D). Section 4.3 presents the testing plan and its output, and Section 4.4 the main function code for each objective.
 
 ## 4.1 System Guide
 
@@ -18,11 +18,11 @@ Table 4.1: The parts of the system on the development computer
 | MongoDB | AI reports, chats, scan details | MongoDB 8.3 | localhost:27017 |
 | Redis, MinIO, Qdrant | Shared rate limits; S3-style file storage; vector search (for later) | Docker containers | ports 6379; 9000–9001; 6333 |
 
-Every request from the app or the website passes through the backend in a fixed order: the per-address rate limit, the access token check, the per-account rate limit, the permission check, validation of the request, and the service, which does the work and writes an audit entry. Only the backend talks to the databases and the AI service.
+Every request from the app or the website passes through the backend's guards in a fixed order (Section 3.5.2), then validation and the service, which does the work and writes an audit entry. Only the backend talks to the databases and the AI service.
 
 ### 4.1.2 Using the system
 
-**Clinicians** sign in on the phone and can register patients and add screening records (PSA, free PSA, DRE finding, PI-RADS, prostate volume, biopsy and family history, symptoms) with or without a connection. Each item shows its state in words ("Saved on device", "Synced" or "Needs attention"), and the Sync screen shows any conflict side by side for the clinician to resolve. A synchronised patient's page offers **Consent**, **Images and slides** (files wait in an upload queue until they can be sent) and **AI analysis**. The analysis button is disabled, with the reason, when the phone is offline, AI consent is missing or no screening has been synchronised. The report begins with the banner "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT." and then shows the values, the modules used and skipped, and each explanation or the reason there is none.
+**Clinicians** sign in on the phone and register patients and add screening records (PSA, free PSA, DRE finding, PI-RADS, prostate volume, biopsy and family history, symptoms), with or without a connection. Each item shows its state in words ("Saved on device", "Synced" or "Needs attention"); the Sync screen shows any conflict side by side for the clinician to resolve. A synchronised patient's page offers **Consent**, **Images and slides** (files wait in an upload queue until they can be sent) and **AI analysis**, which is disabled, with the reason shown, when the phone is offline, AI consent is missing or no screening has been synchronised. The report begins with the banner "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT." and then shows the values, the modules used and skipped, and each explanation or the reason there is none.
 
 **Pathologists** open the review queue, enter the primary and secondary Gleason patterns (3 to 5) for a slide and save; the server computes the ISUP grade group and allows one review per slide.
 
@@ -34,7 +34,7 @@ Every request from the app or the website passes through the backend in a fixed 
 
 ### 4.2.1 Requirements
 
-The system was developed on a Windows 11 laptop with an 11th-generation Intel Core i5 processor (4 cores, 8 threads) and 32 GB of memory. Table 4.2 lists the software, with the versions in use on 30 September 2026.
+The system was developed on a Windows 11 laptop with an 11th-generation Intel Core i5 processor (4 cores, 8 threads) and 32 GB of memory. Table 4.2 lists the software versions in use on 30 September 2026.
 
 Table 4.2: Software required
 
@@ -53,7 +53,7 @@ Table 4.2: Software required
 
 1. Install the tools in Table 4.2.
 2. Clone the private repository: `git clone https://github.com/deedeestephen/final-year-project.git`.
-3. Create the settings file with random secrets: `node 6-infrastructure\scripts\gen-keys.mjs --init-env`. The file, `.env`, is never committed, and must be backed up safely: without its keys, the encrypted fields cannot be read again.
+3. Create the settings file with random secrets: `node 6-infrastructure\scripts\gen-keys.mjs --init-env`. The file, `.env`, is never committed and must be backed up safely: without its keys, the encrypted fields cannot be read again.
 4. Create the database login and database on PostgreSQL and MongoDB as described in `docs/local-databases.md`, and put the passwords in `.env`.
 5. Install the AI service in `4-ai-intelligence-layer\ai-services`: `py -3 -m venv .venv`, then `.venv\Scripts\python -m pip install -e ".[dev]"`.
 6. Optionally download the MedCPT models for the meaning search (about 880 MB, checked against pinned SHA-256 sums): `.venv\Scripts\python -m app.chat.embeddings download`. Without them, the assistant uses keyword search only.
@@ -63,7 +63,7 @@ Table 4.2: Software required
 powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1
 ```
 
-The script checks the settings, starts the database services and Docker containers, applies new migrations, adds the synthetic demonstration data, builds and starts the backend, and starts the website and the AI service in their own windows. It ends with READY. `dev-down.ps1` stops everything without losing data.
+The script checks the settings, starts the databases and Docker containers, applies new migrations, adds the synthetic demonstration data, builds and starts the backend, and starts the website and the AI service in their own windows. It ends with READY. `dev-down.ps1` stops everything without losing data.
 
 ### 4.2.3 Checking, signing in and running the app
 
@@ -87,7 +87,7 @@ On a USB-connected phone, `phone-usb.ps1` lets it reach the computer, and the ap
 
 ### 4.2.4 Switching on push notifications
 
-Push notifications are built but off, because they need a Firebase project in the owner's Google account. The owner creates a free project, adds an Android app (`zm.ac.zcas.pca_mhealth`), and generates a service-account key, which is a secret kept outside the project folder; its path goes in `FCM_SERVICE_ACCOUNT_FILE`. Four public identifiers go into a git-ignored `firebase-app.json` that the app reads at build time. After a restart, http://localhost:3000/api/v1/health/ready reports `"push":"on"`. Until then, the same messages remain in the app's Messages tab. The operations manual also has a troubleshooting table that maps symptoms to causes and fixes.
+Push notifications are built but off, because they need a Firebase project in the owner's Google account. The owner creates a free project, adds an Android app (`zm.ac.zcas.pca_mhealth`) and generates a service-account key, a secret kept outside the project folder; its path goes in `FCM_SERVICE_ACCOUNT_FILE`. Four public identifiers go into a git-ignored `firebase-app.json` that the app reads at build time. After a restart, http://localhost:3000/api/v1/health/ready reports `"push":"on"`. Until then, the same messages remain in the app's Messages tab. The operations manual also has a troubleshooting table that maps symptoms to causes and fixes.
 
 ## 4.3 Testing Plan and Test Output
 
@@ -110,7 +110,7 @@ Table 4.4: Levels of testing
 | Retrieval quality | The assistant's answers on fixed question sets | `python -m app.chat.evaluate` |
 | User acceptance | Task success, time, SUS and interviews | UAT kit (not yet run) |
 
-The testing strategy named mandatory categories: invalid, unauthenticated, forbidden, malformed and oversized API requests; tampered, expired and `alg:none` tokens, refresh-token reuse, privilege escalation, injection and path traversal; repeated submissions, version conflicts, partial batches and an app killed mid-sync; provenance on every AI response and a label on every mock; and refusals, referrals and citations for the chatbot. All test data was synthetic.
+The strategy made these categories mandatory: invalid, unauthenticated, forbidden, malformed and oversized API requests; tampered, expired and `alg:none` tokens, refresh-token reuse, privilege escalation, injection and path traversal; repeated submissions, version conflicts, partial batches and an app killed mid-sync; provenance on every AI response and a label on every mock; and refusals, referrals and citations for the chatbot. All test data was synthetic.
 
 ### 4.3.2 The quality gate and test output
 
@@ -131,7 +131,7 @@ Table 4.5: Automated tests and coverage on 2 October 2026
 | Phone app | 290 | 91.1% of lines (recorded on 1 October 2026) |
 | Admin website | 82 | Coverage recorded on 1 October 2026: 87.8% |
 
-At the final quality audit (Phase 18), every package was given an 80% minimum that fails the gate. The admin website was below it (78.6% of statements, 73.4% of branches) until eleven tests were added. Figure 4.2 shows the real output of the backend gate.
+At the final quality audit (Phase 18), every package was given an 80% minimum that fails the gate. The admin website was below it (78.6% of statements, 73.4% of branches) until eleven tests were added. Figure 4.2 shows the backend gate's output.
 
 ![Figure 4.2: Test output: the backend gate](../report/img/term-gate.png)
 
@@ -151,11 +151,11 @@ Table 4.6: End-to-end workflows on the live system
 | 6. SmartCare Pro export | Only consented, de-identified data is sent over HTTPS; no name, NRC or record identifier reaches the receiver; the audit chain is intact |
 | 7. The assistant | Questions are answered from the real knowledge base through the whole system |
 
-The last test stops the system and searches both logs for every value used in the run: passwords, tokens, names, NRC numbers, phone numbers, clinical notes and chat questions. None appeared. On the Galaxy S9+ emulator (Android 10), the device test passed four flows against the running system (clinician, patient, administrator and pathologist), and it confirms that the phone's database is encrypted by SQLCipher.
+The last test stops the system and searches both logs for every value used in the run: passwords, tokens, names, NRC numbers, phone numbers, clinical notes and chat questions. None appeared. On the Galaxy S9+ emulator (Android 10), the device test passed four flows against the running system (clinician, patient, administrator and pathologist) and confirmed that the phone's database is encrypted by SQLCipher.
 
 ### 4.3.4 Security testing
 
-Phase 15 was an internal security and compliance review whose checks were automated into the gate. The access matrix then listed 66 routes with no rule breaks (75 today). The TLS check against the real nginx configuration showed TLS 1.3 accepted and TLS 1.2 and 1.1 refused. The full-history secret scan found four matches, all confirmed as false positives, and no real settings value appeared in any commit. Dependency audits of every package, including 130 Dart and Flutter packages, found no known vulnerabilities. A tamper test changed an audit entry inside a rolled-back transaction, and the chain check caught it. Table 4.7 lists the review's findings, all of which were fixed.
+Phase 15 was an internal security and compliance review whose checks were automated into the gate. The access matrix then listed 66 routes (75 today) with no rule breaks. The TLS check against the real nginx configuration accepted TLS 1.3 and refused TLS 1.2 and 1.1. The full-history secret scan found four matches, all false positives; no real settings value appeared in any commit. Dependency audits of every package, including 130 Dart and Flutter packages, found no known vulnerabilities. A tamper test changed an audit entry inside a rolled-back transaction, and the chain check caught it. Table 4.7 lists the review's findings, all fixed.
 
 Table 4.7: Findings of the security review (Phase 15)
 
@@ -169,13 +169,13 @@ Table 4.7: Findings of the security review (Phase 15)
 | F-6 | Low | TLS 1.3 was configured but never tested | TLS check added to the gate |
 | F-7 | Low | A vulnerable pip came with a rebuilt Python environment | Upgraded |
 
-A second review on 2 October 2026 (checked code, security and design) found and fixed further defects. A lockout after five wrong passwords had ended the person's open sessions, so anyone who knew an email address could repeatedly sign a clinician out; now a lockout only stops new sign-ins, and a disabled account is still refused at once. A malformed refresh cookie caused a server error; it now receives a 401 answer. Push devices are now removed whenever all of an account's sessions end (password reset, disabling, a role change or unlinking a patient account). Text-field and button outlines were 1.5 to 2.6:1 against their background and failed WCAG 2.1 AA criterion 1.4.11; they now reach at least 3:1, and tests check this. Some findings remain open for the owner, among them clinicians linking a patient account without the NRC match, and the lockout answer that shows an account exists. The report's screen pictures taken before the fix still show the fainter outlines.
+A second review on 2 October 2026 (of code, security and design) found and fixed further defects. A lockout after five wrong passwords had ended the person's open sessions, so anyone who knew an email address could repeatedly sign a clinician out. Now a lockout only stops new sign-ins, and a disabled account is still refused at once. A malformed refresh cookie caused a server error; it now receives a 401 answer. Push devices are now removed whenever all of an account's sessions end (password reset, disabling, a role change or unlinking a patient account). Text-field and button outlines were 1.5 to 2.6:1 against their background, failing WCAG 2.1 AA criterion 1.4.11; they now reach at least 3:1, and tests check this. Some findings remain open for the owner, among them clinicians linking a patient account without the NRC match, and the lockout answer that shows an account exists. The report's screen pictures taken before the fix still show the fainter outlines.
 
 Eight residual risks (R-1 to R-8) must be closed before real data is used; they are listed with the recommendations in Section 5.7.
 
 ### 4.3.5 Performance testing
 
-Phase 17 measured the whole system against the proposal's targets. A load generator written for the project starts the real system, creates 10 synthetic facilities, 500 clinician accounts and 300 patients, and runs a sequence of stages. Each virtual user waits 2–8 seconds between requests and follows a clinician's traffic mix: opening the app, background synchronisation, patient lists and records, and new screenings. Latency is measured on the client to the last byte. The run fails only on wrong answers (server errors, failed AI jobs, or a change lost or saved twice); speed is reported, not asserted.
+Phase 17 measured the whole system against the proposal's targets. A load generator written for the project starts the real system, creates 10 synthetic facilities, 500 clinician accounts and 300 patients, and runs a sequence of stages. Each virtual user waits 2–8 seconds between requests and follows a clinician's traffic mix: opening the app, background synchronisation, patient lists and records, and new screenings. Latency is measured on the client, to the last byte. The run fails only on wrong answers (server errors, failed AI jobs, or a change lost or saved twice); speed is reported, not asserted.
 
 Table 4.8: Measured performance against the targets (development laptop, synthetic data)
 
@@ -189,13 +189,13 @@ Table 4.8: Measured performance against the targets (development laptop, synthet
 
 A stress stage found the saturation point of one API instance on the laptop at about 133 requests a second, with no errors but a P95 of 5,146 ms. Sign-in is deliberately slow because of Argon2id: 500 sign-ins, 25 at a time, took 39.5 seconds.
 
-The measurements exposed two problems, which were fixed. Bulk synchronisation was slow, with each phone taking 14–18 seconds and all finishing together; sampling showed that 79% of the busy database time was spent waiting for the audit chain's lock, held until commit. Writing the audit row last in screening transactions shortened the lock and cut the time per phone from 14.4 seconds to 11.3 and 12.2 seconds in two runs; the remaining capacity, about 160–180 audited changes a second, is far above a clinic's load. And the first version of the meaning search failed the 2-second target with a P95 of 8,440 ms, because questions were encoded one at a time on all threads; encoding each on one thread, six side by side with a keyword fallback after half a second, brought the P95 to 514 ms with no fallbacks.
+The measurements exposed two problems, both fixed. Bulk synchronisation was slow, each phone taking 14–18 seconds and all finishing together; sampling showed that 79% of the busy database time was spent waiting for the audit chain's lock, held until commit. Writing the audit row last in screening transactions shortened the lock and cut the time per phone from 14.4 seconds to 11.3 and 12.2 seconds in two runs; the remaining capacity of about 160–180 audited changes a second is far above a clinic's load. The first version of the meaning search failed the 2-second target with a P95 of 8,440 ms, because questions were encoded one at a time on all threads; encoding each on one thread, six side by side with a keyword fallback after half a second, brought the P95 to 514 ms with no fallbacks.
 
-These numbers have limits. One laptop ran everything at once, including the load generator, both databases in Docker, the emulator and the development tools, so the numbers are a floor rather than a ceiling. The mock models' inference takes almost no time, so the AI timings say nothing about real models. "Concurrent users" means users active at the same time, each acting every few seconds. The main runs were made on 28–29 September 2026 with PostgreSQL 16 and MongoDB 7 in Docker, before the move to the installed servers, and were not repeated afterwards.
+These numbers have limits. One laptop ran everything at once, including the load generator, both databases in Docker, the emulator and the development tools, so the numbers are a floor, not a ceiling. The mock models take almost no time, so the AI timings say nothing about real models. "Concurrent users" means users active at the same time, each acting every few seconds. The main runs, on 28–29 September 2026, used PostgreSQL 16 and MongoDB 7 in Docker, before the move to the installed servers, and were not repeated afterwards.
 
 ### 4.3.6 Evaluation of the assistant's retrieval
 
-The assistant was measured on fixed question sets written by the developer: an 18-question quality set, 24 everyday-word questions, 12 off-topic questions, and 11 follow-ups and new topics. An answer is right when its first quoted passage comes from a correct article, and an off-topic question is right when it is refused (Table 4.9).
+The assistant was measured on fixed question sets written by the developer: 18 quality questions, 24 everyday-word questions, 12 off-topic questions, and 11 follow-ups and new topics. An answer is right when its first quoted passage comes from a correct article, and an off-topic question is right when it is refused (Table 4.9).
 
 Table 4.9: Retrieval evaluation of the assistant (1 October 2026)
 
@@ -204,19 +204,19 @@ Table 4.9: Retrieval evaluation of the assistant (1 October 2026)
 | Keywords only | 18 | 18 | 9 | 6 | 0 |
 | Keywords and meaning (MedCPT) | 18 | 20 | 11 | 7 | 3 |
 
-For example, "Are African men more likely to get it?" now receives the article on who is at higher risk, and "What is the treatment for malaria?" is refused. The first quoted passage should also come from the right section of the article. This was checked on 10 questions whose right section was found by reading the passages (ADR-013, added 2 October 2026). Keywords alone chose the right section for 8 of the 10. The first version, which ordered every passage by meaning, chose it for 5; it put a PI-RADS question under the wrong section. The version as shipped, where meaning chooses the article and keywords choose the section, chose it for 9. One question is still wrong: "What else apart from cancer can push the level up?" receives *What a result can and cannot show* instead of *Why the level can be raised*. Known failures remain: "Tell me about breast cancer screening" still receives the prostate screening passage, and "Will it rain tomorrow?" after a PSA question is still answered. A general sentence-embedding model was tried first and dropped, because it did worse than keywords alone. The sets are small and developer-written, so they guard against regressions rather than prove quality. Separately, the safety rules passed a 34-prompt red-team set in full, small talk was tested with 40 phrases, and a test checks that every quoted answer equals the reviewed passages word for word.
+For example, "Are African men more likely to get it?" now receives the article on who is at higher risk, and "What is the treatment for malaria?" is refused. The first quoted passage should also come from the right section, which was checked on 10 questions whose right section was found by reading the passages (ADR-013, added 2 October 2026). Keywords alone chose the right section for 8 of the 10. The first version, which ordered every passage by meaning, chose it for 5, putting a PI-RADS question under the wrong section. The version as shipped, where meaning chooses the article and keywords the section, chose it for 9. One question is still wrong: "What else apart from cancer can push the level up?" receives *What a result can and cannot show* instead of *Why the level can be raised*. Known failures remain: "Tell me about breast cancer screening" receives the prostate screening passage, and "Will it rain tomorrow?" after a PSA question is answered. A general sentence-embedding model was tried first and dropped, because it did worse than keywords alone. The sets are small and developer-written, so they guard against regressions rather than prove quality. The safety rules passed a 34-prompt red-team set in full, small talk was tested with 40 phrases, and a test checks that every quoted answer equals the reviewed passages word for word.
 
 ### 4.3.7 Interoperability and accessibility testing
 
-The FHIR export was checked with the official HL7 validator (version 6.10.4). After the project's local definitions were published, the sample export passed with 0 errors and 46 best-practice warnings (no narrative text, and no performer, because staff are deliberately not exported). Every LOINC and HL7 code was checked on the HL7 terminology server; for PI-RADS, the rectal examination and prostate volume, where no standard code could be verified, project code systems are used instead of a guessed code. A test for each of the eighteen Safe Harbor identifier classes runs against a synthetic patient carrying every identifier the system can hold.
+The FHIR export was checked with the official HL7 validator (version 6.10.4). After the project's local definitions were published, the sample export passed with 0 errors and 46 best-practice warnings (no narrative text, and no performer, because staff are deliberately not exported). Every LOINC and HL7 code was checked on the HL7 terminology server; for PI-RADS, the rectal examination and prostate volume, no standard code could be verified, so project code systems are used instead of a guess. A test for each of the eighteen Safe Harbor identifier classes runs against a synthetic patient carrying every identifier the system can hold.
 
-For accessibility, the theme test checks 30 text pairs per mode against the WCAG AA ratio of 4.5:1; the accessibility suite applies Flutter's guidelines to twelve screens in both modes and at 200% text; and the website's contrast test fails the build if any text pair falls below 4.5:1. A test with screen-reader users remains for the user acceptance test.
+For accessibility, the theme test checks 30 text pairs per mode against the WCAG AA ratio of 4.5:1; the accessibility suite applies Flutter's guidelines (tap-target size, labels and contrast) to twelve screens in both modes and at 200% text; and the website's contrast test fails the build if any text pair falls below 4.5:1. A test with screen-reader users remains for the user acceptance test.
 
 ### 4.3.8 User acceptance testing
 
 The proposal's user acceptance test has not been carried out. It requires written approval from the ZCAS University Ethics Review Board and the National Health Research Authority, which has not been obtained. No participant has used the system, and no SUS score exists.
 
-A complete kit was prepared: a plan; an information sheet and consent form with a witness line for participants who cannot read; task sheets with success criteria for patients (14 tasks), clinicians (11), pathologists (6) and administrators (7, optional); the SUS questionnaire with reading-aloud instructions and a scoring example; and a results template designed for this section. The plan asks for at least five participants per group from CDH, UTH and a rural or peri-urban facility, using synthetic data only, in 45-minute sessions combining think-aloud, timed tasks with recorded help levels, the SUS and an interview. The analysis covers success rates, time on task, SUS statistics per group, problems rated on Nielsen's severity scale and a thematic analysis. Appendix C summarises the kit.
+A kit was prepared: a plan; an information sheet and consent form with a witness line for participants who cannot read; task sheets with success criteria for patients (14 tasks), clinicians (11), pathologists (6) and administrators (7, optional); the SUS questionnaire with reading-aloud instructions and a scoring example; and a results template designed for this section. The plan asks for at least five participants per group from CDH, UTH and a rural or peri-urban facility, using synthetic data only, in 45-minute sessions of think-aloud, timed tasks with recorded help levels, the SUS and an interview. The analysis covers success rates, time on task, SUS statistics per group, problems rated on Nielsen's severity scale and a thematic analysis. Appendix C summarises the kit.
 
 [UAT RESULTS: to be added after the sessions, from the results template in docs/uat/results-template.md: task success and time per task, the SUS score per group against the target of 75, the problems found with their severity, the themes from think-aloud and interviews, and the read-aloud and voice results for participants with limited reading skills. Report failed tasks as they happened.]
 
@@ -231,7 +231,7 @@ Table 4.10: System Usability Scale results (to be completed after the sessions)
 
 ## 4.4 Main Function Codes
 
-Each picture shows the real file, with its name and line numbers, as it stood when the pictures were taken.
+Each picture shows the real file, with its name and line numbers, as it stood when the picture was taken.
 
 ### 4.4.1 Objective 1: a secure, offline-first mobile application
 
@@ -269,7 +269,7 @@ The pipeline is built but the trained models are not, so the modules are labelle
 
 ### 4.4.3 Objective 3: the patient-education chatbot
 
-The safety rules are checked before every answer (Figure 4.15), and the chatbot service applies safety, then small talk, then the knowledge base (Figure 4.16). Retrieval uses BM25 keyword search (Figure 4.17) and then MedCPT, where the keywords decide whether a question is covered, MedCPT chooses the article and the keywords choose the section (Figure 4.18). The MedCPT encoder, a 12-layer PubMedBERT model, is written with numpy (Figure 4.19), and the answer is written from the passages (Figure 4.20). In the app, the chat controller holds the conversation (Figure 4.21); voice input uses the phone's speech service, so the app receives only text (Figure 4.22); and read-aloud reads articles part by part for people who cannot read (Figure 4.23).
+The safety rules are checked before every answer (Figure 4.15), and the chatbot service applies safety, then small talk, then the knowledge base (Figure 4.16). Retrieval uses BM25 keyword search (Figure 4.17) and then MedCPT: the keywords decide whether a question is covered, MedCPT chooses the article and the keywords choose the section (Figure 4.18). The MedCPT encoder, a 12-layer PubMedBERT model, is written with numpy (Figure 4.19), and the answer is written from the passages (Figure 4.20). In the app, the chat controller holds the conversation (Figure 4.21); voice input uses the phone's speech service, so the app receives only text (Figure 4.22); and read-aloud reads articles part by part for people who cannot read (Figure 4.23).
 
 ![Figure 4.15: Safety rules, checked before every answer](../report/img/code-chat-safety-rules.png)
 
@@ -295,8 +295,8 @@ The audit log's hash chain is enforced by a database trigger, independent of the
 
 ![Figure 4.24: The audit log's hash chain (database trigger)](../report/img/code-db-audit-chain.png)
 
-Objective 4, data collection and model training, has no code in the prototype, because no training data or trained model exists. Its preparation is an integration guide that specifies what each trained model must provide: portable weights, a model card, the exact input and output specification, and an evaluation file with held-out results and per-group figures for the fairness check.
+Objective 4, data collection and model training, has no code in the prototype, because no training data or trained model exists. Its preparation is an integration guide specifying what each trained model must provide: portable weights, a model card, the exact input and output specification, and an evaluation file with held-out results and per-group figures for the fairness check.
 
 ## 4.5 Chapter Summary
 
-The system was implemented as six layers of working software that can be installed with a settings script and started with one command. It was tested at every level, from unit tests to live workflows, device, performance and security tests, and every package passed its 80% coverage minimum. The targets for AI response time, concurrent users, offline synchronisation and assistant response time were met on a development laptop, within the stated limits. The user acceptance test is prepared but awaits ethics approval. Chapter 5 evaluates these results.
+The system was implemented as six layers of working software, installed with a settings script and started with one command. Testing ran at every level, and every package passed its 80% coverage minimum. The targets for AI response time, concurrent users, offline synchronisation and assistant response time were met on a development laptop, within the stated limits. The user acceptance test is prepared but awaits ethics approval. Chapter 5 evaluates these results.
