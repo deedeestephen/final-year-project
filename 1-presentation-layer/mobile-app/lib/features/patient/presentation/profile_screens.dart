@@ -68,7 +68,10 @@ class ProfileScreen extends ConsumerWidget {
                           Divider(color: context.colors.border),
                           const SizedBox(height: AppSizes.sm),
                           ValueRow('Record number', p.mrn),
-                          ValueRow('Date of birth', p.dateOfBirth),
+                          ValueRow(
+                            'Date of birth',
+                            readableDate(p.dateOfBirth),
+                          ),
                           ValueRow(
                             'Area',
                             [

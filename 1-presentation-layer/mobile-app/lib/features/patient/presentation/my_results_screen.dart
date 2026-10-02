@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../shared/widgets/clinical_card.dart';
+import '../../../shared/widgets/hero_header.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../patients/presentation/clinical_formats.dart';
 import '../application/patient_providers.dart';
@@ -69,7 +70,7 @@ class MyResultsScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Visit on ${r.encounterDate}',
+                                    'Visit on ${readableDate(r.encounterDate)}',
                                     style: theme.textTheme.titleMedium,
                                   ),
                                   const SizedBox(height: AppSizes.xs),

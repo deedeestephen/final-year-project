@@ -196,6 +196,14 @@ void main() {
       expect(longDate(DateTime(2027, 1, 3)), 'Sunday 3 January');
     });
 
+    test('a plain date is shown in the long readable form', () {
+      expect(readableDate('2026-08-20'), '20 August 2026');
+      expect(readableDate('2026-01-05'), '5 January 2026');
+      expect(readableDate('2026-08-20T10:00:00Z'), '20 August 2026');
+      expect(readableDate('not a date'), 'not a date');
+      expect(readableDate('2026-13-01'), '2026-13-01');
+    });
+
     test('a name always gets the same avatar colour, never orange', () {
       expect(toneFor('p-123'), toneFor('p-123'));
       final seen = {for (var i = 0; i < 50; i++) toneFor('patient-$i')};

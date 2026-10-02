@@ -148,7 +148,7 @@ void main() {
   ) async {
     await signInAsPatient(tester);
     expect(find.text('Hello, Demo Clinician'), findsOneWidget);
-    expect(find.text('Latest screening: 2026-09-01'), findsOneWidget);
+    expect(find.text('Latest screening: 1 September 2026'), findsOneWidget);
     expect(find.text('2 unread messages'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Symptom check'),
@@ -166,7 +166,7 @@ void main() {
       await signInAsPatient(tester);
       await openTab(tester, 'Results');
       expect(find.text(MyResultsScreen.note), findsOneWidget);
-      expect(find.text('Visit on 2026-09-01'), findsOneWidget);
+      expect(find.text('Visit on 1 September 2026'), findsOneWidget);
       expect(find.text('6.8 ng/mL'), findsOneWidget);
       expect(find.text('Enlarged, smooth'), findsNWidgets(2));
       expect(find.text('3'), findsNWidgets(2));

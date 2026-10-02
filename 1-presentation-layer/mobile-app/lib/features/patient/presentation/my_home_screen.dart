@@ -196,7 +196,7 @@ class _LinkedCards extends ConsumerWidget {
           title: 'My results',
           description: latest == null
               ? 'No screening results yet.'
-              : 'Latest screening: ${latest.encounterDate}',
+              : 'Latest screening: ${readableDate(latest.encounterDate)}',
           descriptionKey: const Key('home.latest'),
           onTap: () => context.go(Routes.myResults),
         ),

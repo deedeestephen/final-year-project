@@ -10,6 +10,21 @@ String initialsOf(String name) {
   return words.take(2).map((w) => w.characters.first.toUpperCase()).join();
 }
 
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 /// "Monday 28 September" (the phone's own date; no locale data needed).
 String longDate(DateTime d) {
   const days = [
@@ -21,21 +36,17 @@ String longDate(DateTime d) {
     'Saturday',
     'Sunday',
   ];
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  return '${days[d.weekday - 1]} ${d.day} ${months[d.month - 1]}';
+  return '${days[d.weekday - 1]} ${d.day} ${_monthNames[d.month - 1]}';
+}
+
+/// "20 August 2026" from a "2026-08-20" date, for patient screens. Text that
+/// is not a plain date is returned as it came.
+String readableDate(String iso) {
+  final m = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(iso);
+  if (m == null) return iso;
+  final month = int.parse(m[2]!);
+  if (month < 1 || month > 12) return iso;
+  return '${int.parse(m[3]!)} ${_monthNames[month - 1]} ${m[1]}';
 }
 
 /// A stable tone for a name, so the same person always gets the same colour.
