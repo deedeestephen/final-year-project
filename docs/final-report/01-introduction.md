@@ -69,7 +69,7 @@ Table 1.1: The nine phases of the proposal's twelve-month plan
 | 8 | Ethical compliance and security audit | M3–M10 |
 | 9 | Evaluation, writing and documentation | M9–M12 |
 
-![Figure 1.1: Planned timeline: the proposal's nine phases over months M1 to M12 (redrawn from proposal §3.10)](../report/figures/gantt-planned.png)
+![Figure 1.1: Planned timeline (from the research proposal)](../report/figures/gantt-planned.png)
 
 ### 1.5.2 The build plan that was followed
 
@@ -105,7 +105,7 @@ The phases were not completed strictly in number order; for example, the Flutter
 
 Figure 1.2 shows the actual timeline, drawn from the Git history with one mark per commit. The history records the build from 23 September to 2 October 2026, in 47 commits on the main branch before this report was drafted, far less than the planned twelve months. Two reasons account for most of the difference. The phases that take most of the planned time (data collection, model training and user acceptance testing) could not be carried out, because they need data-sharing agreements, ethics approval and participants (Section 1.6). And the development log and security review record that the software was written with an AI coding assistant working under the student's direction, which is likely to have shortened the implementation. Chapter 5 compares the plan and the outcome.
 
-![Figure 1.2: Actual build timeline from the Git history (one diamond per commit)](../report/figures/gantt-actual.png)
+![Figure 1.2: Actual build timeline (from the Git history)](../report/figures/gantt-actual.png)
 
 ## 1.6 Scope and Delimitations
 

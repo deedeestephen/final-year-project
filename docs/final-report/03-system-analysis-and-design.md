@@ -157,7 +157,7 @@ Figure 3.8 shows every decision taken when the assistant answers: the request li
 
 ### 3.4.4 Sequence models
 
-Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token, and a refresh token replaced on every use, so that reuse of an old one reveals theft and ends the whole session family. Figure 3.13 follows a question through the gateway guards, the chatbot service and the AI service to MongoDB and the audit log. Figure 3.14 shows the phone's outbox, the batch, the per-operation results and the download of the facility's changes. Figures 3.15 and 3.16 show the AI analysis and the FHIR export with Safe Harbor de-identification. Figure 3.17 shows push notifications: the phone is registered after sign-in, a new notification is claimed by the server's outbox and sent through Firebase with text only, hidden on a locked phone, and sign-out removes the phone.
+Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token, and a refresh token replaced on every use, so that reuse of an old one reveals theft and ends the whole session family. A lockout stops new sign-ins only; it does not end sessions that are already open. Figure 3.13 follows a question through the gateway guards, the chatbot service and the AI service to MongoDB and the audit log. Figure 3.14 shows the phone's outbox, the batch, the per-operation results and the download of the facility's changes. Figures 3.15 and 3.16 show the AI analysis and the FHIR export with Safe Harbor de-identification. Figure 3.17 shows push notifications: the phone is registered after sign-in, a new notification is claimed by the server's outbox and sent through Firebase with text only, hidden on a locked phone, and sign-out removes the phone.
 
 ![Figure 3.12: Sequence diagram: signing in and renewing the session](../report/figures/sequence-sign-in.png)
 
@@ -169,7 +169,7 @@ Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token
 
 ![Figure 3.16: Sequence diagram: exporting de-identified records to SmartCare Pro](../report/figures/sequence-fhir-export.png)
 
-![Figure 3.17: Sequence diagram: push notifications (switched on with the owner's Firebase project)](../report/figures/sequence-push.png)
+![Figure 3.17: Sequence diagram: push notifications](../report/figures/sequence-push.png)
 
 ### 3.4.5 State models
 
@@ -276,7 +276,7 @@ The assistant was designed around one rule: it must never invent medical content
 1. **Limits:** up to 30 questions an hour per account.
 2. **Safety rules, before anything is looked up:** emergency and self-harm wording receives fixed urgent-care text; questions about medicines and doses are declined; a patient's questions about their own results or a diagnosis are declined with a referral to their clinician.
 3. **Small talk:** eighteen kinds of casual message, including Bemba and Nyanja greetings, receive friendly fixed replies, but only if the message is nothing else, so "hello, is my PSA bad?" still meets the safety rules.
-4. **Retrieval (ADR-013):** keywords decide, because BM25 must find a passage scoring at least 2.0; meaning orders, because MedCPT scores those passages and the closest comes first, and if the best scores below a floor of 52.0 the answer is "no reviewed information". A short follow-up is read with the previous question but must also reach the floor on its own, so a new topic is not answered from the old one.
+4. **Retrieval (ADR-013):** keywords decide, because BM25 must find a passage scoring at least 2.0; meaning chooses the article, because MedCPT scores those passages and the article with the closest passage comes first; inside an article the keywords choose the section, because MedCPT scores sections of one article too closely to tell them apart, and if the best scores below a floor of 52.0 the answer is "no reviewed information". A short follow-up is read with the previous question but must also reach the floor on its own, so a new topic is not answered from the old one.
 5. **Writing:** by default the best passages are quoted word for word. If enabled, Claude writes from the three best passages through a fixed tool form, and its answers are labelled "Written by AI (Claude) from the sources below". Claude is off in the prototype.
 6. **Output check and storage:** an answer without a source, or with a dose in it, is never shown; questions and answers are stored for their owner only, and the audit log records that a question was asked, never its words.
 
@@ -306,7 +306,7 @@ The answer in Figure 3.37 is the AI service's real answer to that question, quot
 
 Figure 3.39: Interface design: the admin website (dashboard, accounts list and delete dialog; synthetic API answers, and the dashboard's numbers were made up for the picture)
 
-Accessibility was designed in. An automated test applies Flutter's accessibility guidelines (tap-target size, labels and contrast) to twelve screens in both modes and lays each out at 200% text size, which found and fixed a real overflow in the sign-in header. For people who cannot read, every article and answer can be read aloud, and questions can be spoken.
+Accessibility was designed in. An automated test applies Flutter's accessibility guidelines (tap-target size, labels and contrast) to twelve screens in both modes and lays each out at 200% text size, which found and fixed a real overflow in the sign-in header. Field and button outlines were later raised to at least 3:1 against their background, as WCAG 2.1 criterion 1.4.11 asks. For people who cannot read, every article and answer can be read aloud, and questions can be spoken.
 
 ### 3.5.9 Security design
 

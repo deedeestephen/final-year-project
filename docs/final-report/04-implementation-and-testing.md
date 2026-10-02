@@ -118,18 +118,18 @@ The quality gate (Figure 4.1) runs formatting, static analysis, type checking, t
 
 ![Figure 4.1: The quality gate](../report/figures/activity-quality-gate.png)
 
-Table 4.5 gives the test counts recorded on 1 October 2026, after the meaning search and push notifications were added. All tests passed.
+Table 4.5 gives the test counts recorded on 2 October 2026, after the meaning search, push notifications and the review fixes of Section 4.3.4 were added. All tests passed.
 
-Table 4.5: Automated tests and coverage on 1 October 2026
+Table 4.5: Automated tests and coverage on 2 October 2026
 
 | Part | Tests | Coverage |
 |---|---|---|
-| Backend unit tests | 323 | All backend tests together: 94.7% of statements, 81.4% of branches |
+| Backend unit tests | 329 | Coverage recorded on 1 October 2026 (all backend tests together): 94.7% of statements, 81.4% of branches |
 | Backend end-to-end tests (in process) | 20 | (included above) |
-| Backend database integration tests | 238 | (included above) |
-| AI service | 96 passed; 1 skipped (it would call the real Claude API); 3 more skipped when the MedCPT models are absent, as in CI | 98% |
-| Phone app | 290 | 91.1% of lines |
-| Admin website | 81 | 87.8% |
+| Full database run (46 suites, with Docker) | 588 | (included above) |
+| AI service | 97 passed; 1 skipped (it would call the real Claude API); 3 more skipped when the MedCPT models are absent, as in CI | 98% |
+| Phone app | 290 | 91.1% of lines (recorded on 1 October 2026) |
+| Admin website | 82 | Coverage recorded on 1 October 2026: 87.8% |
 
 At the final quality audit (Phase 18), every package was given an 80% minimum that fails the gate. The admin website was below it (78.6% of statements, 73.4% of branches) until eleven tests were added. Figure 4.2 shows the real output of the backend gate.
 
@@ -169,6 +169,8 @@ Table 4.7: Findings of the security review (Phase 15)
 | F-6 | Low | TLS 1.3 was configured but never tested | TLS check added to the gate |
 | F-7 | Low | A vulnerable pip came with a rebuilt Python environment | Upgraded |
 
+A second review on 2 October 2026 (checked code, security and design) found and fixed further defects. A lockout after five wrong passwords had ended the person's open sessions, so anyone who knew an email address could repeatedly sign a clinician out; now a lockout only stops new sign-ins, and a disabled account is still refused at once. A malformed refresh cookie caused a server error; it now receives a 401 answer. Push devices are now removed whenever all of an account's sessions end (password reset, disabling, a role change or unlinking a patient account). Text-field and button outlines were 1.5 to 2.6:1 against their background and failed WCAG 2.1 AA criterion 1.4.11; they now reach at least 3:1, and tests check this. Some findings remain open for the owner, among them clinicians linking a patient account without the NRC match, and the lockout answer that shows an account exists. The report's screen pictures taken before the fix still show the fainter outlines.
+
 Eight residual risks (R-1 to R-8) must be closed before real data is used; they are listed with the recommendations in Section 5.7.
 
 ### 4.3.5 Performance testing
@@ -202,7 +204,7 @@ Table 4.9: Retrieval evaluation of the assistant (1 October 2026)
 | Keywords only | 18 | 18 | 9 | 6 | 0 |
 | Keywords and meaning (MedCPT) | 18 | 20 | 11 | 7 | 3 |
 
-For example, "Are African men more likely to get it?" now receives the article on who is at higher risk, and "What is the treatment for malaria?" is refused. Known failures remain: "Tell me about breast cancer screening" still receives the prostate screening passage, and "Will it rain tomorrow?" after a PSA question is still answered. A general sentence-embedding model was tried first and dropped, because it did worse than keywords alone. The sets are small and developer-written, so they guard against regressions rather than prove quality. Separately, the safety rules passed a 34-prompt red-team set in full, small talk was tested with 40 phrases, and a test checks that every quoted answer equals the reviewed passages word for word.
+For example, "Are African men more likely to get it?" now receives the article on who is at higher risk, and "What is the treatment for malaria?" is refused. The first quoted passage should also come from the right section of the article. This was checked on 10 questions whose right section was found by reading the passages (ADR-013, added 2 October 2026). Keywords alone chose the right section for 8 of the 10. The first version, which ordered every passage by meaning, chose it for 5; it put a PI-RADS question under the wrong section. The version as shipped, where meaning chooses the article and keywords choose the section, chose it for 9. One question is still wrong: "What else apart from cancer can push the level up?" receives *What a result can and cannot show* instead of *Why the level can be raised*. Known failures remain: "Tell me about breast cancer screening" still receives the prostate screening passage, and "Will it rain tomorrow?" after a PSA question is still answered. A general sentence-embedding model was tried first and dropped, because it did worse than keywords alone. The sets are small and developer-written, so they guard against regressions rather than prove quality. Separately, the safety rules passed a 34-prompt red-team set in full, small talk was tested with 40 phrases, and a test checks that every quoted answer equals the reviewed passages word for word.
 
 ### 4.3.7 Interoperability and accessibility testing
 
@@ -267,7 +269,7 @@ The pipeline is built but the trained models are not, so the modules are labelle
 
 ### 4.4.3 Objective 3: the patient-education chatbot
 
-The safety rules are checked before every answer (Figure 4.15), and the chatbot service applies safety, then small talk, then the knowledge base (Figure 4.16). Retrieval uses BM25 keyword search (Figure 4.17) and then MedCPT, where the keywords decide and the meaning orders (Figure 4.18). The MedCPT encoder, a 12-layer PubMedBERT model, is written with numpy (Figure 4.19), and the answer is written from the passages (Figure 4.20). In the app, the chat controller holds the conversation (Figure 4.21); voice input uses the phone's speech service, so the app receives only text (Figure 4.22); and read-aloud reads articles part by part for people who cannot read (Figure 4.23).
+The safety rules are checked before every answer (Figure 4.15), and the chatbot service applies safety, then small talk, then the knowledge base (Figure 4.16). Retrieval uses BM25 keyword search (Figure 4.17) and then MedCPT, where the keywords decide whether a question is covered, MedCPT chooses the article and the keywords choose the section (Figure 4.18). The MedCPT encoder, a 12-layer PubMedBERT model, is written with numpy (Figure 4.19), and the answer is written from the passages (Figure 4.20). In the app, the chat controller holds the conversation (Figure 4.21); voice input uses the phone's speech service, so the app receives only text (Figure 4.22); and read-aloud reads articles part by part for people who cannot read (Figure 4.23).
 
 ![Figure 4.15: Safety rules, checked before every answer](../report/img/code-chat-safety-rules.png)
 
@@ -275,7 +277,7 @@ The safety rules are checked before every answer (Figure 4.15), and the chatbot 
 
 ![Figure 4.17: Retrieval, step 1: BM25 keyword search of the reviewed knowledge base](../report/img/code-ai-retrieve.png)
 
-![Figure 4.18: Retrieval, step 2: the keywords decide, MedCPT orders by meaning (ADR-013)](../report/img/code-ai-rank.png)
+![Figure 4.18: Retrieval, step 2: the keywords decide, MedCPT chooses the article (ADR-013)](../report/img/code-ai-rank.png)
 
 ![Figure 4.19: The MedCPT encoder (PubMedBERT, 12 layers) written with numpy](../report/img/code-ai-encoder.png)
 

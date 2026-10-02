@@ -18,7 +18,7 @@ Table 5.1: Evaluation of the objectives
 |---|---|---|---|
 | 1. Secure, offline-first app (AES-256, TLS 1.3, RBAC, FHIR R4) | Largely met | Encrypted phone database confirmed on the device; exactly-once synchronisation under load; TLS 1.3 only; 75 routes under checked rules; FHIR export with 0 validator errors | Flutter, not React Native; Android only; push off until a Firebase project exists; SmartCare Pro reached only through a stand-in |
 | 2. Multi-modal AI engine (AUC-ROC ≥ 0.90) | Partly met | Router, contract, queue, explanations, registry and fairness check built and tested; 545 ms P95 with mock models | No trained model; no accuracy figure; no real Grad-CAM or SHAP output |
-| 3. RAG chatbot, English and Zambian languages, within 2 s | Met for English retrieval and speed; partly met overall | 514 ms P95 under 100 users; MedCPT (768 dimensions) ordering reviewed passages; measured retrieval gains; safety rules; voice and read-aloud | No Bemba or Nyanja; knowledge base not signed off; no usability test |
+| 3. RAG chatbot, English and Zambian languages, within 2 s | Met for English retrieval and speed; partly met overall | 514 ms P95 under 100 users; MedCPT (768 dimensions) choosing the article from reviewed passages; measured retrieval gains; safety rules; voice and read-aloud | No Bemba or Nyanja; knowledge base not signed off; no usability test |
 | 4. Data collection and training methodology | Not met in the prototype | An integration guide for trained models and their evaluations | No data collected; methodology not applied |
 | 5. Ethics, privacy and compliance framework | Partly met | Consent per purpose, Safe Harbor tests per identifier class, de-identified AI inputs, tamper-evident audit, separation of duties, labelled mocks, evaluation-gated metrics | No ethics approval, data-protection review or legal review; no real explainability or bias figures |
 
@@ -70,8 +70,8 @@ Comparing Figure 1.1 with Figure 1.2: of the proposal's nine phases, planning (1
 6. **One laptop.** All measurements were taken on one laptop running every component, and the main performance runs predate the move to the installed database servers.
 7. **Android only, mostly on an emulator.** No iOS build exists; speech recognition was not confirmed with a real voice; push was not tested with real Firebase.
 8. **Simulated integration.** SmartCare Pro was reached only through a stand-in, and receiving data was not built.
-9. **Small evaluation sets.** The assistant's thresholds were tuned on 65 developer-written questions, which guard against regressions but do not prove quality.
-10. **An internal security review**, not an independent penetration test, with eight residual risks open.
+9. **Small evaluation sets.** The assistant's thresholds were tuned on 65 developer-written questions and 10 section checks, which guard against regressions but do not prove quality. One section check is still wrong (9 of 10).
+10. **An internal security review**, not an independent penetration test, with eight residual risks open and some findings of the 2 October review (for example the account-linking rule and the lockout answer) still open for the owner.
 
 ## 5.7 Recommendations
 
