@@ -106,7 +106,7 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
   - The last good copy of each is stored in the encrypted database (`Meta`, key `patient.*`), so every tab opens offline with an "Offline · showing what was saved on …" line.
   - Server errors are never hidden behind the saved copy.
   - The saved copies are wiped at sign-out.
-- **Results** show values only: date, PSA, free PSA, DRE, PI-RADS and prostate size. Every time they are shown with the fixed note "Your clinician will explain what this means for you." There are no risk labels, colours or advice (owner decision). A widget test checks that no interpreting words appear.
+- **Results** show values only: date (written out, like "20 August 2026"), PSA, free PSA, DRE, PI-RADS and prostate size. Every time they are shown with the fixed note "Your clinician will explain what this means for you." There are no risk labels, colours or advice (owner decision). A widget test checks that no interpreting words appear.
 - **Learn.** Six plain-English articles bundled in `assets/education/en/articles.json`.
   - Each article cites public sources (NHS, US NCI, WHO). The links were checked, and a CDC link was dropped because it could not be verified.
   - Every article is marked "Draft for review by a qualified clinician".
@@ -166,7 +166,8 @@ These screens talk to the server directly. They need the patient's **server id**
 - **Listen:** every answer has a **Listen** button that reads the safety label, the answer and the disclaimer aloud (not the sources).
 - **How it works:**
   - The first question starts a conversation; follow-ups reuse it.
-  - Answers show their sources, the knowledge base's review status and the disclaimer.
+  - The header under the assistant's name says "Reviewed answers" (clinicians: "Reviewed cards"), short enough to fit a small phone. A screen reader reads the full sentence.
+  - Answers show their sources, the knowledge base's review status and the disclaimer. Each source is shown by its name as an underlined link; a tap opens the web page in the phone's browser (package `url_launcher`). The address is not printed, and a screen reader says "Source: NHS, opens a web page". The status line and the disclaimer stay until a clinician signs the content off.
   - Urgent care, declined and "no reviewed information" answers carry an icon and a word label.
   - Nothing is stored on the phone. The chat is online only: it shows an offline notice, and the send button is off while offline.
 - **New chat and past chats** (owner request, 2026-09-29):
