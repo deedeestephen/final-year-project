@@ -336,6 +336,38 @@ describe('push notifications (ADR-014; real database, a stand-in for Firebase)',
     ).toBe(0);
   });
 
+  it('stops the pushes when every session of the account ends', async () => {
+    // Review of 2 October 2026: a phone cut off by a password reset kept
+    // receiving the account's pushes.
+    const admin = await loginAs(
+      app,
+      (await createUser(prisma, 'ADMIN', null)).email,
+    );
+    const user = await createUser(prisma, 'PATIENT', null);
+    await register(await loginAs(app, user.email), 'phone-reset').expect(201);
+    await http()
+      .post(`/api/v1/users/${user.id}/reset-password`)
+      .set(as(admin))
+      .expect(200);
+    expect(await prisma.pushDevice.count({ where: { userId: user.id } })).toBe(
+      0,
+    );
+
+    // Disabling the account (an administrator ends its sessions) does the same.
+    const other = await createUser(prisma, 'PATIENT', null);
+    await register(await loginAs(app, other.email), 'phone-disable').expect(
+      201,
+    );
+    await http()
+      .patch(`/api/v1/users/${other.id}`)
+      .set(as(admin))
+      .send({ status: 'DISABLED' })
+      .expect(200);
+    expect(await prisma.pushDevice.count({ where: { userId: other.id } })).toBe(
+      0,
+    );
+  });
+
   it("removes an account's phones with the account", async () => {
     const user = await createUser(prisma, 'PATIENT', null);
     await register(await loginAs(app, user.email), 'phone-deleted').expect(201);

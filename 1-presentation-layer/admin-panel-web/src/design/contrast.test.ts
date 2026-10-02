@@ -87,6 +87,14 @@ describe('design tokens (WCAG 2.1 AA)', () => {
     expect(css).not.toMatch(/--flag-/);
   });
 
+  it('keeps field and button outlines visible (WCAG 1.4.11, 3:1)', () => {
+    // A field's outline shows where to type (review of 2 October 2026: it
+    // was 1.5:1).
+    for (const ground of [t.surface, t.canvas, t['surface-subtle']]) {
+      expect(contrast(t['border-strong'], ground)).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it('keeps chart lines visible on white cards (3:1 for graphics)', () => {
     // Series 3 (aqua) is below 3:1, so the charts also show legends,
     // direct labels and a table view: colour is never the only cue.

@@ -27,7 +27,7 @@
   --surface: #ffffff;
   --surface-subtle: #f1f5f9; /* Slate 100 */
   --border: #e2e8f0; /* Slate 200 */
-  --border-strong: #cbd5e1; /* Slate 300 */
+  --border-strong: #7d8ca8; /* field and button outlines: 3.4:1 on white (WCAG 1.4.11) */
 
   /* Ink */
   --ink: #0f172a; /* Slate 900 */

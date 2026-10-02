@@ -518,6 +518,8 @@ export class AuthService {
         where: { userId: stored.userId, revokedAt: null },
         data: { revokedAt: now },
       });
+      // Every session ends, so no phone keeps receiving pushes (ADR-014).
+      await tx.pushDevice.deleteMany({ where: { userId: stored.userId } });
       await this.audit.record(
         {
           action: 'auth.password_reset_completed',

@@ -101,7 +101,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     surface: Color(0xFFFFFFFF),
     surfaceMuted: Color(0xFFEEF3FF),
     border: Color(0xFFDCE4F2),
-    borderStrong: Color(0xFFB8C6DE),
+    borderStrong: Color(0xFF75859F), // 3.7:1 on surface (WCAG 1.4.11)
     textPrimary: Color(0xFF0F172A),
     textSecondary: Color(0xFF334155),
     textMuted: Color(0xFF52627A),
@@ -139,7 +139,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     surface: Color(0xFF111A2E),
     surfaceMuted: Color(0xFF1A2540),
     border: Color(0xFF243150),
-    borderStrong: Color(0xFF4A5B80),
+    borderStrong: Color(0xFF66789E), // 3.9:1 on surface
     textPrimary: Color(0xFFE8EEF9),
     textSecondary: Color(0xFFB9C5DA),
     textMuted: Color(0xFF93A3BD),

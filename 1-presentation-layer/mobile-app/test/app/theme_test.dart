@@ -39,6 +39,21 @@ void main() {
           );
         });
       }
+      // WCAG 1.4.11: a text field's outline shows where to type, so it must
+      // reach 3:1 against what the field sits on (review of 2 October 2026:
+      // it was 1.7:1 in light mode and 2.6:1 in dark mode).
+      test('$mode mode: text-field outlines reach 3:1 (non-text contrast)', () {
+        for (final (ground, colour) in [
+          ('surface', palette.surface),
+          ('canvas', palette.canvas),
+        ]) {
+          expect(
+            contrastRatio(palette.borderStrong, colour),
+            greaterThanOrEqualTo(3),
+            reason: '$mode: outline on $ground',
+          );
+        }
+      });
     }
 
     test(

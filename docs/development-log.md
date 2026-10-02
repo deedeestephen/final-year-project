@@ -1446,3 +1446,18 @@ The article-level results are unchanged: quality 18/18, everyday words 20/24, of
 **Checks:** AI service 97 passed, 1 skipped, coverage 98%; the workflow gate's 14 tests pass, including the chat workflow. The code picture of `_rank` (Figure 4.18), the chat activity and sequence diagrams, ADR-013, the operations manual (§9.1, §9.4) and architecture.md describe the new order.
 
 **Also on 2 October:** the owner asked for the work to run in the cloud. Two cloud sessions were started from GitHub: one reviews and tests the code, security and design on the branch `cloud/review-2026-10-02`; one drafts the final-year report on `cloud/report-draft`. Their results are recorded when they finish.
+
+## 2026-10-02/03: Code, security and design review
+
+A separate agent reviewed the whole project on the branch `cloud/review-2026-10-02` (report: [reviews/review-2026-10-02.md](reviews/review-2026-10-02.md)). It ran on this laptop in a separate git worktree, not in the cloud. Its six commits were applied to `main` unchanged after reading them:
+- fresh installs now generate the Prisma client (`postinstall`), and `prisma validate` works without a database: clean clones, and so probably CI, failed typecheck and tests before;
+- text files are checked out with LF on every platform (`.gitattributes`); `.ps1` and `.bat` keep CRLF;
+- **security:** five wrong passwords no longer end the person's open sessions (anyone knowing an email could sign a clinician out again and again); a malformed refresh cookie gets 401 instead of a server error.
+
+Then, on `main`:
+- every place that ends all of an account's sessions (password reset by the person or an administrator, disabling, a role change, unlinking a patient account) also removes its push devices;
+- text-field and button outlines reach 3:1 (WCAG 1.4.11) in the app and on the admin website; they were 1.5 to 2.6:1. Tests now check it.
+
+**Checks:** backend gate 329 unit and 20 end-to-end tests; database gate with Docker running, 46 suites and 588 tests; app 120 theme and accessibility tests; admin website 82 tests.
+
+**Left for the owner** (review §3 and §4): clinicians can link a patient account without the NRC match and notice that the admin path has (M-2); the lockout answers 423, which shows that an account exists (L-2); and five smaller design points. The report pictures still show the old, fainter outlines until they are taken again.

@@ -1,7 +1,7 @@
 {
  "code": {
-  "date": "2026-10-02",
-  "commit": "41fd514",
+  "date": "2026-10-03",
+  "commit": "80e73e1",
   "uncommitted": true,
   "shots": {
    "backend-main": {
@@ -30,8 +30,8 @@
    },
    "backend-delete-service": {
     "file": "3-application-logic/backend/src/services/users/users.service.ts",
-    "first": 373,
-    "last": 428,
+    "first": 377,
+    "last": 432,
     "sha256": "357a0541e79b0b48"
    },
    "backend-prisma-user": {
@@ -235,11 +235,11 @@
   }
  },
  "pdf": {
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "manual": "edca3c5869ffeb93"
  },
  "html": {
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "manual": "edca3c5869ffeb93"
  },
  "diagrams": {
@@ -284,7 +284,7 @@
   }
  },
  "figures": {
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "document": "4002c0229d50d82d"
  },
  "uat": {

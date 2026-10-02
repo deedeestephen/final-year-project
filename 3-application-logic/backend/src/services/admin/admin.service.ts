@@ -380,11 +380,12 @@ export class AdminService {
         where: { id: patient.id },
         data: { userId: null, version: { increment: 1 } },
       });
-      // The patient app loses access straight away.
+      // The patient app loses access straight away, and its pushes stop.
       await tx.refreshToken.updateMany({
         where: { userId: user.id, revokedAt: null },
         data: { revokedAt: new Date() },
       });
+      await tx.pushDevice.deleteMany({ where: { userId: user.id } });
       await this.audit.record(
         {
           action: 'patient_account.unlinked',

@@ -217,6 +217,8 @@ export class UsersService {
         where: { userId: id, revokedAt: null },
         data: { revokedAt: new Date() },
       });
+      // Every session ends, so no phone keeps receiving pushes (ADR-014).
+      await tx.pushDevice.deleteMany({ where: { userId: id } });
       await this.audit.record(
         {
           action: 'user.password_reset_by_admin',
@@ -300,11 +302,13 @@ export class UsersService {
         include: WITH_ROLES,
       });
       if (dto.status === 'DISABLED' || dto.roles) {
-        // Existing sessions end immediately when access is reduced.
+        // Existing sessions end immediately when access is reduced, and the
+        // account's phones stop receiving pushes (ADR-014).
         await tx.refreshToken.updateMany({
           where: { userId: id, revokedAt: null },
           data: { revokedAt: new Date() },
         });
+        await tx.pushDevice.deleteMany({ where: { userId: id } });
       }
       await this.audit.record(
         {
