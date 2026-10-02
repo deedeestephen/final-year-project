@@ -1,0 +1,5 @@
+# The build script's own Python environment
+.venv/
+__pycache__/
+# Word's lock file while the report is open
+~$*.docx

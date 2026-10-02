@@ -1,0 +1,4 @@
+# Python packages for build_report.py (pinned; tested with Python 3.14.5 on Windows 11)
+python-docx==1.2.0
+lxml==6.1.3
+typing_extensions==4.16.0
