@@ -18,6 +18,10 @@ import type {
   RequestContext,
 } from '../../gateway/access/access.decorators';
 import { AuditService } from '../audit/audit.service';
+import {
+  NOTIFICATION_TEXT,
+  NotificationsService,
+} from '../notifications/notifications.service';
 import type {
   CreatePatientDto,
   ListPatientsQuery,
@@ -42,6 +46,7 @@ export class PatientsService {
     private readonly prisma: PrismaService,
     private readonly crypto: FieldCrypto,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -233,8 +238,9 @@ export class PatientsService {
     ctx: RequestContext,
   ): Promise<PatientView> {
     const patient = await this.requireInFacility(user, patientId);
-    if (dto.accountUserId)
-      await this.assertLinkablePatientAccount(dto.accountUserId, patient.id);
+    const link = dto.accountUserId
+      ? await this.checkAccountLink(dto.accountUserId, patient)
+      : null;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.patient.updateMany({
@@ -275,6 +281,28 @@ export class PatientsService {
         },
         tx,
       );
+      if (link?.isNew && dto.accountUserId) {
+        // As on the admin website: the link is audited on its own, and the
+        // patient is told that the app now shows their clinic record.
+        await this.audit.record(
+          {
+            action: 'patient_account.linked',
+            entityType: 'patient',
+            entityId: patient.id,
+            outcome: 'SUCCESS',
+            actorUserId: user.id,
+            actorRole: user.roles.join(','),
+            details: { userId: dto.accountUserId, matchedBy: link.matchedBy },
+            ...ctx,
+          },
+          tx,
+        );
+        await this.notifications.notifyUser(
+          dto.accountUserId,
+          NOTIFICATION_TEXT.accountLinked,
+          tx,
+        );
+      }
       return tx.patient.findUniqueOrThrow({ where: { id: patient.id } });
     });
 
@@ -294,10 +322,18 @@ export class PatientsService {
 
   // ---------------------------------------------------------------------------
 
-  private async assertLinkablePatientAccount(
+  /**
+   * Whether a clinician may link this app account to this record, with the
+   * safeguards of the admin website's linking (review 2026-10-02, M-2): a
+   * record keeps the account it has, and an account registered with an NRC
+   * is linked only to the record with the same NRC. Passport holders (and
+   * accounts without an ID document) are linked by their clinic, which checks
+   * the document in person.
+   */
+  private async checkAccountLink(
     userId: string,
-    patientId: string,
-  ): Promise<void> {
+    patient: Patient,
+  ): Promise<{ isNew: boolean; matchedBy: 'NRC' | 'CLINIC_CHECK' }> {
     const account = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { roles: { include: { role: true } }, patientProfile: true },
@@ -309,12 +345,31 @@ export class PatientsService {
         message: 'accountUserId must refer to a patient app account',
       });
     }
-    if (account.patientProfile && account.patientProfile.id !== patientId) {
+    if (account.patientProfile && account.patientProfile.id !== patient.id) {
       throw new ConflictException({
         code: 'CONFLICT',
         message: 'This app account is already linked to another patient',
       });
     }
+    if (patient.userId && patient.userId !== userId) {
+      throw new ConflictException({
+        code: 'CONFLICT',
+        message:
+          'This patient record is already linked to another app account. An administrator must unlink it first.',
+      });
+    }
+    const byNrc = account.idDocumentType === 'NRC' && !!account.idNumberHmac;
+    if (byNrc && patient.nationalIdHmac !== account.idNumberHmac) {
+      throw new BadRequestException({
+        code: 'NRC_MISMATCH',
+        message:
+          "The NRC number of this app account does not match the patient record's NRC",
+      });
+    }
+    return {
+      isNew: patient.userId !== userId,
+      matchedBy: byNrc ? 'NRC' : 'CLINIC_CHECK',
+    };
   }
 
   private recordRead(
