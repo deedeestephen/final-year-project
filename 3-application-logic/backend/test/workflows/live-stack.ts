@@ -231,6 +231,8 @@ export async function startLiveStack(
       AI_SERVICE_TOKEN: aiToken,
       SMARTCARE_FHIR_URL: `https://localhost:${smartcare.port}/fhir`,
       SMARTCARE_TOKEN: smartcareToken,
+      // Never push to real phones from a test run (ADR-014).
+      FCM_SERVICE_ACCOUNT_FILE: '',
       // The stand-in's certificate is self-signed: trust only it, only here.
       NODE_EXTRA_CA_CERTS: certs.cert,
       // Many sign-ins from one address in a short run.

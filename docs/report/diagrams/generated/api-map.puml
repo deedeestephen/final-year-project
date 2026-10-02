@@ -7,7 +7,7 @@ hide circle
 hide empty methods
 left to right direction
 skinparam ranksep 90
-title The REST API: 73 routes under /api/v1, who may call them, and the AI service's internal API
+title The REST API: 75 routes under /api/v1, who may call them, and the AI service's internal API
 actor "Phone app\n(patients, clinicians,\npathologists)" as phone
 actor "Admin website\n(administrators)" as admin
 class "Sign-in and sessions" as g0 <<7 routes>> {
@@ -102,9 +102,11 @@ class "The assistant (chat)" as g7 <<5 routes>> {
   {field} POST /chat/conversations/:id/messages  ·  chatbot:use  ·  Patient, Clinician
 }
 phone --> g7
-class "Notifications" as g8 <<3 routes>> {
+class "Notifications" as g8 <<5 routes>> {
   {field} GET /notifications  ·  notification:read  ·  Patient, Clinician, Pathologist, Admin
   {field} POST /notifications/:id/read  ·  notification:read  ·  Patient, Clinician, Pathologist, Admin
+  {field} POST /notifications/devices  ·  notification:read  ·  Patient, Clinician, Pathologist, Admin
+  {field} DELETE /notifications/devices/:id  ·  notification:read  ·  Patient, Clinician, Pathologist, Admin
   {field} POST /notifications/read-all  ·  notification:read  ·  Patient, Clinician, Pathologist, Admin
 }
 phone --> g8

@@ -199,12 +199,24 @@ The app asks the phone for as little as possible (checked in the built APK's mer
 | `INTERNET` | talk to the PCa mHealth server | No (Android grants it) |
 | `ACCESS_NETWORK_STATE` | know when the phone is offline, to save work locally and sync later | No (Android grants it) |
 | `RECORD_AUDIO` | voice messages to the assistant (ADR-012): the phone's speech service turns speech into text; the app never records or stores sound | Yes, the first time the microphone is tapped; the app works without it (type instead) |
+| `POST_NOTIFICATIONS` | push notifications for patients (ADR-014), added by the `firebase_messaging` plugin | Yes, on Android 13 and later, once, after a patient signs in in an app built with the Firebase settings; the messages stay in the app if the answer is no |
+| `WAKE_LOCK`, `com.google.android.c2dm.permission.RECEIVE` | let Google Play services deliver pushes (added by the plugin) | No (Android grants them) |
 
 - **Also declared:** `<queries>` for the phone's speech-to-text (`android.speech.RecognitionService`) and text-to-speech (`android.intent.action.TTS_SERVICE`) services, so Android 11 and later let the app find them. These are not permissions.
-- **Not used:** camera, location, contacts, phone storage, notifications.
+- **Not used:** camera, location, contacts, phone storage.
 - **Files** are chosen with Android's own file chooser (Storage Access Framework). The app receives only the one file the user picks, so no storage permission is needed. Picked files are copied into the app's private storage and deleted after upload and at sign-out.
 - **iPhone:** `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription` explain the voice messages. Nothing else that needs a usage description is used.
-- **Rule for later features:** a permission is added only with the feature that needs it, asked for at the moment it is needed (not at start-up), with a plain explanation, and the app keeps working if the user says no. Likely later: notifications (push messages), and the camera only if photographing documents is ever wanted.
+- **Rule for later features:** a permission is added only with the feature that needs it, asked for at the moment it is needed (not at start-up), with a plain explanation, and the app keeps working if the user says no. Likely later: the camera, only if photographing documents is ever wanted.
+
+## Push notifications (ADR-014)
+
+- **Who:** patients, the only accounts with messages today. Clinicians and pathologists are not registered.
+- **Off unless built with the Firebase settings:** `flutter run --dart-define-from-file=firebase-app.json` (operations manual section 18). Without them, `startFirebasePush()` returns null, and the app works as before.
+- **Registration** (`core/push/push_registrar.dart`): after a patient signs in, or a session is restored, the app asks to show notifications (Android 13 and later), gets the phone's push address and sends it to `POST /notifications/devices`. A renewed address is sent again.
+- **Sign-out:** the phone is removed (`DELETE /notifications/devices/{id}`) while the session is still valid, then the app drops its push address. When a session expires, or the app starts without a session (after a sign-out made offline), the address is dropped.
+- **On the phone:** a white bell in the status bar, in a channel called **Messages** that can be switched off on its own. A locked phone hides the text.
+- **In the app:** a push that arrives while the app is open updates the messages and their badge; tapping a push opens **Messages**.
+- **Tests:** `test/core/push_test.dart` plays the phone's push service with a fake (`test/support/push_fakes.dart`), so no Firebase is needed.
 
 ## Administration (moved to the web)
 

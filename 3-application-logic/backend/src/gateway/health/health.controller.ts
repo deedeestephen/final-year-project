@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Inject, Res } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiServiceUnavailableResponse,
@@ -10,6 +10,10 @@ import { Public } from '../access/access.decorators';
 import { MongoService } from '../../persistence/database/mongo.service';
 import { PrismaService } from '../../persistence/database/prisma.service';
 import { AiBrokerService } from '../../services/ai/ai-broker.service';
+import {
+  PUSH_SENDER,
+  type PushSender,
+} from '../../services/notifications/push/fcm.client';
 
 export interface HealthStatus {
   status: 'ok';
@@ -26,6 +30,8 @@ export interface ReadinessStatus {
     mongodb: DependencyState;
     /** Informational: without the AI service only AI analysis is unavailable. */
     ai: DependencyState | 'disabled';
+    /** Informational: push notifications are sent (Firebase configured, ADR-014). */
+    push: 'on' | 'off';
   };
 }
 
@@ -58,6 +64,7 @@ export class HealthController {
     private readonly prisma: PrismaService,
     private readonly mongo: MongoService,
     private readonly ai: AiBrokerService,
+    @Inject(PUSH_SENDER) private readonly push: PushSender,
   ) {}
 
   /** Liveness: the process is running. No dependency checks. */
@@ -89,7 +96,7 @@ export class HealthController {
     res.status(ok ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
     return {
       status: ok ? 'ok' : 'unavailable',
-      checks: { postgres, mongodb, ai },
+      checks: { postgres, mongodb, ai, push: this.push.enabled ? 'on' : 'off' },
     };
   }
 }

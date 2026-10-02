@@ -48,6 +48,7 @@ model User {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   notifications       Notification[]
+  pushDevices         PushDevice[]
   patientProfile      Patient?             @relation("PatientAccount")
 
   @@index([facilityId])
@@ -475,10 +476,30 @@ model Notification {
   body      String
   readAt    DateTime? @map("read_at") @db.Timestamptz(3)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// When the push sender took it (ADR-014); null while push is off or not yet sent.
+  pushedAt  DateTime? @map("pushed_at") @db.Timestamptz(3)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt])
+  // The push sender's query: recent notifications not pushed yet.
+  @@index([pushedAt, createdAt])
   @@map("notifications")
+}
+
+/// A phone that receives push notifications (ADR-014). The token is Firebase
+/// Cloud Messaging's address for one install of the app. It is removed when
+/// the user signs out, when FCM says it is no longer valid, and with the account.
+model PushDevice {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  token      String   @unique
+  platform   String // android | ios (CHECK in SQL)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lastSeenAt])
+  @@map("push_devices")
 }
 
 enum SyncOperationType {

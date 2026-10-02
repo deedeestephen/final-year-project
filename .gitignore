@@ -25,3 +25,8 @@ local.properties
 coverage-db/
 # MedCPT models for the chat's meaning search (about 880 MB; ADR-013).
 4-ai-intelligence-layer/ai-services/models/
+# Push notifications (ADR-014). The service-account key is a secret; the app's
+# Firebase settings belong to the owner's project (copy firebase-app.example.json).
+*firebase-adminsdk*.json
+firebase-service-account*.json
+1-presentation-layer/mobile-app/firebase-app.json

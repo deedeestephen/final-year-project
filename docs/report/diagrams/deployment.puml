@@ -33,6 +33,7 @@ node "Windows 11 laptop" as pc {
 node "Web browser" as browser
 cloud "GitHub\n(private repository, Actions CI)" as github
 cloud "Anthropic API\n(only if a key is set; off)" as anthropic
+cloud "Firebase Cloud Messaging\n(only if a key file is set; off)" as fcm
 
 apk --> backend : HTTPS/HTTP :3000\n(emulator: 10.0.2.2;\nUSB phone: adb reverse)
 apk --> sqlite
@@ -46,5 +47,7 @@ backend --> objects
 backend --> ai : service token
 ai --> models
 ai ..> anthropic : optional
+backend ..> fcm : push (optional)
+fcm ..> apk : notification
 pc ..> github : git push
 @enduml

@@ -212,7 +212,7 @@ describe('readiness (e2e)', () => {
       .get('/api/v1/health/ready')
       .expect(200, {
         status: 'ok',
-        checks: { postgres: 'up', mongodb: 'up', ai: 'disabled' },
+        checks: { postgres: 'up', mongodb: 'up', ai: 'disabled', push: 'off' },
       });
     await app.close();
   });
@@ -223,7 +223,12 @@ describe('readiness (e2e)', () => {
       .get('/api/v1/health/ready')
       .expect(503, {
         status: 'unavailable',
-        checks: { postgres: 'down', mongodb: 'up', ai: 'disabled' },
+        checks: {
+          postgres: 'down',
+          mongodb: 'up',
+          ai: 'disabled',
+          push: 'off',
+        },
       });
     await app.close();
   });

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Awareness blue (ADR-011), for the push notification icon (ADR-014). -->
+    <color name="notification_accent">#2563EB</color>
+</resources>

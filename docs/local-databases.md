@@ -4,7 +4,7 @@ Since 2026-09-29 (owner request), the project keeps its data in the database ser
 
 | What | Server | Port | Database | Login used by the app |
 |---|---|---|---|---|
-| Accounts, patients, screenings, consents, AI jobs, audit log (20 tables) | PostgreSQL 18 (Windows service `postgresql-x64-18`) | 5432 | `pca_mhealth` | `pca` |
+| Accounts, patients, screenings, consents, AI jobs, audit log (21 tables) | PostgreSQL 18 (Windows service `postgresql-x64-18`) | 5432 | `pca_mhealth` | `pca` |
 | AI reports, AI logs, scan details, chats (4 collections) | MongoDB 8.3 (Windows service `MongoDB`) | 27017 | `pca_mhealth` | `pca` |
 | Uploaded scan and slide files | A folder on this PC: `3-application-logic/backend/var/objects` (`STORAGE_DRIVER=local` in `.env`) | | | |
 | The same files when `STORAGE_DRIVER=s3` (also used by the database tests) | MinIO in Docker | 9000 (console 9001) | bucket `pca-mhealth` | from `.env` |

@@ -44,6 +44,8 @@ describe('readiness endpoint with the real application and databases', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
+    // Never push from a test run, whatever .env says (ADR-014).
+    process.env.FCM_SERVICE_ACCOUNT_FILE = '';
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -70,6 +72,7 @@ describe('readiness endpoint with the real application and databases', () => {
         postgres: 'up',
         mongodb: 'up',
         ai: expect.stringMatching(/^(up|down|disabled)$/) as string,
+        push: 'off',
       },
     });
   });

@@ -415,6 +415,28 @@ First, restart everything so the new chat is loaded: close the server windows an
 - [ ] **Measure it.** In the same PowerShell window: `.venv\Scripts\python -m app.chat.evaluate`.
   → A table: keywords 18/18, 18/24 and 9/12; keywords + meaning 18/18, 20/24 and 11/12. Then the questions whose answer changed, follow-ups 6/7 → 7/7, and the meaning scores next to the floor (52.0).
 
+### Push notifications (ADR-014)
+
+This needs your own Firebase project first: follow section 18 of the [operations manual](operations-manual.md). You also need two devices: the patient on one (for example your phone by USB), and a clinician on the other (the emulator).
+
+- [ ] Open http://localhost:3000/api/v1/health/ready.
+  → `"push":"on"`. If it says `"off"`, `FCM_SERVICE_ACCOUNT_FILE` is empty or the backend was not restarted.
+- [ ] **On the patient's device,** run the app with `--dart-define-from-file=firebase-app.json` (manual section 18) and sign in as the demo **patient**.
+  → On Android 13 and later, the phone asks whether the app may send notifications: tap **Allow**. Android 10 (the S9+) does not ask.
+- [ ] Press the phone's **Home** button, so the app is in the background.
+- [ ] **On the other device,** sign in as the demo **clinician**, open the patient linked to the demo patient account, and add a screening record.
+  → Within a few seconds the patient's phone shows a bell and *New screening record: A new screening record was added. Open My results to see it.* No PSA value or name is in it.
+- [ ] Lock the patient's phone and add another record.
+  → The lock screen shows that a message came, but not its text (*Contents hidden*), until the phone is unlocked.
+- [ ] Tap the notification.
+  → The app opens on **Messages**, with the new message at the top.
+- [ ] With the app open on Messages, add one more record.
+  → No pop-up, because the app is open, but the new message appears and the unread count goes up.
+- [ ] In the phone's **Settings › Apps › PCa mHealth › Notifications** there is a channel called **Messages**, which can be switched off on its own.
+- [ ] **Sign out** on the patient's phone, then add another record.
+  → Nothing arrives on the phone.
+- [ ] Sign in as a **clinician** on a device: the app does not ask about notifications. Clinicians have no messages in the app yet.
+
 ### The blue look, the assistant bot, voice and read-aloud (ADR-011, ADR-012)
 
 - [ ] **Colours and icons.** Everything is blue now, with no green or flag colours; icons are soft and rounded; the selected tab's icon is filled. Try **Profile › Settings › Dark**: dark navy, still easy to read.

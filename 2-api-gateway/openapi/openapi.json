@@ -1353,6 +1353,70 @@
         ]
       }
     },
+    "/api/v1/notifications/devices": {
+      "post": {
+        "operationId": "NotificationsController_registerDevice_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushDeviceView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/devices/{id}": {
+      "delete": {
+        "operationId": "NotificationsController_removeDevice_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/api/v1/chat/conversations": {
       "post": {
         "operationId": "ChatbotController_create_v1",
@@ -4201,6 +4265,39 @@
         },
         "required": [
           "updated"
+        ]
+      },
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The app's Firebase Cloud Messaging registration token",
+            "maxLength": 4096
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "android",
+              "ios"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "platform"
+        ]
+      },
+      "PushDeviceView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Keep it to stop the pushes at sign-out (DELETE)"
+          }
+        },
+        "required": [
+          "id"
         ]
       },
       "CreateConversationDto": {

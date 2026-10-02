@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/providers.dart';
+import '../../../core/push/push_providers.dart';
 import '../domain/current_user.dart';
 
 /// Where the app is in the sign-in lifecycle.
@@ -39,10 +42,14 @@ class SessionController extends Notifier<SessionState> {
       final user = await auth.restore();
       if (user == null) {
         state = const SignedOut();
+        // A sign-out made offline could not stop this phone's pushes: its
+        // push address is dropped now instead (ADR-014).
+        unawaited(ref.read(pushRegistrarProvider).forget());
         return;
       }
       await _remember(user);
       state = SignedIn(user);
+      _startPush(user);
     } on ApiException catch (e) {
       // A refused refresh has already signed out with its own message.
       if (state is SignedOut) return;
@@ -51,7 +58,9 @@ class SessionController extends Notifier<SessionState> {
         // so work can go on without a connection (FR-03).
         final cached = await ref.read(localStoreProvider).cachedUser();
         if (cached != null && await auth.hasSavedSession()) {
-          state = SignedIn(CurrentUser.fromJson(cached));
+          final user = CurrentUser.fromJson(cached);
+          state = SignedIn(user);
+          _startPush(user);
           return;
         }
       }
@@ -69,11 +78,17 @@ class SessionController extends Notifier<SessionState> {
     await store.cacheUser(user.toJson());
   }
 
+  /// Push notifications for patients (ADR-014), in the background: signing
+  /// in never waits for them.
+  void _startPush(CurrentUser user) =>
+      unawaited(ref.read(pushRegistrarProvider).start(user));
+
   /// Throws [ApiException] so the login screen can show the exact reason.
   Future<void> signIn(String email, String password) async {
     final user = await ref.read(authRepositoryProvider).login(email, password);
     await _remember(user);
     state = SignedIn(user);
+    _startPush(user);
   }
 
   Future<void> changePassword(String current, String next) async {
@@ -89,6 +104,8 @@ class SessionController extends Notifier<SessionState> {
   /// Signs out and removes this user's data from the device. The screen
   /// warns first when changes have not been sent yet.
   Future<void> signOut() async {
+    // Pushes stop first, while the session can still tell the server.
+    await ref.read(pushRegistrarProvider).stop();
     await ref.read(authRepositoryProvider).logout();
     await ref.read(localStoreProvider).wipe();
     state = const SignedOut();
@@ -96,6 +113,7 @@ class SessionController extends Notifier<SessionState> {
 
   /// Called by the API client when the server refuses to refresh the session.
   void sessionExpired() {
+    unawaited(ref.read(pushRegistrarProvider).forget());
     state = const SignedOut(
       reason: 'Your session has ended. Please sign in again.',
     );

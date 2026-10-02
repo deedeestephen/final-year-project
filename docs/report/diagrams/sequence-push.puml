@@ -1,0 +1,68 @@
+@startuml sequence-push
+!include style.iuml
+title Push notifications: a phone registered, a notification pushed, a tap, sign-out (sequence, ADR-014)
+autonumber
+
+actor "Patient" as patient
+box "Phone app (Flutter)" #f8fafc
+  participant "SessionController" as session
+  participant "PushRegistrar" as registrar
+  participant "PcaApp\n(router, inbox)" as appui
+  participant "Firebase Messaging\n(on the phone)" as phonefcm
+end box
+box "Backend (NestJS)" #f8fafc
+  participant "Notifications\ncontroller" as devices
+  participant "Auth" as auth
+  participant "Clinical service" as clinical
+  participant "PushOutbox\n(every 2 s)" as outbox
+  participant "FcmClient" as client
+end box
+database "PostgreSQL\nnotifications,\npush_devices" as pg
+participant "Google sign-in" as google
+participant "Firebase Cloud\nMessaging" as fcm
+actor "Clinician" as clinician
+
+== After the patient signs in ==
+patient -> session : signs in
+session -> registrar : start(user)
+registrar -> phonefcm : requestPermission()\n(Android 13 and later ask once)
+registrar -> phonefcm : getToken()
+phonefcm --> registrar : push address
+registrar -> devices : POST /notifications/devices\n{token, platform}
+devices -> pg : upsert by token (it moves to this\naccount); at most 10 per account
+devices --> registrar : 201 {id}
+
+== A change that concerns the patient ==
+clinician -> clinical : adds a screening record
+clinical -> pg : the record and a notification,\nin one transaction
+...up to 2 seconds...
+outbox -> pg : claim: SET pushed_at = now() WHERE not pushed\nand at most 10 minutes old (SKIP LOCKED)
+pg --> outbox : the claimed notifications
+outbox -> pg : the accounts' phones\n(none for disabled accounts)
+outbox -> client : send(token, title, text, id and type)
+client -> google : a JWT signed with the\nservice-account key
+google --> client : access token (one hour)
+client -> fcm : POST messages:send\n(text hidden on a locked phone)
+alt the phone is known
+  fcm --> client : 200
+  fcm -> phonefcm : the notification
+  phonefcm -> patient : bell: "New screening record"
+else Firebase no longer knows the phone
+  fcm --> client : 404 UNREGISTERED
+  client --> outbox : invalid-token
+  outbox -> pg : delete the phone
+end
+
+== The patient taps the notification ==
+patient -> phonefcm : taps it
+phonefcm -> registrar : opened
+registrar -> appui : PushOpened
+appui -> appui : reload the inbox,\nopen Messages
+
+== Sign-out ==
+patient -> session : signs out
+session -> registrar : stop()
+registrar -> devices : DELETE /notifications/devices/{id}
+registrar -> phonefcm : deleteToken()
+session -> auth : POST /auth/logout
+@enduml

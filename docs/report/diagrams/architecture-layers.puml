@@ -6,7 +6,7 @@ skinparam nodesep 25
 skinparam ranksep 45
 
 package "1  Presentation" as L1 {
-  component "Phone app\nFlutter 3.35 (Android)\nRiverpod, go_router\nDrift + SQLCipher (offline)\nphone speech and read-aloud" as app
+  component "Phone app\nFlutter 3.35 (Android)\nRiverpod, go_router\nDrift + SQLCipher (offline)\nphone speech and read-aloud\npush notifications" as app
   component "Admin website\nReact 19 + Vite\n(accounts, roles, audit,\nFHIR export, dashboard)" as web
 }
 
@@ -23,7 +23,7 @@ package "3  Application logic (NestJS 11, TypeScript)" as L3 {
   component "AI broker\nand job queue" as s5
   component "Chatbot\n(safety, small talk)" as s6
   component "FHIR R4 export" as s7
-  component "Notifications,\naudit (hash chain)" as s8
+  component "Notifications and push\n(Firebase, ADR-014),\naudit (hash chain)" as s8
 }
 
 package "4  AI intelligence (Python 3, FastAPI)" as L4 {
@@ -33,7 +33,7 @@ package "4  AI intelligence (Python 3, FastAPI)" as L4 {
 }
 
 package "5  Data persistence" as L5 {
-  database "PostgreSQL 18\n20 tables, CHECKs,\nappend-only audit chain" as pg
+  database "PostgreSQL 18\n21 tables, CHECKs,\nappend-only audit chain" as pg
   database "MongoDB 8.3\n4 collections\nwith validators" as mongo
   storage "Object storage\nlocal folder\n(S3 / MinIO option)" as files
   database "Redis\nrate-limit counters" as redis

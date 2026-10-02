@@ -20,6 +20,7 @@ patients 1─* imaging_studies                          patients 1─* histopath
 patients 1─* ai_jobs 1─* explainability_artifacts *─1 ai_models
 sync_operations (idempotency_key unique)              audit_logs (append-only, hash-chained)
 patients 0..1─1 users   (a patient's own login account)
+users 1─* push_devices  (phones that receive push notifications, token unique; ADR-014)
 ```
 
 Conventions: UUID primary keys; `created_at`/`updated_at` as `timestamptz(3)`; a `version` column (starting at 1) on records edited offline (patients, clinical records, consents) for conflict detection in Phase 6; `client_uuid` (unique) so a record created offline keeps one identity across retries.
@@ -30,6 +31,7 @@ Conventions: UUID primary keys; `created_at`/`updated_at` as `timestamptz(3)`; a
 - **Consent:** `WITHDRAWN` requires `withdrawn_at`, and `GRANTED` forbids it.
 - **Explainability (NFR-09):** each artifact row has either a stored file or an explicit `unavailable_reason`, never neither.
 - **Idempotent sync:** `sync_operations.idempotency_key` is unique.
+- **Push phones** (migration `…_push_devices`, ADR-014): `push_devices.platform` is `android` or `ios`, the token is 1 to 4,096 characters and unique, and the rows go with the account. `notifications.pushed_at` records when the push sender took a notification, so each one is pushed at most once.
 
 ### Audit log (FR-10)
 - `audit_logs` is **append-only**: triggers raise on `UPDATE`, `DELETE` and `TRUNCATE`.

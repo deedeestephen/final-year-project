@@ -124,7 +124,7 @@ footer { max-width: 78rem; margin-inline: auto; padding-inline: 1rem; padding-bl
   <h1>PCa mHealth: how it was built, and how to run it yourself</h1>
   <p>The backend, the databases, Docker, the AI service, the chatbot, the phone app and the admin website:
   how each was made, and how to start, check, change and repair it without an AI assistant.</p>
-  <div class="meta"><span>Made on 1 October 2026</span><span>Code pictures from commit 9104c32 with uncommitted changes</span><span>Synthetic data only</span><span>Not a medical device</span></div>
+  <div class="meta"><span>Made on 2 October 2026</span><span>Code pictures from commit b3dd3d4 with uncommitted changes</span><span>Synthetic data only</span><span>Not a medical device</span></div>
 </header>
 <div class="rule"></div>
 
@@ -132,7 +132,7 @@ footer { max-width: 78rem; margin-inline: auto; padding-inline: 1rem; padding-bl
   <nav class="toc" aria-label="Contents">
     <details id="toc">
       <summary>Contents</summary>
-      <ol><li><a href="#1-the-system-on-one-page">1. The system on one page</a></li><li><a href="#2-what-is-installed-on-this-pc">2. What is installed on this PC</a></li><li><a href="#3-starting-and-stopping">3. Starting and stopping</a></li><li><a href="#4-the-settings-file-env">4. The settings file (.env)</a></li><li><a href="#5-the-backend">5. The backend</a></li><li><a href="#6-the-databases">6. The databases</a></li><li><a href="#7-docker">7. Docker</a></li><li><a href="#8-the-ai-service">8. The AI service</a></li><li><a href="#9-the-chatbot-end-to-end">9. The chatbot, end to end</a></li><li><a href="#10-the-phone-app">10. The phone app</a></li><li><a href="#11-the-admin-website">11. The admin website</a></li><li><a href="#12-tests-and-the-quality-gate">12. Tests and the quality gate</a></li><li><a href="#13-git-and-github">13. Git and GitHub</a></li><li><a href="#14-when-something-goes-wrong">14. When something goes wrong</a></li><li><a href="#15-before-real-patients">15. Before real patients</a></li><li><a href="#16-where-to-read-more">16. Where to read more</a></li><li><a href="#17-updating-this-manual">17. Updating this manual</a></li></ol>
+      <ol><li><a href="#1-the-system-on-one-page">1. The system on one page</a></li><li><a href="#2-what-is-installed-on-this-pc">2. What is installed on this PC</a></li><li><a href="#3-starting-and-stopping">3. Starting and stopping</a></li><li><a href="#4-the-settings-file-env">4. The settings file (.env)</a></li><li><a href="#5-the-backend">5. The backend</a></li><li><a href="#6-the-databases">6. The databases</a></li><li><a href="#7-docker">7. Docker</a></li><li><a href="#8-the-ai-service">8. The AI service</a></li><li><a href="#9-the-chatbot-end-to-end">9. The chatbot, end to end</a></li><li><a href="#10-the-phone-app">10. The phone app</a></li><li><a href="#11-the-admin-website">11. The admin website</a></li><li><a href="#12-tests-and-the-quality-gate">12. Tests and the quality gate</a></li><li><a href="#13-git-and-github">13. Git and GitHub</a></li><li><a href="#14-when-something-goes-wrong">14. When something goes wrong</a></li><li><a href="#15-before-real-patients">15. Before real patients</a></li><li><a href="#16-where-to-read-more">16. Where to read more</a></li><li><a href="#17-updating-this-manual">17. Updating this manual</a></li><li><a href="#18-push-notifications-switching-them-on">18. Push notifications (switching them on)</a></li></ol>
     </details>
   </nav>
   <main>
@@ -499,6 +499,11 @@ npm run dev     # then open http://localhost:5173
 <td>where the AI service is; the shared token; Claude is off while the key is empty</td>
 </tr>
 <tr>
+<td>Push</td>
+<td><code>FCM_SERVICE_ACCOUNT_FILE</code>, <code>PUSH_POLL_MS</code>, <code>PUSH_MAX_AGE_MIN</code></td>
+<td>the Firebase key file (empty: push is off, section 18); how often new notifications are looked for; how old one may be and still be pushed</td>
+</tr>
+<tr>
 <td>Chatbot search</td>
 <td><code>CHAT_RETRIEVAL</code>, <code>CHAT_MODELS_DIR</code>, <code>CHAT_MEANING_SLOTS</code>, <code>CHAT_MEANING_WAIT_MS</code></td>
 <td><code>auto</code>: the meaning search is used when its models are downloaded (<code>keywords</code> switches it off); where the models are; how many questions it handles at once, and how long one waits before keywords alone answer (section 9.4)</td>
@@ -690,8 +695,8 @@ npm run dev     # then open http://localhost:5173
 </thead>
 <tbody>
 <tr>
-<td>Accounts, roles, patients, screenings, consents, scans and slides (the records), AI jobs, notifications, sync history, audit log</td>
-<td>PostgreSQL 18, database <code>pca_mhealth</code>, 20 tables</td>
+<td>Accounts, roles, patients, screenings, consents, scans and slides (the records), AI jobs, notifications and the phones they are pushed to, sync history, audit log</td>
+<td>PostgreSQL 18, database <code>pca_mhealth</code>, 21 tables</td>
 <td>Structured records with strict rules and links between them</td>
 </tr>
 <tr>
@@ -711,7 +716,7 @@ npm run dev     # then open http://localhost:5173
 </tr>
 </tbody>
 </table></div>
-<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="The 20 tables" src="img/term-tables.png" /></figure>
+<figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="The 21 tables" src="img/term-tables.png" /></figure>
 <h3 id="62-postgresql-how-the-tables-were-made">6.2 PostgreSQL: how the tables were made</h3>
 <p>The tables are <strong>not</strong> created by hand. They are described in one file, <code>3-application-logic/backend/prisma/schema.prisma</code>. This is the part that describes a user account:</p>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="schema.prisma: the User model" src="img/code-backend-prisma-user.png" /></figure>
@@ -1089,7 +1094,8 @@ flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:3000
 <li><strong>Talking to the server:</strong> <code>core/network/api_client.dart</code> adds the session token to every request, renews it when it has expired, and turns server errors into plain messages.</li>
 <li><strong>Offline:</strong> clinicians' work is saved first in an encrypted database on the phone (Drift with SQLCipher) and sent when the connection returns (<code>core/sync</code>). The server re-checks every change with the same rules as online.</li>
 <li><strong>Session tokens</strong> are kept in the phone's secure storage, never in plain files.</li>
-<li><strong>Permissions:</strong> the app only asks for the internet and, when the microphone is first tapped, the microphone.</li>
+<li><strong>Permissions:</strong> the app only asks for the internet; the microphone, when it is first tapped; and, for patients after signing in, to show notifications (Android 13 and later, and only when the app is built with the Firebase settings, section 18).</li>
+<li><strong>Push notifications</strong> (<code>core/push</code>): after a patient signs in, the phone is registered with the server, and it is removed again at sign-out (section 18).</li>
 </ul>
 <h3 id="104-voice-and-reading-aloud">10.4 Voice and reading aloud</h3>
 <p>Both use the phone's own speech services, behind small interfaces, so tests can replace them with stand-ins.</p>
@@ -1242,7 +1248,7 @@ powershell -ExecutionPolicy Bypass -File $gate all
 <tbody>
 <tr>
 <td>Backend unit tests</td>
-<td>307</td>
+<td>323</td>
 </tr>
 <tr>
 <td>Backend end-to-end tests</td>
@@ -1250,7 +1256,7 @@ powershell -ExecutionPolicy Bypass -File $gate all
 </tr>
 <tr>
 <td>Backend database tests</td>
-<td>230</td>
+<td>238 (all backend tests together: 94.7% of statements, 81.4% of branches)</td>
 </tr>
 <tr>
 <td>AI service</td>
@@ -1258,7 +1264,7 @@ powershell -ExecutionPolicy Bypass -File $gate all
 </tr>
 <tr>
 <td>Phone app</td>
-<td>280 (line coverage 90.9%)</td>
+<td>290 (line coverage 91.1%)</td>
 </tr>
 <tr>
 <td>Admin website</td>
@@ -1342,6 +1348,16 @@ git pull origin main             # get changes from GitHub
 <td>run <code>flutter run</code> again (section 10.2)</td>
 </tr>
 <tr>
+<td>Backend window: <em>FCM_SERVICE_ACCOUNT_FILE: …</em> and it stops</td>
+<td>the push key file's path is wrong, or it is not the service-account key</td>
+<td>fix the path in <code>.env</code>, or empty it to switch push off (section 18)</td>
+</tr>
+<tr>
+<td>No push arrives on the phone</td>
+<td>push is off on the server, the app was built without <code>firebase-app.json</code>, or notifications are not allowed</td>
+<td>check <code>"push":"on"</code> at http://localhost:3000/api/v1/health/ready, run the app as in section 18, allow notifications in the phone's settings</td>
+</tr>
+<tr>
 <td>Chat: <em>The assistant is not available right now</em></td>
 <td>the AI service is not running</td>
 <td>start it (section 3.4) and check http://127.0.0.1:8000/v1/health</td>
@@ -1385,7 +1401,7 @@ git pull origin main             # get changes from GitHub
 <ul>
 <li><strong>Trained and evaluated AI models.</strong> The mocks stay labelled until then.</li>
 <li><strong>A clinician's sign-off</strong> of the knowledge base, and <strong>human-verified Bemba and Nyanja</strong> translations.</li>
-<li><strong>A data-protection review</strong> under Zambia's Data Protection Act (2021) and ethics approval, covering the speech service and, if used, Claude.</li>
+<li><strong>A data-protection review</strong> under Zambia's Data Protection Act (2021) and ethics approval, covering the speech service and, if used, Claude and Firebase push.</li>
 <li><strong>MongoDB access control switched on</strong>, and a proper server with HTTPS, backups and monitoring. The list is in <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/security-review.md" target="_blank" rel="noopener">security-review.md</a>, items R-1 to R-8.</li>
 </ul>
 <h2 id="16-where-to-read-more">16. Where to read more</h2>
@@ -1431,7 +1447,11 @@ git pull origin main             # get changes from GitHub
 </tr>
 <tr>
 <td>The chatbot's design</td>
-<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/chatbot-plan.md" target="_blank" rel="noopener">chatbot-plan.md</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-009-offline-extractive-chatbot.md" target="_blank" rel="noopener">ADR-009</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-010-claude-for-chat-answers.md" target="_blank" rel="noopener">ADR-010</a></td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/chatbot-plan.md" target="_blank" rel="noopener">chatbot-plan.md</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-009-offline-extractive-chatbot.md" target="_blank" rel="noopener">ADR-009</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-010-claude-for-chat-answers.md" target="_blank" rel="noopener">ADR-010</a>, <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-013-hybrid-retrieval-medcpt.md" target="_blank" rel="noopener">ADR-013</a></td>
+</tr>
+<tr>
+<td>Push notifications</td>
+<td><a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-014-push-notifications-fcm.md" target="_blank" rel="noopener">ADR-014</a>, and section 18 above</td>
 </tr>
 <tr>
 <td>Swapping the mock AI models for real ones</td>
@@ -1463,6 +1483,65 @@ powershell -ExecutionPolicy Bypass -File $report all
 <li>The same tool draws the <strong>diagrams for the final-year report</strong> (use cases, data flow, activity, sequence, state, class, database, API, architecture, timelines) from text files in <code>docs/report/diagrams</code>: <code>report.ps1 diagrams figures</code>. They are listed, with captions, in <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/report-figures.md" target="_blank" rel="noopener">report-figures.md</a>.</li>
 </ul>
 <p>The same manual is in the project as <code>docs/operations-manual.md</code>, and as a PDF in <code>docs/report/</code>.</p>
+<h2 id="18-push-notifications-switching-them-on">18. Push notifications (switching them on)</h2>
+<p>Patients can get a notification on their phone when a screening record is added, a consent is given or withdrawn, or their account is linked to their clinic record (<a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-014-push-notifications-fcm.md" target="_blank" rel="noopener">ADR-014</a>).
+- The same messages are always in the app's <strong>Messages</strong> tab; a push only tells the person sooner.
+- A push carries only the message's title and text, which never contain results, names or numbers. A locked phone hides even those.
+- <strong>Push is off on this PC.</strong> It needs a Firebase project, which belongs to your Google account. Firebase Cloud Messaging is free.</p>
+<p><strong>Once, in the Firebase console</strong> (console.firebase.google.com, signed in with your Google account):</p>
+<ol>
+<li><strong>Create a project,</strong> for example <em>pca-mhealth</em>. Google Analytics is not needed.</li>
+<li><strong>Add an Android app</strong> with the package name <code>zm.ac.zcas.pca_mhealth</code>.</li>
+<li><strong>Download <code>google-services.json</code></strong> when the console offers it. The app does not use the file, and the Gradle steps can be skipped; you only copy four values from it (step 7).</li>
+<li><strong>Project settings › Cloud Messaging:</strong> check that <em>Firebase Cloud Messaging API (V1)</em> is <strong>Enabled</strong>.</li>
+<li><strong>Project settings › Service accounts › Generate new private key.</strong> A JSON file downloads.
+   - It is a <strong>secret</strong>, like a password: anyone with it can send pushes as your project.
+   - Save it <strong>outside the project folder</strong>, for example <code>D:\Final Year Project\secrets\pca-mhealth-firebase.json</code>.
+   - Never e-mail it or put it in Git.</li>
+</ol>
+<p><strong>On this PC:</strong></p>
+<ol start="6">
+<li>Open <code>.env</code> and set the full path of that file: <code>FCM_SERVICE_ACCOUNT_FILE=D:\Final Year Project\secrets\pca-mhealth-firebase.json</code>.</li>
+<li>In <code>1-presentation-layer\mobile-app</code>, copy <code>firebase-app.example.json</code> to <code>firebase-app.json</code> (Git ignores it) and fill in the four values from <code>google-services.json</code>:</li>
+</ol>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>In <code>firebase-app.json</code></th>
+<th>From <code>google-services.json</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FIREBASE_API_KEY</code></td>
+<td><code>client</code> › <code>api_key</code> › <code>current_key</code></td>
+</tr>
+<tr>
+<td><code>FIREBASE_APP_ID</code></td>
+<td><code>client</code> › <code>client_info</code> › <code>mobilesdk_app_id</code></td>
+</tr>
+<tr>
+<td><code>FIREBASE_SENDER_ID</code></td>
+<td><code>project_info</code> › <code>project_number</code></td>
+</tr>
+<tr>
+<td><code>FIREBASE_PROJECT_ID</code></td>
+<td><code>project_info</code> › <code>project_id</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>These four identify the app to Firebase and are not secrets. <code>google-services.json</code> can then be deleted.
+8. Restart the backend (<code>dev-down.ps1</code>, then <code>dev-up.ps1</code>).
+   - Its window says <em>Push notifications are on (Firebase project …)</em>.
+   - http://localhost:3000/api/v1/health/ready shows <code>"push":"on"</code>.
+9. Run the app with the Firebase settings:</p>
+<p><code>powershell
+   cd 1-presentation-layer\mobile-app
+   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000 --dart-define-from-file=firebase-app.json</code></p>
+<p>Pushes need Google Play services on the phone. The Galaxy S9+ emulator has them (a <em>Google APIs</em> image), and so does every phone with the Play Store.</p>
+<p><strong>To check it,</strong> follow <em>Push notifications</em> in <a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/how-to-test.md" target="_blank" rel="noopener">how-to-test.md</a>. In short: sign in on the phone as a patient whose account is linked, leave the app, then add a screening record for that patient as a clinician. <em>New screening record</em> appears on the phone within a few seconds.</p>
+<p><strong>To switch it off,</strong> empty <code>FCM_SERVICE_ACCOUNT_FILE</code> and restart the backend.</p>
+<p><strong>If the backend stops at start-up</strong> with a message that begins <em>FCM_SERVICE_ACCOUNT_FILE</em>, the path is wrong or the file is not the service-account key from step 5. The message says which; it never shows the key.</p>
   </main>
 </div>
 <footer>PCa mHealth, final-year research prototype. The code pictures show the project's real files with their line numbers. Made from docs/operations-manual.md by docs/report/tools/report.py.</footer>

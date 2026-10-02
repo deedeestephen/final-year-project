@@ -90,6 +90,36 @@ describe('loadConfig', () => {
     });
   });
 
+  it('keeps push notifications off until a Firebase key file is set (ADR-014)', () => {
+    expect(loadConfig(base).push).toEqual({
+      serviceAccountFile: '',
+      apiUrl: 'https://fcm.googleapis.com',
+      pollMs: 2000,
+      maxAgeMinutes: 10,
+    });
+    const config = loadConfig({
+      ...base,
+      FCM_SERVICE_ACCOUNT_FILE: ' D:\\keys\\firebase.json ',
+      FCM_API_URL: 'http://127.0.0.1:9099/',
+      PUSH_POLL_MS: '500',
+      PUSH_MAX_AGE_MIN: '30',
+    });
+    expect(config.push).toEqual({
+      serviceAccountFile: 'D:\\keys\\firebase.json',
+      apiUrl: 'http://127.0.0.1:9099',
+      pollMs: 500,
+      maxAgeMinutes: 30,
+    });
+    expect(() =>
+      loadConfig({
+        ...base,
+        NODE_ENV: 'production',
+        CORS_ORIGINS: 'https://app.example.org',
+        FCM_API_URL: 'http://fcm.example.org',
+      }),
+    ).toThrow(/FCM_API_URL: must use https in production/);
+  });
+
   it('requires every S3 setting when STORAGE_DRIVER=s3, without echoing values', () => {
     expect(() =>
       loadConfig({ ...base, STORAGE_DRIVER: 's3', S3_SECRET_KEY: 'hush' }),

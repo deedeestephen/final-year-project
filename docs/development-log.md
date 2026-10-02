@@ -1383,6 +1383,43 @@ The second of the three items. Recorded in [ADR-013](decisions/ADR-013-hybrid-re
 **Docs and pictures:**
 - ADR-013; the operations manual (§3.2, §4, §8, §9); performance.md; the traceability matrix (the gap is closed for retrieval); how-to-test.md; architecture, database, chatbot plan and security.
 - Five report diagrams redrawn (server classes, the chat activity, DFD level 2, the architecture and the chat sequence), and the deployment diagram (the models folder).
-- Two new code pictures: the ranking and the encoder (Figures 4.17 and 4.18; later figures renumbered).
+- Two new code pictures: the ranking and the encoder (Figures 4.18 and 4.19 since the push entry below; later figures renumbered).
 
 **Tests:** AI service 96 passed and 1 skipped (it would call the real Claude), coverage 98%. Without the models, 3 more are skipped, as in CI.
+
+## 2026-10-01: Push notifications (Firebase Cloud Messaging)
+
+The third of the three items. Recorded in [ADR-014](decisions/ADR-014-push-notifications-fcm.md). Built and tested with stand-ins for Google and Firebase; switched on when the owner creates a Firebase project (operations manual §18).
+
+**Server** (`services/notifications/push/`):
+- **`FcmClient`:** signs in to Google with the service account (a JWT signed with Node's crypto, exchanged for a one-hour access token) and calls FCM's HTTP v1 API. No Firebase package was added.
+  - Phones that Firebase reports as `UNREGISTERED` or `SENDER_ID_MISMATCH` are forgotten. A plain 404 is not enough, because a wrong project id would otherwise wipe every phone.
+  - Each push asks Android to hide its text on a locked phone (`visibility: PRIVATE`).
+- **`PushOutbox`:** every 2 s it claims recent notifications not yet pushed, in one `UPDATE … FOR UPDATE SKIP LOCKED … RETURNING` statement, and pushes each at most once.
+  - Notifications are made inside transactions, so pushing at that point could announce a change that is then rolled back. The outbox only sees committed rows.
+  - Disabled accounts get nothing.
+- **Phones:** `POST /notifications/devices` and `DELETE /notifications/devices/{id}`.
+  - A token moves to the account that registers it. An account keeps at most 10 phones.
+  - New table `push_devices` and column `notifications.pushed_at` (migration `20261001120000_push_devices`, checked against `prisma migrate diff`). The table count goes from 20 to 21.
+- **Settings:** `FCM_SERVICE_ACCOUNT_FILE` (empty: off). An unusable key file stops the start-up, with the reason but not the contents. `/health/ready` reports `push`.
+- **Test runs never push:** the database tests, the workflow and performance runs, and `services.int-spec.ts` all set the key file to empty.
+
+**App** (`lib/core/push/`):
+- Patients only. After sign-in, or a restored session, the app asks to show notifications (Android 13 and later), then registers the phone. A renewed address is registered again.
+- At sign-out, the phone is removed while the session is still valid, then the push address is dropped. When a session expires, or the app starts without a session (after a sign-out made offline), the address is dropped too.
+- A push while the app is open updates the inbox; a tap opens **Messages**.
+- Firebase is set up from build settings (`--dart-define-from-file=firebase-app.json`; an example file is committed, the real one is git-ignored). No `google-services.json` is needed.
+- **Android:** a white bell icon, the awareness-blue colour, and a "Messages" channel created in `MainActivity`.
+
+**Problems found and fixed:**
+- **Sign-out hung in the widget tests.** `await subscription.cancel()` on a broadcast stream returns a future tied to the root zone, which never completes under the tests' fake clock. Cancelling takes effect at once, so the future is no longer awaited.
+- **Port 9 is blocked by fetch.** The "Firebase unreachable" test got "bad port" instead of a refused connection; it now uses a port that was free a moment earlier.
+- **The readiness checks changed shape** (`push` added). Two end-to-end tests and `services.int-spec.ts` were updated.
+- **The database gate's first step migrated the dev database.** `prisma migrate deploy` uses the root `.env`, as `dev-up.ps1` does, so the owner's database got the new table during the gate. The change is additive.
+
+**Tests:**
+- Backend: `fcm.client.spec.ts` (14), `push.int-spec.ts` (8, real database, whole backend, stand-in for Google and Firebase), config (1), readiness (1 more). 323 unit and 20 end-to-end tests pass.
+- App: `push_test.dart` (10), with a fake push service. 290 tests pass, line coverage 91%. The debug APK builds with Firebase.
+- Not tested: real Firebase, which needs the owner's project. The check is in [how-to-test.md](how-to-test.md).
+
+**Docs and pictures:** ADR-014; operations manual §18 (setup), §4, §10.3, §14, §15, §16; how-to-test.md; mobile.md (permissions and push); security.md; database.md; architecture.md; the traceability matrix (the gap is closed, waiting for the owner's Firebase project); README. A new sequence diagram (Figure 3.17; later chapter-3 figures renumbered), and the component, deployment, architecture and phone use-case diagrams updated.

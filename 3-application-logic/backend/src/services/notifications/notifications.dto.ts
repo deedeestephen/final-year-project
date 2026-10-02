@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class ListNotificationsQuery {
   @ApiPropertyOptional({ default: false })
@@ -49,4 +59,29 @@ export class NotificationPage {
 export class MarkedReadResponse {
   @ApiProperty({ description: 'How many notifications changed to read' })
   updated!: number;
+}
+
+export const PUSH_PLATFORMS = ['android', 'ios'] as const;
+
+/** A phone that should receive the caller's push notifications (ADR-014). */
+export class RegisterDeviceDto {
+  @ApiProperty({
+    description: "The app's Firebase Cloud Messaging registration token",
+    maxLength: 4096,
+  })
+  @IsString()
+  @Length(1, 4096)
+  @Matches(/^[A-Za-z0-9_:.-]+$/, { message: 'token has invalid characters' })
+  token!: string;
+
+  @ApiProperty({ enum: PUSH_PLATFORMS })
+  @IsIn(PUSH_PLATFORMS)
+  platform!: (typeof PUSH_PLATFORMS)[number];
+}
+
+export class PushDeviceView {
+  @ApiProperty({
+    description: 'Keep it to stop the pushes at sign-out (DELETE)',
+  })
+  id!: string;
 }

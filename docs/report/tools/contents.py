@@ -74,6 +74,8 @@ CODE = [
     Code("ai-router", A + "router.py", r"    def infer\(self", 34, "python"),
     Code("backend-fairness", B + "src/services/ai/fairness.ts", r"^export function fairnessFrom", 40, "typescript"),
     Code("fhir-safe-harbor", B + "src/services/fhir/deidentify.ts", r"^export const SAFE_HARBOR", 30, "typescript"),
+    Code("backend-push-outbox", B + "src/services/notifications/push/push-outbox.service.ts",
+         r"^  private async run\(", 62, "typescript"),
 ]
 
 

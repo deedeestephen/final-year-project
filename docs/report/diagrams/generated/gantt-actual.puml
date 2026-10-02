@@ -53,4 +53,5 @@ hide footbox
 [Operations manual: a tool to rebuild its pictures, PDF and web page (dd1813e)] happens 2026-10-01
 [Diagrams and figures for the final-year report; proposal gaps listed (0fde88c)] happens 2026-10-01
 [User acceptance testing kit (proposal §3.8.2, NFR-04) (9104c32)] happens 2026-10-01
+[Meaning search with MedCPT next to the keyword search (ADR-013) (b3dd3d4)] happens 2026-10-01
 @endgantt

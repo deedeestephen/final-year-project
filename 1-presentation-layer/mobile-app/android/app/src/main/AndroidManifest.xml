@@ -39,6 +39,19 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Push notifications (ADR-014), only when the app is built with the
+             Firebase settings: the status-bar icon, its colour, and the
+             "Messages" channel that MainActivity creates. The plugin adds the
+             notification permission (asked on Android 13 and later). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notify" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_accent" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="messages" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

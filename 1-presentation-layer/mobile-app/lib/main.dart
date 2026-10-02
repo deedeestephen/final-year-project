@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'core/db/open_database.dart';
 import 'core/providers.dart';
+import 'core/push/firebase_push.dart';
+import 'core/push/push_providers.dart';
 import 'features/settings/appearance.dart';
 
 Future<void> main() async {
@@ -14,11 +16,14 @@ Future<void> main() async {
   _registerFontLicences();
   final database = await openAppDatabase();
   final preferences = await SharedPreferences.getInstance();
+  // Push notifications only when built with the Firebase settings (ADR-014).
+  final push = await startFirebasePush();
   runApp(
     ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWithValue(database),
         preferencesProvider.overrideWithValue(preferences),
+        pushMessagingProvider.overrideWithValue(push),
       ],
       child: const PcaApp(),
     ),

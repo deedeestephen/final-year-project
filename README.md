@@ -45,10 +45,11 @@ The folders follow the six layers of the architecture ([docs/architecture.md](do
 | 18 | Final quality audit | Done (see the [development log](docs/development-log.md)) |
 | extra | Admin website, activity dashboard, dark mode, "modern health app" redesign | Done (`bfd9cfc`, `5bc85f3`, `967c988`, `0aebf4e`, `12c1d57`) |
 | extra | Awareness-blue theme, modern icons and the assistant bot ([ADR-011](docs/decisions/ADR-011-awareness-blue-and-modern-icons.md)); voice messages and read-aloud ([ADR-012](docs/decisions/ADR-012-voice-input-and-read-aloud.md)) | Done (see the [development log](docs/development-log.md)) |
-| extra | Proposal review: report diagrams ([report-figures.md](docs/report-figures.md)), a user-testing kit ([uat/](docs/uat/README.md)), and a biomedical meaning search for the assistant ([ADR-013](docs/decisions/ADR-013-hybrid-retrieval-medcpt.md)) | Done (`0fde88c`, `9104c32`, and the meaning-search commit) |
+| extra | Proposal review: report diagrams ([report-figures.md](docs/report-figures.md)), a user-testing kit ([uat/](docs/uat/README.md)), a biomedical meaning search for the assistant ([ADR-013](docs/decisions/ADR-013-hybrid-retrieval-medcpt.md)), and push notifications ([ADR-014](docs/decisions/ADR-014-push-notifications-fcm.md)) | Done (`0fde88c`, `9104c32`, `b3dd3d4`, and the push commit); push is switched on with the owner's Firebase project |
 
 **Still waiting for outside input:**
 - **Trained AI models:** see the [integration guide](docs/ai-model-integration-guide.md). The mocks stay labelled until then.
 - **Owner decisions** on paid services: SMS or e-mail delivery, and a chatbot language model.
+- **A Firebase project** (free, with the owner's Google account) to switch push notifications on: [operations manual §18](docs/operations-manual.md#18-push-notifications-switching-them-on).
 - **Clinical sign-off** of the chatbot's knowledge base, and **Bemba and Nyanja** translations checked by people.
 - **Deployment hardening:** listed in the [security review](docs/security-review.md), R-1 to R-8.

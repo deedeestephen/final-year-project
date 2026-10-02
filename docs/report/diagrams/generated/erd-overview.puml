@@ -5,7 +5,7 @@ set separator none
 hide circle
 hide empty methods
 skinparam linetype ortho
-title PostgreSQL 18: all 19 tables and their foreign keys (keys only)
+title PostgreSQL 18: all 20 tables and their foreign keys (keys only)
 package "Identity and access" {
 entity "users" as users #eff6ff {
   * id : uuid <<PK>>
@@ -113,6 +113,12 @@ entity "notifications" as notifications #fff7ed {
   --
   * user_id : uuid <<FK>>
 }
+entity "push_devices" as push_devices #fff7ed {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * token : text <<UQ>>
+}
 entity "sync_operations" as sync_operations #fff7ed {
   * id : uuid <<PK>>
   --
@@ -140,6 +146,7 @@ ai_jobs }o--|| patients : patient_id
 explainability_artifacts }o--|| ai_jobs : job_id
 explainability_artifacts }o--o| ai_models : model_id
 notifications }o--|| users : user_id
+push_devices }o--|| users : user_id
 legend right
   * required (NOT NULL)   PK primary key   FK foreign key   UQ unique
   Prisma's own table _prisma_migrations is not shown.

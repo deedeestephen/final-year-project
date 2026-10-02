@@ -11,3 +11,5 @@ c03e70d9a5f1dadbe536cd843d8e5ce0b4f636cc:mobile/test/features/admin/admin_test.d
 6520784f2fc9dc5e1f97bf6aba7f8ce0d510a991:backend/README.md:generic-api-key:5
 # Made-up one-time password in a fake server answer, admin website test (2026-09-29):
 6968791c556a7c99c24fc0909fb021166b96b25f:1-presentation-layer/admin-panel-web/src/pages/UsersPages.test.tsx:generic-api-key:148
+# SHA-256 checksum of the public MedCPT tokenizer file, pinned for its download (ADR-013, 2026-10-01):
+b3dd3d45ac2304bcf84ba6e583729cc32e4cceb8:4-ai-intelligence-layer/ai-services/app/chat/embeddings.py:generic-api-key:33

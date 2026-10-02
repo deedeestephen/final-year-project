@@ -137,17 +137,28 @@ const schema = z
       .min(1)
       .max(100_000)
       .default(5000),
+    // Push notifications (ADR-014): the Firebase service-account key file
+    // (JSON, from the Firebase console). Empty = push is off. The file is a
+    // secret: keep it outside the repository.
+    FCM_SERVICE_ACCOUNT_FILE: z.string().trim().default(''),
+    // Firebase Cloud Messaging's HTTP v1 API; tests point it at a stand-in.
+    FCM_API_URL: z
+      .url({ protocol: /^https?$/ })
+      .default('https://fcm.googleapis.com'),
+    PUSH_POLL_MS: z.coerce.number().int().min(250).max(60_000).default(2000),
+    // Older notifications are not pushed, for example the ones made while
+    // push was off: they stay in the app's list only.
+    PUSH_MAX_AGE_MIN: z.coerce.number().int().min(1).max(1440).default(10),
   })
   .superRefine((env, ctx) => {
-    if (
-      env.NODE_ENV === 'production' &&
-      env.SMARTCARE_FHIR_URL.startsWith('http:')
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['SMARTCARE_FHIR_URL'],
-        message: 'must use https in production',
-      });
+    for (const key of ['SMARTCARE_FHIR_URL', 'FCM_API_URL'] as const) {
+      if (env.NODE_ENV === 'production' && env[key].startsWith('http:')) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [key],
+          message: 'must use https in production',
+        });
+      }
     }
     if (env.STORAGE_DRIVER === 's3') {
       for (const key of [
@@ -232,6 +243,13 @@ export interface AppConfig {
     /** Largest number of patients in one export. */
     maxPatients: number;
   };
+  push: {
+    /** Firebase service-account key file; empty means push is switched off. */
+    serviceAccountFile: string;
+    apiUrl: string;
+    pollMs: number;
+    maxAgeMinutes: number;
+  };
 }
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -313,6 +331,12 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
       smartcareToken: e.SMARTCARE_TOKEN,
       timeoutMs: e.SMARTCARE_TIMEOUT_MS,
       maxPatients: e.FHIR_EXPORT_MAX_PATIENTS,
+    },
+    push: {
+      serviceAccountFile: e.FCM_SERVICE_ACCOUNT_FILE,
+      apiUrl: e.FCM_API_URL.replace(/\/+$/, ''),
+      pollMs: e.PUSH_POLL_MS,
+      maxAgeMinutes: e.PUSH_MAX_AGE_MIN,
     },
   };
 }

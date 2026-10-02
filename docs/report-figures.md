@@ -166,121 +166,131 @@ The FHIR R4 export (UC-08) with Safe Harbor de-identification of all 18 identifi
 
 Files: [PNG](report/figures/sequence-fhir-export.png) · [SVG](report/figures/sequence-fhir-export.svg) · source [sequence-fhir-export.puml](report/diagrams/sequence-fhir-export.puml)
 
-#### Figure 3.17: State diagram: a change saved on the phone
+#### Figure 3.17: Sequence diagram: push notifications
 
-![Figure 3.17: States of an offline change](report/figures/state-offline-change.png)
+A patient's phone is registered after sign-in; a new notification is claimed by the outbox and sent through Firebase Cloud Messaging (text only, hidden on a locked phone); a tap opens the messages; sign-out removes the phone (ADR-014). Push is switched on with the owner's Firebase project.
+
+![Figure 3.17: Push notifications](report/figures/sequence-push.png)
+
+Files: [PNG](report/figures/sequence-push.png) · [SVG](report/figures/sequence-push.svg) · source [sequence-push.puml](report/diagrams/sequence-push.puml)
+
+#### Figure 3.18: State diagram: a change saved on the phone
+
+![Figure 3.18: States of an offline change](report/figures/state-offline-change.png)
 
 Files: [PNG](report/figures/state-offline-change.png) · [SVG](report/figures/state-offline-change.svg) · source [state-offline-change.puml](report/diagrams/state-offline-change.puml)
 
-#### Figure 3.18: State diagram: an AI analysis job
+#### Figure 3.19: State diagram: an AI analysis job
 
-![Figure 3.18: States of an AI job](report/figures/state-ai-job.png)
+![Figure 3.19: States of an AI job](report/figures/state-ai-job.png)
 
 Files: [PNG](report/figures/state-ai-job.png) · [SVG](report/figures/state-ai-job.svg) · source [state-ai-job.puml](report/diagrams/state-ai-job.puml)
 
-#### Figure 3.19: State diagram: the chat's message box with voice input
+#### Figure 3.20: State diagram: the chat's message box with voice input
 
-![Figure 3.19: States of the message box](report/figures/state-voice-input.png)
+![Figure 3.20: States of the message box](report/figures/state-voice-input.png)
 
 Files: [PNG](report/figures/state-voice-input.png) · [SVG](report/figures/state-voice-input.svg) · source [state-voice-input.puml](report/diagrams/state-voice-input.puml)
 
 ### 3.5 Program design, database design and interface design
 
-#### Figure 3.20: The six-layer architecture as built
+#### Figure 3.21: The six-layer architecture as built
 
 The proposal's six layers (§3.3) with what each contains in the prototype.
 
-![Figure 3.20: Architecture](report/figures/architecture-layers.png)
+![Figure 3.21: Architecture](report/figures/architecture-layers.png)
 
 Files: [PNG](report/figures/architecture-layers.png) · [SVG](report/figures/architecture-layers.svg) · source [architecture-layers.puml](report/diagrams/architecture-layers.puml)
 
-#### Figure 3.21: Deployment diagram
+#### Figure 3.22: Deployment diagram
 
 Where each part runs: the phone or emulator, the laptop's Windows services, Node.js, Python and Docker, and the outside services.
 
-![Figure 3.21: Deployment](report/figures/deployment.png)
+![Figure 3.22: Deployment](report/figures/deployment.png)
 
 Files: [PNG](report/figures/deployment.png) · [SVG](report/figures/deployment.svg) · source [deployment.puml](report/diagrams/deployment.puml)
 
-#### Figure 3.22: Component diagram: the backend modules
+#### Figure 3.23: Component diagram: the backend modules
 
 The NestJS modules and their real dependencies (taken from the services' constructors), and the order of the gateway guards.
 
-![Figure 3.22: Backend modules](report/figures/component-backend.png)
+![Figure 3.23: Backend modules](report/figures/component-backend.png)
 
 Files: [PNG](report/figures/component-backend.png) · [SVG](report/figures/component-backend.svg) · source [component-backend.puml](report/diagrams/component-backend.puml)
 
-#### Figure 3.23: Class diagram: the app's assistant, voice input and read-aloud
+#### Figure 3.24: Class diagram: the app's assistant, voice input and read-aloud
 
-![Figure 3.23: App classes for the assistant](report/figures/class-app-chat-audio.png)
+![Figure 3.24: App classes for the assistant](report/figures/class-app-chat-audio.png)
 
 Files: [PNG](report/figures/class-app-chat-audio.png) · [SVG](report/figures/class-app-chat-audio.svg) · source [class-app-chat-audio.puml](report/diagrams/class-app-chat-audio.puml)
 
-#### Figure 3.24: Class diagram: the app's offline storage and synchronisation
+#### Figure 3.25: Class diagram: the app's offline storage and synchronisation
 
-![Figure 3.24: App classes for offline work](report/figures/class-app-offline.png)
+![Figure 3.25: App classes for offline work](report/figures/class-app-offline.png)
 
 Files: [PNG](report/figures/class-app-offline.png) · [SVG](report/figures/class-app-offline.svg) · source [class-app-offline.puml](report/diagrams/class-app-offline.puml)
 
-#### Figure 3.25: Class diagram: the assistant on the server
+#### Figure 3.26: Class diagram: the assistant on the server
 
 The backend's chatbot module and the AI service's chat module (keyword retrieval, the MedCPT meaning search, knowledge base, optional Claude writer).
 
-![Figure 3.25: Server classes for the assistant](report/figures/class-chat-server.png)
+![Figure 3.26: Server classes for the assistant](report/figures/class-chat-server.png)
 
 Files: [PNG](report/figures/class-chat-server.png) · [SVG](report/figures/class-chat-server.svg) · source [class-chat-server.puml](report/diagrams/class-chat-server.puml)
 
-#### Figure 3.26: API diagram: every route, its permission and its default roles
+#### Figure 3.27: API diagram: every route, its permission and its default roles
 
 All REST routes under `/api/v1`, grouped by resource, with the apps whose users may call them, and the AI service's internal API. Generated from [access-matrix.md](access-matrix.md).
 
-![Figure 3.26: API map](report/figures/api-map.png)
+![Figure 3.27: API map](report/figures/api-map.png)
 
 Files: [PNG](report/figures/api-map.png) · [SVG](report/figures/api-map.svg) · source generated: [api-map.puml](report/diagrams/generated/api-map.puml)
 
-#### Figure 3.27: The API explorer (OpenAPI 3, Swagger UI)
+#### Figure 3.28: The API explorer (OpenAPI 3, Swagger UI)
 
 The backend describes its own API at `http://localhost:3000/api/docs` (screenshot of the running backend).
 
-![Figure 3.27: API explorer](report/img/web-api-explorer.png)
+![Figure 3.28: API explorer](report/img/web-api-explorer.png)
 
-#### Figure 3.28: Entity-relationship diagram: all PostgreSQL tables and their keys
+#### Figure 3.29: Entity-relationship diagram: all PostgreSQL tables and their keys
 
 Generated from `schema.prisma`. Crow's-foot notation: a circle means "zero", a bar "one", a fork "many".
 
-![Figure 3.28: ERD overview](report/figures/erd-overview.png)
+![Figure 3.29: ERD overview](report/figures/erd-overview.png)
 
 Files: [PNG](report/figures/erd-overview.png) · [SVG](report/figures/erd-overview.svg) · source generated: [erd-overview.puml](report/diagrams/generated/erd-overview.puml)
 
-#### Figure 3.29: ERD: accounts, roles and sessions
+#### Figure 3.30: ERD: accounts, roles and sessions
 
-![Figure 3.29: ERD accounts](report/figures/erd-accounts.png)
+![Figure 3.30: ERD accounts](report/figures/erd-accounts.png)
 
 Files: [PNG](report/figures/erd-accounts.png) · [SVG](report/figures/erd-accounts.svg) · source generated: [erd-accounts.puml](report/diagrams/generated/erd-accounts.puml)
 
-#### Figure 3.30: ERD: facilities, patients, screenings, consent, scans and slides
+#### Figure 3.31: ERD: facilities, patients, screenings, consent, scans and slides
 
-![Figure 3.30: ERD patients](report/figures/erd-patients.png)
+![Figure 3.31: ERD patients](report/figures/erd-patients.png)
 
 Files: [PNG](report/figures/erd-patients.png) · [SVG](report/figures/erd-patients.svg) · source generated: [erd-patients.puml](report/diagrams/generated/erd-patients.puml)
 
-#### Figure 3.31: ERD: AI jobs, notifications, synchronisation and the audit log
+#### Figure 3.32: ERD: AI jobs, notifications, synchronisation and the audit log
 
-![Figure 3.31: ERD AI, sync and audit](report/figures/erd-ai-sync-audit.png)
+Also the phones that receive push notifications (`push_devices`, ADR-014), and when each notification was pushed (`notifications.pushed_at`).
+
+![Figure 3.32: ERD AI, sync and audit](report/figures/erd-ai-sync-audit.png)
 
 Files: [PNG](report/figures/erd-ai-sync-audit.png) · [SVG](report/figures/erd-ai-sync-audit.svg) · source generated: [erd-ai-sync-audit.puml](report/diagrams/generated/erd-ai-sync-audit.puml)
 
-#### Figure 3.32: MongoDB: the four document collections and their rules
+#### Figure 3.33: MongoDB: the four document collections and their rules
 
-![Figure 3.32: MongoDB collections](report/figures/database-mongodb.png)
+![Figure 3.33: MongoDB collections](report/figures/database-mongodb.png)
 
 Files: [PNG](report/figures/database-mongodb.png) · [SVG](report/figures/database-mongodb.svg) · source [database-mongodb.puml](report/diagrams/database-mongodb.puml)
 
-#### Figure 3.33: The phone's encrypted database
+#### Figure 3.34: The phone's encrypted database
 
 The six tables the app keeps on the phone (Drift with SQLCipher) for offline work.
 
-![Figure 3.33: Phone database](report/figures/database-phone.png)
+![Figure 3.34: Phone database](report/figures/database-phone.png)
 
 Files: [PNG](report/figures/database-phone.png) · [SVG](report/figures/database-phone.svg) · source [database-phone.puml](report/diagrams/database-phone.puml)
 
@@ -289,6 +299,7 @@ Files: [PNG](report/figures/database-phone.png) · [SVG](report/figures/database
 These are facts about the schema you can use when you discuss normalisation:
 
 - **Keys:** every table has a primary key: a UUID `id`, except the two link tables `user_roles` (`user_id`, `role_id`) and `role_permissions` (`role_id`, `permission_id`), which have composite keys, and `audit_logs`, keyed by a sequence number `seq`.
+- **Alternate keys** (unique columns): for example `users.email`, and `push_devices.token`, so one phone is registered only once.
 - **Many-to-many relations** (users and roles, roles and permissions) are resolved by those two link tables.
 - **Second normal form:** the only composite keys are those of the link tables; `role_permissions` has no other column, and `user_roles.assigned_at` depends on the whole key.
 - **Third normal form:** facility details are stored once in `facilities` and referenced by `facility_id`; role names once in `roles`. PSA density and the free-to-total PSA ratio are calculated when a record is read, not stored.
@@ -298,21 +309,21 @@ These are facts about the schema you can use when you discuss normalisation:
   - AI reports, chats and scan details live in MongoDB as documents, linked by id.
 - **Integrity rules in the database:** 18 foreign keys, unique keys, CHECK constraints on clinical values (PSA, PI-RADS, Gleason, ISUP), and triggers that make `audit_logs` append-only and chain each row's hash to the previous one.
 
-#### Figure 3.34: The app's screens and navigation
+#### Figure 3.35: The app's screens and navigation
 
 Every route of the app and how people move between screens, by role.
 
-![Figure 3.34: Navigation](report/figures/navigation-app.png)
+![Figure 3.35: Navigation](report/figures/navigation-app.png)
 
 Files: [PNG](report/figures/navigation-app.png) · [SVG](report/figures/navigation-app.svg) · source [navigation-app.puml](report/diagrams/navigation-app.puml)
 
-#### Figure 3.35: Interface design: patient screens
+#### Figure 3.36: Interface design: patient screens
 
 | Sign-in | Patient home (emulator) | Learn (dark mode) | An article read aloud (emulator) |
 |---|---|---|---|
 | ![Sign-in](report/img/app-signin.jpg) | ![Home](report/img/app-home-device.jpg) | ![Learn](report/img/app-learn.jpg) | ![Article](report/img/app-article-device.jpg) |
 
-#### Figure 3.36: Interface design: the assistant
+#### Figure 3.37: Interface design: the assistant
 
 | Empty chat | An answer with its sources | Casual chat |
 |---|---|---|
@@ -324,11 +335,11 @@ Files: [PNG](report/figures/navigation-app.png) · [SVG](report/figures/navigati
 
 The answer is the AI service's real answer to that question; the casual replies are the backend's real replies; in the recording picture a stand-in plays the part of the phone's speech service.
 
-#### Figure 3.37: Interface design: clinician home
+#### Figure 3.38: Interface design: clinician home
 
 ![Clinician home](report/img/app-clinician.jpg)
 
-#### Figure 3.38: Interface design: the admin website
+#### Figure 3.39: Interface design: the admin website
 
 The dashboard, the accounts list and the delete dialog. Synthetic API answers were used for these pictures; the dashboard's numbers are made up for the picture.
 
@@ -344,7 +355,7 @@ The dashboard, the accounts list and the delete dialog. Synthetic API answers we
 
 ### 4.1 System guide and 4.2 Installation manual
 
-The [operations manual](operations-manual.md) is the system guide and installation manual: what is installed, how to start, check and stop everything (§2 to §4), the phone app (§10) and the admin website (§11). [how-to-test.md](how-to-test.md) walks through every feature by hand. Figure 3.21 (deployment) shows where each part runs.
+The [operations manual](operations-manual.md) is the system guide and installation manual: what is installed, how to start, check and stop everything (§2 to §4), the phone app (§10) and the admin website (§11). [how-to-test.md](how-to-test.md) walks through every feature by hand. Figure 3.22 (deployment) shows where each part runs.
 
 ### 4.3 Testing plan and test output
 
@@ -402,64 +413,68 @@ The code that meets each objective of the proposal. Every picture shows the real
 
 ![Figure 4.10](report/img/code-fhir-safe-harbor.png)
 
+#### Figure 4.11: Push notifications: the outbox sends each new notification once (ADR-014)
+
+![Figure 4.11](report/img/code-backend-push-outbox.png)
+
 **Objective 2: the multi-modal AI inference engine** (the pipeline is built; the trained models are not, so the modules are labelled mocks)
 
-#### Figure 4.11: Requesting an analysis: consent first
+#### Figure 4.12: Requesting an analysis: consent first
 
-![Figure 4.11](report/img/code-backend-ai-request.png)
+![Figure 4.12](report/img/code-backend-ai-request.png)
 
-#### Figure 4.12: The model router and the fusion step
+#### Figure 4.13: The model router and the fusion step
 
-![Figure 4.12](report/img/code-ai-router.png)
+![Figure 4.13](report/img/code-ai-router.png)
 
-#### Figure 4.13: Fairness check across groups (AUC gap above 0.05 flagged)
+#### Figure 4.14: Fairness check across groups (AUC gap above 0.05 flagged)
 
-![Figure 4.13](report/img/code-backend-fairness.png)
+![Figure 4.14](report/img/code-backend-fairness.png)
 
 **Objective 3: the patient education chatbot**
 
-#### Figure 4.14: Safety rules, checked before every answer
+#### Figure 4.15: Safety rules, checked before every answer
 
-![Figure 4.14](report/img/code-chat-safety-rules.png)
+![Figure 4.15](report/img/code-chat-safety-rules.png)
 
-#### Figure 4.15: The chatbot service: safety, small talk, then the knowledge base
+#### Figure 4.16: The chatbot service: safety, small talk, then the knowledge base
 
-![Figure 4.15](report/img/code-chat-answer-flow.png)
+![Figure 4.16](report/img/code-chat-answer-flow.png)
 
-#### Figure 4.16: Retrieval, step 1: BM25 keyword search of the reviewed knowledge base
+#### Figure 4.17: Retrieval, step 1: BM25 keyword search of the reviewed knowledge base
 
-![Figure 4.16](report/img/code-ai-retrieve.png)
+![Figure 4.17](report/img/code-ai-retrieve.png)
 
-#### Figure 4.17: Retrieval, step 2: the keywords decide, MedCPT orders by meaning (ADR-013)
+#### Figure 4.18: Retrieval, step 2: the keywords decide, MedCPT orders by meaning (ADR-013)
 
-![Figure 4.17](report/img/code-ai-rank.png)
+![Figure 4.18](report/img/code-ai-rank.png)
 
-#### Figure 4.18: The MedCPT encoder (PubMedBERT, 12 layers) written with numpy
+#### Figure 4.19: The MedCPT encoder (PubMedBERT, 12 layers) written with numpy
 
-![Figure 4.18](report/img/code-ai-encoder.png)
+![Figure 4.19](report/img/code-ai-encoder.png)
 
-#### Figure 4.19: Writing the answer from the passages
+#### Figure 4.20: Writing the answer from the passages
 
-![Figure 4.19](report/img/code-ai-answer.png)
+![Figure 4.20](report/img/code-ai-answer.png)
 
-#### Figure 4.20: The app's chat controller
+#### Figure 4.21: The app's chat controller
 
-![Figure 4.20](report/img/code-app-chat-controller.png)
+![Figure 4.21](report/img/code-app-chat-controller.png)
 
-#### Figure 4.21: Voice input with the phone's speech service
+#### Figure 4.22: Voice input with the phone's speech service
 
-![Figure 4.21](report/img/code-app-voice.png)
+![Figure 4.22](report/img/code-app-voice.png)
 
-#### Figure 4.22: Reading aloud for people who cannot read
+#### Figure 4.23: Reading aloud for people who cannot read
 
-![Figure 4.22](report/img/code-app-read-aloud.png)
+![Figure 4.23](report/img/code-app-read-aloud.png)
 
 **Objective 5: ethics, privacy and compliance**
 
-#### Figure 4.23: The audit log's hash chain (database trigger)
+#### Figure 4.24: The audit log's hash chain (database trigger)
 
-![Figure 4.23](report/img/code-db-audit-chain.png)
+![Figure 4.24](report/img/code-db-audit-chain.png)
 
-Figures 4.6 (encryption), 4.10 (de-identification) and 4.13 (fairness) also belong to this objective. **Objective 4** (data collection and model training) has no code yet: no training data or trained model exists in the prototype.
+Figures 4.6 (encryption), 4.10 (de-identification) and 4.14 (fairness) also belong to this objective. **Objective 4** (data collection and model training) has no code yet: no training data or trained model exists in the prototype.
 
 **More code pictures** in [report/img](report/img), for example the small-talk replies (`code-chat-small-talk.png`), the knowledge base (`code-ai-knowledge-base.png`), the assistant's face drawn in code (`code-app-bot-painter.png`), the user model (`code-backend-prisma-user.png`) and the admin delete dialog (`code-admin-delete-dialog.png`).

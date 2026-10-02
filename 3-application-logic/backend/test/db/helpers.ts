@@ -42,6 +42,10 @@ export async function createDbTestApp(
     SMARTCARE_TOKEN: '',
     SMARTCARE_TIMEOUT_MS: '30000',
     FHIR_EXPORT_MAX_PATIENTS: '5000',
+    // Push off unless a test points it at its own stand-in for Firebase.
+    FCM_SERVICE_ACCOUNT_FILE: '',
+    FCM_API_URL: 'https://fcm.googleapis.com',
+    PUSH_POLL_MS: '2000',
     ...TEST_JWT_ENV,
     ...env,
   });

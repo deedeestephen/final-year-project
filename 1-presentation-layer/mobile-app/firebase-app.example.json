@@ -1,0 +1,6 @@
+{
+  "FIREBASE_API_KEY": "the API key shown for the Android app in the Firebase console",
+  "FIREBASE_APP_ID": "1:000000000000:android:0000000000000000000000",
+  "FIREBASE_SENDER_ID": "000000000000",
+  "FIREBASE_PROJECT_ID": "your-firebase-project-id"
+}

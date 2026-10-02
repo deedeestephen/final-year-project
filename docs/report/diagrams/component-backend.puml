@@ -21,8 +21,10 @@ package "services" {
   component "AI\n(broker, job queue,\nfairness)" as ai
   component "Chatbot" as chatbot
   component "FHIR export\n(+ SmartCare Pro client)" as fhir
-  component "Notifications" as notifications
+  component "Notifications\n(in-app list; push outbox\nand phones, ADR-014)" as notifications
 }
+
+cloud "Firebase Cloud Messaging\n(only when configured)" as fcm
 
 package "persistence and shared" {
   component "Audit\n(append-only, hash chain)" as audit
@@ -51,6 +53,8 @@ ai --> crypto
 fhir --> crypto
 imaging --> storage
 ai --> storage
+notifications ..> fcm : HTTP v1,\nservice account
+health --> notifications : push on or off
 audit --> db
 db --> config
 

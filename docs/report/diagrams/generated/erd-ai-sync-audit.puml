@@ -53,6 +53,16 @@ entity "notifications" as notifications #fff7ed {
   * body : text
     read_at : timestamptz
   * created_at : timestamptz
+    pushed_at : timestamptz
+}
+entity "push_devices" as push_devices #fff7ed {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * token : text <<UQ>>
+  * platform : text
+  * created_at : timestamptz
+  * last_seen_at : timestamptz
 }
 entity "sync_operations" as sync_operations #fff7ed {
   * id : uuid <<PK>>
@@ -96,6 +106,7 @@ ai_jobs }o--|| patients : patient_id
 explainability_artifacts }o--|| ai_jobs : job_id
 explainability_artifacts }o--o| ai_models : model_id
 notifications }o--|| users : user_id
+push_devices }o--|| users : user_id
 enum AiJobStatus {
   QUEUED
   RUNNING
@@ -141,6 +152,12 @@ enum SyncResult {
 note bottom of explainability_artifacts
 Either a stored artifact or an explicit reason it is
 unavailable (NFR-09).
+end note
+note bottom of push_devices
+A phone that receives push notifications (ADR-014). The
+token is Firebase Cloud Messaging's address for one install
+of the app. It is removed when the user signs out, when FCM
+says it is no longer valid, and with the account.
 end note
 note bottom of sync_operations
 One row per client operation. idempotency_key makes retries

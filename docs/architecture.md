@@ -79,6 +79,13 @@ per-record sync log is kept.
 
 Then the backend checks the answer (source, no dose), stores it and adds the disclaimer. The plan above (embedding → Qdrant top-k) was changed: with 32 passages, the vectors are kept in a file, and Qdrant stays for a larger knowledge base. Content in Bemba and Nyanja **must come from human-verified translations**. The system will not machine-translate medical content and present it as verified.
 
+**Push notifications (ADR-014).** A change that concerns a patient (a new screening record, a consent given or withdrawn, the account linked) writes an in-app notification in the same database transaction. A push sender in the backend reads the notifications table every 2 s as an outbox:
+- it claims the recent ones not yet pushed, in one statement;
+- it sends each to the account's registered phones through Firebase Cloud Messaging (HTTP v1, signed in with a service account), with the notification's text only;
+- it forgets phones that Firebase no longer knows.
+
+The phone registers itself after a patient signs in (`POST /notifications/devices`) and removes itself at sign-out. Push is off until the owner's Firebase project is configured.
+
 **Imaging (UC-03/04), built in Phase 10.** The client sends the form fields first, then one file, as multipart/form-data. The stream goes through a guard that counts bytes (size cap), hashes (SHA-256) and checks magic bytes, then straight into object storage (`StorageModule`: local files, or S3/MinIO with multipart upload). DICOM headers are read with `dicom-parser` (technical fields only) and checked against the chosen modality. Only then is the `imaging_studies` / `histopathology_specimens` row written, with an audit entry, plus a metadata copy in MongoDB `imaging_metadata`. A repeated `clientUuid` returns the existing record, so a lost connection can simply be retried (whole-file retry; byte-range resume is future work).
 
 ## 5. Security boundaries

@@ -232,6 +232,7 @@ powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1 -Re
 | Sign-in | `JWT_PRIVATE_KEY_BASE64`, `JWT_PUBLIC_KEY_BASE64` | the key pair that signs sessions |
 | Encryption | `FIELD_ENCRYPTION_KEY_BASE64`, `FIELD_HMAC_KEY_BASE64` | encrypt names, phone and NRC numbers. **If these are lost, those fields cannot be read again: back up `.env` safely** |
 | AI | `AI_SERVICE_URL`, `AI_SERVICE_TOKEN`, `ANTHROPIC_API_KEY`, `CHAT_LLM_MODEL`, `CHAT_LLM_DAILY_LIMIT` | where the AI service is; the shared token; Claude is off while the key is empty |
+| Push | `FCM_SERVICE_ACCOUNT_FILE`, `PUSH_POLL_MS`, `PUSH_MAX_AGE_MIN` | the Firebase key file (empty: push is off, section 18); how often new notifications are looked for; how old one may be and still be pushed |
 | Chatbot search | `CHAT_RETRIEVAL`, `CHAT_MODELS_DIR`, `CHAT_MEANING_SLOTS`, `CHAT_MEANING_WAIT_MS` | `auto`: the meaning search is used when its models are downloaded (`keywords` switches it off); where the models are; how many questions it handles at once, and how long one waits before keywords alone answer (section 9.4) |
 | Demo | `SEED_DEMO_PASSWORD` | the password of the four demo accounts |
 
@@ -346,12 +347,12 @@ http://localhost:3000/api/docs lists every route with its inputs and outputs. To
 
 | Data | Where | Why there |
 |---|---|---|
-| Accounts, roles, patients, screenings, consents, scans and slides (the records), AI jobs, notifications, sync history, audit log | PostgreSQL 18, database `pca_mhealth`, 20 tables | Structured records with strict rules and links between them |
+| Accounts, roles, patients, screenings, consents, scans and slides (the records), AI jobs, notifications and the phones they are pushed to, sync history, audit log | PostgreSQL 18, database `pca_mhealth`, 21 tables | Structured records with strict rules and links between them |
 | AI reports, AI logs, scan technical details, chatbot conversations | MongoDB 8.3, database `pca_mhealth`, 4 collections | Documents whose shape varies |
 | Uploaded scan and slide files | the folder `3-application-logic/backend/var/objects` | Large files do not belong in a database |
 | Rate-limit counters | Redis (Docker) | Fast, shared, temporary |
 
-![The 20 tables](report/img/term-tables.png)
+![The 21 tables](report/img/term-tables.png)
 
 ### 6.2 PostgreSQL: how the tables were made
 
@@ -671,7 +672,8 @@ The file appears in `build\app\outputs\flutter-apk\app-release.apk`. A release b
 - **Talking to the server:** `core/network/api_client.dart` adds the session token to every request, renews it when it has expired, and turns server errors into plain messages.
 - **Offline:** clinicians' work is saved first in an encrypted database on the phone (Drift with SQLCipher) and sent when the connection returns (`core/sync`). The server re-checks every change with the same rules as online.
 - **Session tokens** are kept in the phone's secure storage, never in plain files.
-- **Permissions:** the app only asks for the internet and, when the microphone is first tapped, the microphone.
+- **Permissions:** the app only asks for the internet; the microphone, when it is first tapped; and, for patients after signing in, to show notifications (Android 13 and later, and only when the app is built with the Firebase settings, section 18).
+- **Push notifications** (`core/push`): after a patient signs in, the phone is registered with the server, and it is removed again at sign-out (section 18).
 
 ### 10.4 Voice and reading aloud
 
@@ -775,11 +777,11 @@ powershell -ExecutionPolicy Bypass -File $gate all
 
 | Part | Tests |
 |---|---|
-| Backend unit tests | 307 |
+| Backend unit tests | 323 |
 | Backend end-to-end tests | 20 |
-| Backend database tests | 230 |
+| Backend database tests | 238 (all backend tests together: 94.7% of statements, 81.4% of branches) |
 | AI service | 96, and 1 skipped (it would call the real Claude); without the MedCPT models, 3 more are skipped |
-| Phone app | 280 (line coverage 90.9%) |
+| Phone app | 290 (line coverage 91.1%) |
 | Admin website | 81 (coverage 87.8%) |
 
 **The rule the project has followed:** no commit unless the gate for the changed part passes. If a test fails, fix the code or, if the behaviour really should change, change the test and say why in the commit.
@@ -815,6 +817,8 @@ git pull origin main             # get changes from GitHub
 | Admin website: *Cannot reach the server* | the backend is not running | check http://localhost:3000/api/v1/health |
 | App: *Cannot reach the server* on the emulator | the backend is not running, or the wrong address | the address must be `http://10.0.2.2:3000` on the emulator |
 | App shows a white screen after the PC restarted | a debug build needs `flutter run` | run `flutter run` again (section 10.2) |
+| Backend window: *FCM_SERVICE_ACCOUNT_FILE: …* and it stops | the push key file's path is wrong, or it is not the service-account key | fix the path in `.env`, or empty it to switch push off (section 18) |
+| No push arrives on the phone | push is off on the server, the app was built without `firebase-app.json`, or notifications are not allowed | check `"push":"on"` at http://localhost:3000/api/v1/health/ready, run the app as in section 18, allow notifications in the phone's settings |
 | Chat: *The assistant is not available right now* | the AI service is not running | start it (section 3.4) and check http://127.0.0.1:8000/v1/health |
 | Chat always answers *No reviewed information* | the question is outside the knowledge base | expected; add content (section 9.4) |
 | Voice: *I did not hear anything* on the emulator | the emulator's microphone is off | emulator › ⋮ › Microphone › *Virtual microphone uses host audio input*, or use a real phone |
@@ -836,7 +840,7 @@ The prototype runs on synthetic data. These are still needed before any real use
 
 - **Trained and evaluated AI models.** The mocks stay labelled until then.
 - **A clinician's sign-off** of the knowledge base, and **human-verified Bemba and Nyanja** translations.
-- **A data-protection review** under Zambia's Data Protection Act (2021) and ethics approval, covering the speech service and, if used, Claude.
+- **A data-protection review** under Zambia's Data Protection Act (2021) and ethics approval, covering the speech service and, if used, Claude and Firebase push.
 - **MongoDB access control switched on**, and a proper server with HTTPS, backups and monitoring. The list is in [security-review.md](security-review.md), items R-1 to R-8.
 
 ## 16. Where to read more
@@ -851,7 +855,8 @@ The prototype runs on synthetic data. These are still needed before any real use
 | The databases on this PC | [local-databases.md](local-databases.md) and [database.md](database.md) |
 | The phone app in depth | [mobile.md](mobile.md) |
 | Security | [security.md](security.md), [security-review.md](security-review.md), [access-matrix.md](access-matrix.md) |
-| The chatbot's design | [chatbot-plan.md](chatbot-plan.md), [ADR-009](decisions/ADR-009-offline-extractive-chatbot.md), [ADR-010](decisions/ADR-010-claude-for-chat-answers.md) |
+| The chatbot's design | [chatbot-plan.md](chatbot-plan.md), [ADR-009](decisions/ADR-009-offline-extractive-chatbot.md), [ADR-010](decisions/ADR-010-claude-for-chat-answers.md), [ADR-013](decisions/ADR-013-hybrid-retrieval-medcpt.md) |
+| Push notifications | [ADR-014](decisions/ADR-014-push-notifications-fcm.md), and section 18 above |
 | Swapping the mock AI models for real ones | [ai-model-integration-guide.md](ai-model-integration-guide.md) |
 | Speed and load | [performance.md](performance.md), [scalability.md](scalability.md) |
 
@@ -878,3 +883,52 @@ powershell -ExecutionPolicy Bypass -File $report all
 - The same tool draws the **diagrams for the final-year report** (use cases, data flow, activity, sequence, state, class, database, API, architecture, timelines) from text files in `docs/report/diagrams`: `report.ps1 diagrams figures`. They are listed, with captions, in [report-figures.md](report-figures.md).
 
 A PDF of this manual is in [report/PCa-mHealth-operations-manual.pdf](report/PCa-mHealth-operations-manual.pdf), and a web page (open it in a browser) in [report/operations-manual.html](report/operations-manual.html).
+
+## 18. Push notifications (switching them on)
+
+Patients can get a notification on their phone when a screening record is added, a consent is given or withdrawn, or their account is linked to their clinic record ([ADR-014](decisions/ADR-014-push-notifications-fcm.md)).
+- The same messages are always in the app's **Messages** tab; a push only tells the person sooner.
+- A push carries only the message's title and text, which never contain results, names or numbers. A locked phone hides even those.
+- **Push is off on this PC.** It needs a Firebase project, which belongs to your Google account. Firebase Cloud Messaging is free.
+
+**Once, in the Firebase console** (console.firebase.google.com, signed in with your Google account):
+
+1. **Create a project,** for example *pca-mhealth*. Google Analytics is not needed.
+2. **Add an Android app** with the package name `zm.ac.zcas.pca_mhealth`.
+3. **Download `google-services.json`** when the console offers it. The app does not use the file, and the Gradle steps can be skipped; you only copy four values from it (step 7).
+4. **Project settings › Cloud Messaging:** check that *Firebase Cloud Messaging API (V1)* is **Enabled**.
+5. **Project settings › Service accounts › Generate new private key.** A JSON file downloads.
+   - It is a **secret**, like a password: anyone with it can send pushes as your project.
+   - Save it **outside the project folder**, for example `D:\Final Year Project\secrets\pca-mhealth-firebase.json`.
+   - Never e-mail it or put it in Git.
+
+**On this PC:**
+
+6. Open `.env` and set the full path of that file: `FCM_SERVICE_ACCOUNT_FILE=D:\Final Year Project\secrets\pca-mhealth-firebase.json`.
+7. In `1-presentation-layer\mobile-app`, copy `firebase-app.example.json` to `firebase-app.json` (Git ignores it) and fill in the four values from `google-services.json`:
+
+   | In `firebase-app.json` | From `google-services.json` |
+   |---|---|
+   | `FIREBASE_API_KEY` | `client` › `api_key` › `current_key` |
+   | `FIREBASE_APP_ID` | `client` › `client_info` › `mobilesdk_app_id` |
+   | `FIREBASE_SENDER_ID` | `project_info` › `project_number` |
+   | `FIREBASE_PROJECT_ID` | `project_info` › `project_id` |
+
+   These four identify the app to Firebase and are not secrets. `google-services.json` can then be deleted.
+8. Restart the backend (`dev-down.ps1`, then `dev-up.ps1`).
+   - Its window says *Push notifications are on (Firebase project …)*.
+   - http://localhost:3000/api/v1/health/ready shows `"push":"on"`.
+9. Run the app with the Firebase settings:
+
+   ```powershell
+   cd 1-presentation-layer\mobile-app
+   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000 --dart-define-from-file=firebase-app.json
+   ```
+
+   Pushes need Google Play services on the phone. The Galaxy S9+ emulator has them (a *Google APIs* image), and so does every phone with the Play Store.
+
+**To check it,** follow *Push notifications* in [how-to-test.md](how-to-test.md). In short: sign in on the phone as a patient whose account is linked, leave the app, then add a screening record for that patient as a clinician. *New screening record* appears on the phone within a few seconds.
+
+**To switch it off,** empty `FCM_SERVICE_ACCOUNT_FILE` and restart the backend.
+
+**If the backend stops at start-up** with a message that begins *FCM_SERVICE_ACCOUNT_FILE*, the path is wrong or the file is not the service-account key from step 5. The message says which; it never shows the key.
