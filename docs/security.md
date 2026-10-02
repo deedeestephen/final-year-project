@@ -123,7 +123,7 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
 | EdDSA access JWT (15 min), algorithm pinned, iss/aud/exp/typ checked; `alg:none`, tampered, foreign-key and expired tokens rejected | `services/auth/token.service.ts` | Verified (Ph.4, unit + integration) |
 | Account and session re-checked in the DB on every request (disable/logout effective immediately) | `AuthService.authenticate`, `JwtAuthGuard` | Verified (Ph.4) |
 | Opaque refresh tokens (SHA-256 stored), rotated on every use; reuse revokes the whole family and is audited; race-safe conditional update | `AuthService.refresh` | Verified (Ph.4) |
-| Lockout after 5 failures (15 min), counter reset on success, lockout audited | `AuthService.login` | Verified (Ph.4) |
+| Lockout after 5 failures (15 min), counter reset on success, lockout audited; it stops new sign-ins only, so wrong passwords typed by someone else cannot end a person's open sessions (review 2026-10-02) | `AuthService.login`, `auth.service.spec.ts` | Verified (Ph.4; sessions: review 2026-10-02) |
 | No account enumeration: identical login error for unknown/wrong/disabled accounts, dummy Argon2 verification for timing, forgot-password always 202 | `AuthService` | Verified (Ph.4) |
 | Deny-by-default authentication (`@Public()` opt-out) and RBAC permissions guard; denials audited | `gateway/access/*` | Verified (Ph.4) |
 | Self-registration creates PATIENT only; role self-assignment and mass assignment rejected | `RegisterDto`, validation pipe | Verified (Ph.4) |
