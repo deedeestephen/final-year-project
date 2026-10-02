@@ -19,12 +19,14 @@
 
 ## Decision
 
-1. **Keywords decide whether the question is covered; meaning decides the order** (`app/chat/answer.py`):
+1. **Keywords decide whether the question is covered; meaning chooses the article; keywords choose the section** (`app/chat/answer.py`):
    - BM25 finds every passage scoring at least 2.0 (`MIN_SCORE`, unchanged). If there is none, the answer is "no reviewed information", as before.
-   - MedCPT scores those passages, and the closest in meaning is quoted first (and given first to Claude, when Claude writes).
-   - **The meaning floor:** if the best passage scores below **52.0** (`MEANING_FLOOR`), the answer is "no reviewed information". The words matched, but the meaning did not.
-   - A second passage is quoted only when it scores within **2.0** of the first (`MEANING_SECOND_GAP`) and both fit in 700 characters.
-   - **Follow-ups:** a short question ("Does it hurt?") is still read together with the previous question. The short question on its own must also reach the floor with the chosen passage. So a new topic after a covered one ("What is the treatment for malaria?" after a question about the DRE) is not answered from the earlier topic.
+   - MedCPT scores those passages. The articles are put in order of their closest passage, and **inside an article the passages keep their keyword order**. The first passage is quoted first (and given first to Claude, when Claude writes).
+     - Why two stages: MedCPT tells articles apart well, but it scores the sections of one article within a point or two of each other. There the keywords choose better.
+     - The first version ordered every passage by meaning alone. It answered "What does PI-RADS 4 mean?" with the passage *PI-RADS in this app* (71.8) instead of *The five categories* (69.0). The end-to-end workflow test found it on 2 October 2026, and it was corrected the same day (Measured, below).
+   - **The meaning floor:** if the closest passage scores below **52.0** (`MEANING_FLOOR`), the answer is "no reviewed information". The words matched, but the meaning did not.
+   - A second passage, the next in that order, is quoted only when it scores within **2.0** of the closest (`MEANING_SECOND_GAP`) and both fit in 700 characters.
+   - **Follow-ups:** a short question ("Does it hurt?") is still read together with the previous question. The short question on its own must also reach the floor with the chosen article. So a new topic after a covered one ("What is the treatment for malaria?" after a question about the DRE) is not answered from the earlier topic.
 2. **The models:** the MedCPT query encoder (questions, up to 64 tokens) and article encoder (each passage as its title and heading, then its text, up to 512 tokens). The score is the dot product of the two 768-number vectors, as in the model card.
    - **Pinned:** a fixed revision of each, and the SHA-256 sum of every file. `python -m app.chat.embeddings download` fetches them once (about 880 MB) into `ai-services/models/`, which Git ignores. A file whose sum differs is refused.
    - **No PyTorch:** the 12-layer BERT encoder is written with numpy (`app/chat/embeddings.py`). On reference texts, its vectors match the model card's code (transformers and PyTorch) to within 0.0001, and its scores to within 0.002 (`tests/test_meaning.py`).
@@ -57,6 +59,16 @@
 - "What is the treatment for malaria?" and "How much does a bus ticket to Ndola cost?" now get "no reviewed information".
 - "Why are the heat maps not shown?" was answered from the wrong card (grade groups); it now gets "no reviewed information". That is safer, but still not the right answer, which is the card on the AI report.
 
+**The right section** (added 2 October 2026, `SECTION_SET` in `eval_sets.py`: 10 questions whose right section was checked by reading the passages). The sets above only check the article, so they did not catch the PI-RADS slip.
+
+| | Right section quoted first (10) |
+|---|---|
+| Keywords only | 8 |
+| First version: every passage ordered by meaning | 5 (wrong: PI-RADS 4, grade group 3, both "mock data" questions, someone else in the room) |
+| **As shipped: meaning chooses the article, keywords the section** | **9** (still wrong: "What else apart from cancer can push the level up?" gets *What a result can and cannot show*, not *Why the level can be raised*) |
+
+The article-level results in the first table are the same for both versions.
+
 **Speed** ([performance.md](../performance.md)):
 - **One question at a time:** encoding takes about 60 ms on this laptop (4 cores, numpy).
 - **The load test:** 100 clinicians asking every 2 to 8 s, about 18 questions a second.
@@ -70,7 +82,7 @@
 
 - **A near topic can pass.** "Tell me about breast cancer screening" still gets the passage on prostate cancer screening (meaning score 66.9: to MedCPT, both are cancer screening). The answer names its source, so the person can see it is about the prostate. When Claude writes the answers, it can still say that the passages do not cover the question (ADR-010).
 - **One new topic still passes as a follow-up:** "Will it rain tomorrow?" after a PSA question is answered from the PSA article (53.4, just above the floor).
-- **Small, hand-written sets.** The floor and the gap were tuned on these 65 questions, written by the developer. They guard against getting worse; they do not prove quality. Real questions from the UAT sessions ([uat/](../uat/README.md)) should be added to the sets, and the thresholds checked again with `python -m app.chat.evaluate`.
+- **Small, hand-written sets.** The floor and the gap were tuned on these 65 questions (and 10 section checks), written by the developer. They guard against getting worse; they do not prove quality. Real questions from the UAT sessions ([uat/](../uat/README.md)) should be added to the sets, and the thresholds checked again with `python -m app.chat.evaluate`.
 - **Under heavy load, some answers use keywords only.** That keeps answers fast, but those questions lose the better ordering and the meaning floor. The health check counts them, so a server that needs more processor threads can be spotted.
 - **English only,** like the knowledge base. Bemba and Nyanja would need a different model as well as verified content.
 - **Retrieval only.** MedCPT finds passages; it writes nothing. Answers are still quoted passages, or Claude's text from them.

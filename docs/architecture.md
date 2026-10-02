@@ -74,7 +74,7 @@ per-record sync log is kept.
 
 **Chatbot (UC-07), built in Phase 13 and extended by ADR-010 and ADR-013.** Question → backend safety rules (emergency and self-harm, doses, a patient's own results; always first) → small talk → AI service:
 - BM25 keyword search of the reviewed knowledge base decides whether the question is covered;
-- MedCPT (a PubMedBERT retriever, 768 numbers, run with numpy) orders the matching passages by meaning, and refuses an answer whose best passage is far from the question;
+- MedCPT (a PubMedBERT retriever, 768 numbers, run with numpy) chooses the article of the matching passages closest in meaning (the keywords still choose the section inside it), and refuses an answer whose closest passage is far from the question;
 - the best passages are quoted, or Claude writes from them when a key is set.
 
 Then the backend checks the answer (source, no dose), stores it and adds the disclaimer. The plan above (embedding → Qdrant top-k) was changed: with 32 passages, the vectors are kept in a file, and Qdrant stays for a larger knowledge base. Content in Bemba and Nyanja **must come from human-verified translations**. The system will not machine-translate medical content and present it as verified.

@@ -78,6 +78,33 @@ PARAPHRASE_SET: list[tuple[str, str, frozenset[str]]] = [
     ),
 ]
 
+#: (audience, question, article, the section that answers it), checked by
+#: reading the passages (2 October 2026). The sets above only check the
+#: article; this one caught the meaning search quoting "PI-RADS in this app"
+#: instead of the five categories for "What does PI-RADS 4 mean?".
+SECTION_SET: list[tuple[str, str, str, str]] = [
+    ("clinician", "What does PI-RADS 4 mean?", "pi-rads", "The five categories"),
+    (
+        "clinician",
+        "What is grade group 3?",
+        "isup-grade-groups",
+        "How Gleason scores map to grade groups",
+    ),
+    ("clinician", "Gleason 4+3", "isup-grade-groups", "How Gleason scores map to grade groups"),
+    ("clinician", "Why does the AI report say mock data?", "ai-report", "Development mock data"),
+    ("clinician", "Are the numbers in the analysis real?", "ai-report", "Development mock data"),
+    ("patient", "Can someone else be in the room during the exam?", "dre", "Your choice"),
+    ("patient", "Can I ask for a chaperone during the DRE?", "dre", "Your choice"),
+    ("patient", "Is the finger test painful?", "dre", "What happens"),
+    ("patient", "Are African men more likely to get it?", "screening", "Who may be at higher risk"),
+    (
+        "patient",
+        "What else apart from cancer can push the level up?",
+        "psa-test",
+        "Why the level can be raised",
+    ),
+]
+
 #: (previous question, short question, the article that answers it, or None
 #: for a new topic the knowledge base does not cover), asked as a patient.
 FOLLOW_UP_SET: list[tuple[str, str, str | None]] = [

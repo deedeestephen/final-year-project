@@ -1423,3 +1423,26 @@ The third of the three items. Recorded in [ADR-014](decisions/ADR-014-push-notif
 - Not tested: real Firebase, which needs the owner's project. The check is in [how-to-test.md](how-to-test.md).
 
 **Docs and pictures:** ADR-014; operations manual §18 (setup), §4, §10.3, §14, §15, §16; how-to-test.md; mobile.md (permissions and push); security.md; database.md; architecture.md; the traceability matrix (the gap is closed, waiting for the owner's Firebase project); README. A new sequence diagram (Figure 3.17; later chapter-3 figures renumbered), and the component, deployment, architecture and phone use-case diagrams updated.
+
+## 2026-10-02: The meaning search chose the wrong section; corrected
+
+**How it was found:** the end-to-end workflow gate (Phase 16, `npm run test:workflows`) failed. A clinician asking "What does PI-RADS 4 mean?" got the passage *PI-RADS in this app* instead of *The five categories*. Neither the unit tests nor `python -m app.chat.evaluate` had caught it, because the evaluation sets only checked the article, not the section. The workflow gate had not been run after the meaning search was added on 1 October; it should have been.
+
+**Cause:** MedCPT scores the sections of one article within a point or two of each other (71.8, 69.4 and 69.0 for the three PI-RADS sections), and the first version ordered every passage by meaning alone. Inside an article, those small differences overrode the keyword search, which chose better.
+
+**Fix** (`answer.py`, ADR-013 updated): meaning chooses the article (articles are ordered by their closest passage); inside an article, the passages keep their keyword order. The floor, the second-passage rule and the follow-up check now work on the article.
+- A tie band (passages within 1 to 5 points of the closest ordered by keywords) was tried first and dropped: it lost "The gland feels hard and irregular on rectal exam", which needs the DRE findings card.
+
+**A new section-level set** (`SECTION_SET`, 10 questions whose right section was checked by reading the passages), reported by `python -m app.chat.evaluate` and checked by `test_meaning.py` when the models are downloaded:
+
+| | Right section quoted first (10) |
+|---|---|
+| Keywords only | 8 |
+| First version (1 October): every passage ordered by meaning | 5 |
+| As corrected | 9 |
+
+The article-level results are unchanged: quality 18/18, everyday words 20/24, off-topic refused 11/12, follow-ups 7/7, new topics refused 3/4. Still wrong: "What else apart from cancer can push the level up?" gets *What a result can and cannot show* rather than *Why the level can be raised*.
+
+**Checks:** AI service 97 passed, 1 skipped, coverage 98%; the workflow gate's 14 tests pass, including the chat workflow. The code picture of `_rank` (Figure 4.18), the chat activity and sequence diagrams, ADR-013, the operations manual (§9.1, §9.4) and architecture.md describe the new order.
+
+**Also on 2 October:** the owner asked for the work to run in the cloud. Two cloud sessions were started from GitHub: one reviews and tests the code, security and design on the branch `cloud/review-2026-10-02`; one drafts the final-year report on `cloud/report-draft`. Their results are recorded when they finish.

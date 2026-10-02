@@ -2,9 +2,10 @@
 
 The passages that match the question's words are found first (BM25); only
 a match of at least MIN_SCORE means the knowledge base covers the question.
-When the meaning search is on (ADR-013), MedCPT then orders those passages
-by meaning and refuses an answer whose best passage is far from the
-question; when it is too busy, the keywords alone decide. Then either:
+When the meaning search is on (ADR-013), MedCPT then puts the articles of
+those passages in order of meaning (the keywords still order the sections
+inside an article) and refuses an answer whose closest passage is far from
+the question; when it is too busy, the keywords alone decide. Then either:
 - Claude writes the answer from those passages only and names the ones it
   used (`GENERATED`, ADR-010), when an API key is configured; or
 - the passages are quoted word for word (`EXTRACTIVE`, ADR-009), which is
@@ -149,22 +150,39 @@ def _rank(
             quoted.append(hits[1])
         return hits, quoted
 
-    # Meaning search: the keywords decide whether the question is covered;
-    # among the passages that match them, the closest in meaning comes first.
+    # Meaning search: the keywords decide whether the question is covered.
+    # MedCPT tells articles apart well, but scores the sections of one article
+    # within a point or two of each other, where the keywords choose better
+    # ("What does PI-RADS 4 mean?" is answered by the five categories). So the
+    # articles come in order of their closest passage, and inside an article
+    # the passages keep their keyword order (candidates are in BM25 order, and
+    # the sort is stable).
     hits = retriever.search(text, top_k=len(retriever.passages))
     candidates = [h for h in hits if h.score >= MIN_SCORE]
     if not candidates:
         return None
     closeness = meaning.scores(text, [h.passage for h in candidates])
-    ordered = sorted(zip(candidates, closeness, strict=True), key=lambda pair: -pair[1])
-    (best, best_closeness) = ordered[0]
+    article_best: dict[str, float] = {}
+    for hit, close in zip(candidates, closeness, strict=True):
+        article = hit.passage.article_id
+        article_best[article] = max(article_best.get(article, close), close)
+    ordered = sorted(
+        zip(candidates, closeness, strict=True),
+        key=lambda pair: -article_best[pair[0].passage.article_id],
+    )
+    best = ordered[0][0]
+    best_closeness = article_best[best.passage.article_id]
     if best_closeness < MEANING_FLOOR:
         return None
     # A short question read with the previous one must itself be close to the
-    # passage: "Does it hurt?" after the DRE is, "What is the treatment for
+    # article: "Does it hurt?" after the DRE is, "What is the treatment for
     # malaria?" after the DRE is not (it is a new topic, and not covered).
-    if text != question and meaning.scores(question, [best.passage])[0] < MEANING_FLOOR:
-        return None
+    if text != question:
+        same_article = [
+            h.passage for h, _ in ordered if h.passage.article_id == best.passage.article_id
+        ]
+        if max(meaning.scores(question, same_article)) < MEANING_FLOOR:
+            return None
     quoted = [best]
     if (
         len(ordered) > 1

@@ -498,7 +498,7 @@ A separate Python program (FastAPI) in `4-ai-intelligence-layer/ai-services`. On
 3. The backend checks the permission (`chatbot:use`) and the limit (30 questions an hour per account).
 4. **Safety rules** look at the question. An emergency, self-harm, a medicine dose, or a patient asking what their own results mean gets a fixed, careful reply. Nothing is looked up.
 5. **Small talk** ("hello", "how are you", "tell me a joke") gets a friendly fixed reply.
-6. Otherwise the backend asks the AI service, which **searches the reviewed knowledge base**: it finds the passages that share the question's key words, and puts them in order of meaning.
+6. Otherwise the backend asks the AI service, which **searches the reviewed knowledge base**: it finds the passages that share the question's key words, chooses the article closest in meaning, and the best-matching section of it.
 7. If Claude is switched on, Claude writes a short answer **from those passages only**. If not, or if anything fails, the passages are quoted word for word.
 8. The backend checks the answer: it must have a source and must not contain a dose.
 9. Question and answer are stored in MongoDB. The audit log records that a question was asked, never its words.
@@ -540,9 +540,10 @@ The assistant can only say what is in two files in `4-ai-intelligence-layer/know
 Every section of every article is one **passage** the assistant can use. Passages are found in two steps ([ADR-013](decisions/ADR-013-hybrid-retrieval-medcpt.md)):
 
 1. **Keywords (BM25) decide whether the question is covered.** A passage must share enough of the question's words (a score of 2.0 or more). This needs no model, and every match can be explained by the words it shares with the question.
-2. **Meaning (MedCPT) puts those passages in order.** A biomedical model from the US National Library of Medicine turns the question and each passage into 768 numbers, and the passage closest in meaning comes first. If even the closest one is far from the question (a score under 52.0), the answer is "no reviewed information".
-   - "Are African men more likely to get it?" now gets the passage on who is at higher risk. The keywords alone preferred the one about the gland.
+2. **Meaning (MedCPT) chooses the article.** A biomedical model from the US National Library of Medicine turns the question and each passage into 768 numbers, and the article with the passage closest in meaning comes first. If even the closest passage is far from the question (a score under 52.0), the answer is "no reviewed information".
+   - "Are African men more likely to get it?" now gets the article on who is at higher risk. The keywords alone preferred the one about the gland.
    - "What is the treatment for malaria?" is refused. It only shares the word "treatment" with a screening passage.
+3. **Keywords choose the section inside that article.** The model scores the sections of one article almost the same, so the keywords decide there: "What does PI-RADS 4 mean?" gets the five PI-RADS categories.
 
 ![retrieve.py](report/img/code-ai-retrieve.png)
 

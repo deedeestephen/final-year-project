@@ -445,7 +445,7 @@ The code that meets each objective of the proposal. Every picture shows the real
 
 ![Figure 4.17](report/img/code-ai-retrieve.png)
 
-#### Figure 4.18: Retrieval, step 2: the keywords decide, MedCPT orders by meaning (ADR-013)
+#### Figure 4.18: Retrieval, step 2: the keywords decide, MedCPT chooses the article (ADR-013)
 
 ![Figure 4.18](report/img/code-ai-rank.png)
 

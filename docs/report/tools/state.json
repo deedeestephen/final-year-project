@@ -1,7 +1,7 @@
 {
  "code": {
   "date": "2026-10-02",
-  "commit": "b3dd3d4",
+  "commit": "41fd514",
   "uncommitted": true,
   "shots": {
    "backend-main": {
@@ -96,9 +96,9 @@
    },
    "ai-rank": {
     "file": "4-ai-intelligence-layer/ai-services/app/chat/answer.py",
-    "first": 131,
-    "last": 176,
-    "sha256": "30d5ec25e6028c99"
+    "first": 132,
+    "last": 194,
+    "sha256": "42e90e3d9275937e"
    },
    "ai-encoder": {
     "file": "4-ai-intelligence-layer/ai-services/app/chat/embeddings.py",
@@ -108,8 +108,8 @@
    },
    "ai-answer": {
     "file": "4-ai-intelligence-layer/ai-services/app/chat/answer.py",
-    "first": 179,
-    "last": 233,
+    "first": 197,
+    "last": 251,
     "sha256": "f8f0b35aa1b55c25"
    },
    "ai-claude-instructions": {
@@ -236,17 +236,17 @@
  },
  "pdf": {
   "date": "2026-10-02",
-  "manual": "4d9ee26f01d677ee"
+  "manual": "edca3c5869ffeb93"
  },
  "html": {
   "date": "2026-10-02",
-  "manual": "4d9ee26f01d677ee"
+  "manual": "edca3c5869ffeb93"
  },
  "diagrams": {
   "date": "2026-10-02",
   "sources": {
    "docs/report/diagrams/activity-ai-analysis.puml": "c4dd124aa41762e1",
-   "docs/report/diagrams/activity-chat-answer.puml": "0e6aa5d8b00680d2",
+   "docs/report/diagrams/activity-chat-answer.puml": "20b0c8e419b1cc82",
    "docs/report/diagrams/activity-offline-capture.puml": "45dda64964f90377",
    "docs/report/diagrams/activity-prototyping-cycle.puml": "707df99c8493a62a",
    "docs/report/diagrams/activity-quality-gate.puml": "5156a0695a39ce83",
@@ -265,7 +265,7 @@
    "docs/report/diagrams/gantt-planned.puml": "6a76501c25d42fd1",
    "docs/report/diagrams/navigation-app.puml": "a571740f0d70a6db",
    "docs/report/diagrams/sequence-ai-analysis.puml": "839db637981a0a9f",
-   "docs/report/diagrams/sequence-chat.puml": "be3a934782ffa069",
+   "docs/report/diagrams/sequence-chat.puml": "09f61b002c4e1ee1",
    "docs/report/diagrams/sequence-fhir-export.puml": "c321b3be9cbc0507",
    "docs/report/diagrams/sequence-offline-sync.puml": "216e68e394396648",
    "docs/report/diagrams/sequence-push.puml": "299a43dbdcc2419c",
@@ -285,7 +285,7 @@
  },
  "figures": {
   "date": "2026-10-02",
-  "document": "b6ab4cac90712269"
+  "document": "4002c0229d50d82d"
  },
  "uat": {
   "date": "2026-10-01",

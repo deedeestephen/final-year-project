@@ -124,7 +124,7 @@ footer { max-width: 78rem; margin-inline: auto; padding-inline: 1rem; padding-bl
   <h1>PCa mHealth: how it was built, and how to run it yourself</h1>
   <p>The backend, the databases, Docker, the AI service, the chatbot, the phone app and the admin website:
   how each was made, and how to start, check, change and repair it without an AI assistant.</p>
-  <div class="meta"><span>Made on 2 October 2026</span><span>Code pictures from commit b3dd3d4 with uncommitted changes</span><span>Synthetic data only</span><span>Not a medical device</span></div>
+  <div class="meta"><span>Made on 2 October 2026</span><span>Code pictures from commit 41fd514 with uncommitted changes</span><span>Synthetic data only</span><span>Not a medical device</span></div>
 </header>
 <div class="rule"></div>
 
@@ -922,7 +922,7 @@ docker compose -f $compose --env-file .env stop         # stop, keep the data
 <li>The backend checks the permission (<code>chatbot:use</code>) and the limit (30 questions an hour per account).</li>
 <li><strong>Safety rules</strong> look at the question. An emergency, self-harm, a medicine dose, or a patient asking what their own results mean gets a fixed, careful reply. Nothing is looked up.</li>
 <li><strong>Small talk</strong> ("hello", "how are you", "tell me a joke") gets a friendly fixed reply.</li>
-<li>Otherwise the backend asks the AI service, which <strong>searches the reviewed knowledge base</strong>: it finds the passages that share the question's key words, and puts them in order of meaning.</li>
+<li>Otherwise the backend asks the AI service, which <strong>searches the reviewed knowledge base</strong>: it finds the passages that share the question's key words, chooses the article closest in meaning, and the best-matching section of it.</li>
 <li>If Claude is switched on, Claude writes a short answer <strong>from those passages only</strong>. If not, or if anything fails, the passages are quoted word for word.</li>
 <li>The backend checks the answer: it must have a source and must not contain a dose.</li>
 <li>Question and answer are stored in MongoDB. The audit log records that a question was asked, never its words.</li>
@@ -949,9 +949,10 @@ node node_modules\jest\bin\jest.js src/services/chatbot
 <p>Every section of every article is one <strong>passage</strong> the assistant can use. Passages are found in two steps (<a href="https://github.com/deedeestephen/final-year-project/blob/main/docs/decisions/ADR-013-hybrid-retrieval-medcpt.md" target="_blank" rel="noopener">ADR-013</a>):</p>
 <ol>
 <li><strong>Keywords (BM25) decide whether the question is covered.</strong> A passage must share enough of the question's words (a score of 2.0 or more). This needs no model, and every match can be explained by the words it shares with the question.</li>
-<li><strong>Meaning (MedCPT) puts those passages in order.</strong> A biomedical model from the US National Library of Medicine turns the question and each passage into 768 numbers, and the passage closest in meaning comes first. If even the closest one is far from the question (a score under 52.0), the answer is "no reviewed information".
-   - "Are African men more likely to get it?" now gets the passage on who is at higher risk. The keywords alone preferred the one about the gland.
+<li><strong>Meaning (MedCPT) chooses the article.</strong> A biomedical model from the US National Library of Medicine turns the question and each passage into 768 numbers, and the article with the passage closest in meaning comes first. If even the closest passage is far from the question (a score under 52.0), the answer is "no reviewed information".
+   - "Are African men more likely to get it?" now gets the article on who is at higher risk. The keywords alone preferred the one about the gland.
    - "What is the treatment for malaria?" is refused. It only shares the word "treatment" with a screening passage.</li>
+<li><strong>Keywords choose the section inside that article.</strong> The model scores the sections of one article almost the same, so the keywords decide there: "What does PI-RADS 4 mean?" gets the five PI-RADS categories.</li>
 </ol>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="retrieve.py" src="img/code-ai-retrieve.png" /></figure>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="answer.py: _rank" src="img/code-ai-rank.png" /></figure>

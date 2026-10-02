@@ -43,7 +43,7 @@ else greeting or casual message
 else a health question
   svc -> broker : chatAnswer(question, audience, last 6 messages)
   broker -> aisvc : HTTP + service token, timeout
-  aisvc -> aisvc : BM25 keyword search of the reviewed\nknowledge base; MedCPT orders the matches\nby meaning; quote the best passages
+  aisvc -> aisvc : BM25 keyword search of the reviewed\nknowledge base; MedCPT chooses the article\nclosest in meaning, keywords the section;\nquote the best passages
   aisvc --> broker : text, sources, review status\n(or "not covered")
   broker --> svc : validated answer
   svc -> safety : checkAnswer(text, sources)

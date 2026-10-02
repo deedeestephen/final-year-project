@@ -6,7 +6,7 @@ ganttDiagram {
   milestone { BackGroundColor #1d4ed8 }
 }
 </style>
-title What was built, day by day: one diamond per commit (2026-09-23 to 2026-10-01)
+title What was built, day by day: one diamond per commit (2026-09-23 to 2026-10-02)
 printscale daily
 Project starts 2026-09-23
 saturday are open
@@ -54,4 +54,5 @@ hide footbox
 [Diagrams and figures for the final-year report; proposal gaps listed (0fde88c)] happens 2026-10-01
 [User acceptance testing kit (proposal §3.8.2, NFR-04) (9104c32)] happens 2026-10-01
 [Meaning search with MedCPT next to the keyword search (ADR-013) (b3dd3d4)] happens 2026-10-01
+[Push notifications through Firebase Cloud Messaging (ADR-014) (41fd514)] happens 2026-10-02
 @endgantt

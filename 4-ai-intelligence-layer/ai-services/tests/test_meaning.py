@@ -3,6 +3,7 @@
 
 import json
 import threading
+from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -19,7 +20,13 @@ from app.chat.answer import (
     ChatAnswerResult,
     answer,
 )
-from app.chat.eval_sets import FOLLOW_UP_SET, OFF_TOPIC_SET, PARAPHRASE_SET, QUALITY_SET
+from app.chat.eval_sets import (
+    FOLLOW_UP_SET,
+    OFF_TOPIC_SET,
+    PARAPHRASE_SET,
+    QUALITY_SET,
+    SECTION_SET,
+)
 from app.chat.kb import KnowledgeBase, Passage, default_knowledge_base
 from app.chat.meaning import MeaningIndex, MeaningLoader, passage_key
 from app.chat.retrieve import Hit, Retriever
@@ -81,7 +88,7 @@ def test_the_keywords_still_decide_whether_a_question_is_covered(kb: KnowledgeBa
     assert result.matched is False
 
 
-def test_the_passage_closest_in_meaning_is_quoted_first(kb: KnowledgeBase) -> None:
+def test_the_article_closest_in_meaning_is_quoted_first(kb: KnowledgeBase) -> None:
     found = candidates(kb, MANY)
     assert len({h.passage.article_id for h in found}) >= 2, (
         "the test question needs several articles"
@@ -90,6 +97,19 @@ def test_the_passage_closest_in_meaning_is_quoted_first(kb: KnowledgeBase) -> No
     result = ask(kb, MANY, FakeMeaning({last: 70.0}, default=55.0))
     assert result.passages[0].articleId == last
     assert result.matched is True
+
+
+def test_inside_an_article_the_keywords_choose_the_section(kb: KnowledgeBase) -> None:
+    # MedCPT scores the sections of one article within a point or two of each
+    # other; "What does PI-RADS 4 mean?" lost the five categories that way.
+    found = [h.passage for h in candidates(kb, MANY) if h.passage.article_id == "screening"]
+    assert len(found) >= 3, "the test question needs several sections of one article"
+    top, weakest = found[0], found[-1]  # in keyword order
+    fake = FakeMeaning({("screening", weakest.heading): 80.0, "screening": 60.0}, default=55.0)
+    result = ask(kb, MANY, fake)
+    # The article is chosen by its closest section; its keyword-best section
+    # is quoted, and the next section (60) is not close enough to 80 to follow.
+    assert [(p.articleId, p.heading) for p in result.passages] == [("screening", top.heading)]
 
 
 def test_an_answer_far_from_the_question_in_meaning_is_not_given(kb: KnowledgeBase) -> None:
@@ -101,11 +121,14 @@ def test_an_answer_far_from_the_question_in_meaning_is_not_given(kb: KnowledgeBa
 
 def test_a_second_passage_is_quoted_only_when_it_is_nearly_as_close(kb: KnowledgeBase) -> None:
     found = candidates(kb, MANY)
-    short = sorted(found, key=lambda h: len(h.passage.body))
-    first, second = (
-        short[0].passage,
-        next(h.passage for h in short[1:] if h.passage.article_id != short[0].passage.article_id),
+    # Two articles with one matching passage each, so the order is clear.
+    per_article = Counter(h.passage.article_id for h in found)
+    single = sorted(
+        (h.passage for h in found if per_article[h.passage.article_id] == 1),
+        key=lambda p: len(p.body),
     )
+    assert len(single) >= 2, "the test question needs two single-passage articles"
+    first, second = single[0], single[1]
     assert len(first.body) + len(second.body) <= 700
 
     a, b = (first.article_id, first.heading), (second.article_id, second.heading)
@@ -415,6 +438,21 @@ def test_the_meaning_search_is_at_least_as_good_as_keywords_on_every_set(kb: Kno
     for with_meaning, keywords in zip(counts["meaning"], counts["keywords"], strict=True):
         assert with_meaning >= keywords
 
+    # And the right section of the article (2 October 2026: keywords 8/10,
+    # with the meaning search 9/10; the first version only got 5).
+    def section(question: str, audience: str, meaning: object) -> tuple[str, str] | None:
+        result = ask(kb, question, meaning, audience)
+        return (
+            (result.passages[0].articleId, result.passages[0].heading) if result.matched else None
+        )
+
+    sections = {
+        mode: sum(section(q, a, meaning) == (art, sec) for a, q, art, sec in SECTION_SET)
+        for mode, meaning in (("keywords", None), ("meaning", index))
+    }
+    assert sections["meaning"] >= 9
+    assert sections["meaning"] >= sections["keywords"]
+
 
 @models
 def test_follow_ups_are_understood_and_new_topics_are_not_taken_for_them(
@@ -423,7 +461,7 @@ def test_follow_ups_are_understood_and_new_topics_are_not_taken_for_them(
     index = real_index(kb)
 
     def first(previous: str, question: str) -> str | None:
-        history = [{"role": "user", "text": previous}, {"role": "assistant", "text": "…"}]
+        history = [{"role": "user", "text": previous}, {"role": "assistant", "text": "â€¦"}]
         request = ChatAnswerRequest(
             question=question,
             audience="patient",

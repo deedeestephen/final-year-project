@@ -14,7 +14,13 @@ import time
 
 from app.chat import embeddings
 from app.chat.answer import MEANING_FLOOR, MIN_SCORE, ChatAnswerRequest, answer
-from app.chat.eval_sets import FOLLOW_UP_SET, OFF_TOPIC_SET, PARAPHRASE_SET, QUALITY_SET
+from app.chat.eval_sets import (
+    FOLLOW_UP_SET,
+    OFF_TOPIC_SET,
+    PARAPHRASE_SET,
+    QUALITY_SET,
+    SECTION_SET,
+)
 from app.chat.kb import KnowledgeBase, default_knowledge_base
 from app.chat.meaning import MeaningIndex, MeaningScorer
 from app.chat.retrieve import Retriever
@@ -32,6 +38,14 @@ def first_article(
     )
     result = answer(kb, request, meaning=meaning)
     return result.passages[0].articleId if result.matched else None
+
+
+def first_section(question: str, audience: str, meaning: MeaningScorer | None) -> str | None:
+    request = ChatAnswerRequest(question=question, audience=audience)  # type: ignore[arg-type]
+    result = answer(default_knowledge_base(), request, meaning=meaning)
+    if not result.matched:
+        return None
+    return f"{result.passages[0].articleId}/{result.passages[0].heading}"
 
 
 def best_closeness(kb: KnowledgeBase, index: MeaningIndex, audience: str, q: str) -> float | None:
@@ -89,6 +103,17 @@ def main() -> int:
         print(
             f"{mode:22}{f'{understood}/{len(follow_ups)}':>18}{f'{declined}/{len(new_topics)}':>20}"
         )
+    print("\nThe right section quoted first (the sets above only check the article):")
+    for mode, scorer in modes.items():
+        quoted = [
+            (q, first_section(q, a, scorer), f"{art}/{sec}") for a, q, art, sec in SECTION_SET
+        ]
+        print(
+            f"  {mode:20}{sum(got_s == right_s for _, got_s, right_s in quoted)}/{len(SECTION_SET)}"
+        )
+        for asked, got_s, right_s in quoted:
+            if got_s != right_s:
+                print(f"    {asked}: {got_s} (right: {right_s})")
     print(f"\nMeaning score of the passage quoted first (the floor is {MEANING_FLOOR}):")
     right = [
         (closeness, q)

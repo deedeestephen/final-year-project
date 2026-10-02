@@ -50,7 +50,7 @@ CODE = [
     Code("chat-small-talk", B + "src/services/chatbot/chat-safety.ts", r"name: 'how-are-you'", 30, "typescript"),
     Code("chat-answer-flow", B + "src/services/chatbot/chatbot.service.ts", r"Safety check, then the quoted answer", 58, "typescript"),
     Code("ai-retrieve", A + "chat/retrieve.py", r"^class Retriever", 50, "python"),
-    Code("ai-rank", A + "chat/answer.py", r"^def _rank\(", 46, "python"),
+    Code("ai-rank", A + "chat/answer.py", r"^def _rank\(", 63, "python"),
     Code("ai-encoder", A + "chat/embeddings.py", r"^    def _encode\(", 33, "python"),
     Code("ai-answer", A + "chat/answer.py", r"^def answer\(", 55, "python"),
     Code("ai-claude-instructions", A + "chat/generate.py", r"^SYSTEM: dict", 16, "python"),
