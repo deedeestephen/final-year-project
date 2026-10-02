@@ -252,6 +252,26 @@ describe('authentication and authorisation (real database)', () => {
         await login(email, 'wrong-password-y').expect(401);
       await login(email, STRONG).expect(200);
     });
+
+    it('stops new sign-ins during a lockout but leaves open sessions working', async () => {
+      // Someone else types wrong passwords for this email (review 2026-10-02).
+      const { email, session } = await registerAndLogin('lock-session');
+      for (let i = 0; i < 5; i++)
+        await login(email, `wrong-password-${i}`).expect(401);
+      await login(email, STRONG).expect(423);
+
+      await http()
+        .get('/api/v1/users/me')
+        .set('Authorization', `Bearer ${session.accessToken}`)
+        .expect(200);
+      const rotated = await http()
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: session.refreshToken })
+        .expect(200);
+      expect((rotated.body as LoginBody).refreshToken).not.toBe(
+        session.refreshToken,
+      );
+    });
   });
 
   describe('access tokens', () => {
