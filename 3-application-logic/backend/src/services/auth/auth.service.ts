@@ -337,7 +337,7 @@ export class AuthService {
       throw invalidToken();
     }
     const now = new Date();
-    if (stored.expiresAt <= now || !isUsable(stored.user, now)) {
+    if (stored.expiresAt <= now || !isActive(stored.user)) {
       await this.revokeFamily(stored.familyId);
       throw invalidToken();
     }
@@ -426,7 +426,7 @@ export class AuthService {
         select: { id: true },
       }),
     ]);
-    if (!user || !isUsable(user, now) || !liveSession) throw invalidToken();
+    if (!user || !isActive(user) || !liveSession) throw invalidToken();
 
     return {
       id: user.id,
@@ -616,13 +616,14 @@ export class AuthService {
   }
 }
 
-function isUsable(
-  user: { status: string; lockedUntil: Date | null },
-  now: Date,
-): boolean {
-  return (
-    user.status === 'ACTIVE' && !(user.lockedUntil && user.lockedUntil > now)
-  );
+/**
+ * Whether a signed-in session may go on. A lockout (too many wrong
+ * passwords) only stops new sign-ins, in `login`: if it also ended open
+ * sessions, anyone who knows an email address could sign that person out,
+ * again and again, by typing wrong passwords.
+ */
+function isActive(user: { status: string }): boolean {
+  return user.status === 'ACTIVE';
 }
 
 export function rolesOf(user: UserWithAccess): RoleName[] {
