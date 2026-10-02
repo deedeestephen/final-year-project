@@ -22,7 +22,13 @@ export function readRefreshCookie(req: Request): string | undefined {
   if (!header) return undefined;
   for (const part of header.split(';')) {
     const [name, ...rest] = part.trim().split('=');
-    if (name === REFRESH_COOKIE) return decodeURIComponent(rest.join('='));
+    if (name !== REFRESH_COOKIE) continue;
+    try {
+      return decodeURIComponent(rest.join('='));
+    } catch {
+      // Malformed: treated as no session (401), not as a server error.
+      return undefined;
+    }
   }
   return undefined;
 }
