@@ -32,7 +32,9 @@ backend() {
   run "backend format" npx prettier --check "src/**/*.ts" "test/**/*.ts" "tools/**/*.ts" prisma.config.ts
   run "backend lint" npx eslint "{src,test,tools}/**/*.ts" prisma.config.ts
   run "backend typecheck" npx tsc --noEmit -p tsconfig.json
-  run "prisma validate" npx prisma validate
+  # The schema reads DATABASE_URL, but validating it opens no connection: a
+  # placeholder is used when none is set (the CI backend job has no database).
+  run "prisma validate" env DATABASE_URL="${DATABASE_URL:-postgresql://validate@localhost:5432/validate}" npx prisma validate
   run "backend unit tests" npx jest
   run "backend e2e tests" npx jest --config test/jest-e2e.json
   run "openapi document up to date" npm run -s openapi:check
