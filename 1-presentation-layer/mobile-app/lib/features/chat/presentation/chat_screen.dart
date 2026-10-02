@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../core/connectivity/connectivity_service.dart';
@@ -14,6 +15,12 @@ import '../../auth/domain/current_user.dart';
 import '../application/chat_controller.dart';
 import '../data/chat_api.dart';
 import 'chat_composer.dart';
+
+/// Opens a source in the phone's browser. Tests replace it.
+final sourceLauncherProvider = Provider<Future<bool> Function(Uri)>(
+  (ref) =>
+      (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
+);
 
 const _patientSuggestions = [
   'What does a PSA test measure?',
@@ -930,12 +937,7 @@ class _AnswerCard extends ConsumerWidget {
                         color: p.textSecondary,
                       ),
                       const SizedBox(width: AppSizes.sm),
-                      Expanded(
-                        child: SelectableText(
-                          s.url.isEmpty ? s.name : '${s.name}\n${s.url}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
+                      Expanded(child: _SourceLink(source: s)),
                     ],
                   ),
                 ),
@@ -965,6 +967,51 @@ class _AnswerCard extends ConsumerWidget {
 
 /// "Listen" reads the answer aloud (not the sources), for people who find
 /// reading hard. Tapping again stops it.
+/// A source shown by its name; a tap opens the web page. The address itself
+/// is not printed: it is a lot of small text for a slow reader.
+class _SourceLink extends ConsumerWidget {
+  const _SourceLink({required this.source});
+
+  final ChatSource source;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final p = context.colors;
+    final uri = Uri.tryParse(source.url);
+    final canOpen =
+        uri != null && (uri.scheme == 'https' || uri.scheme == 'http');
+    if (!canOpen) {
+      return Text(source.name, style: theme.textTheme.bodyMedium);
+    }
+    void open() => ref.read(sourceLauncherProvider)(uri);
+    return Semantics(
+      container: true,
+      link: true,
+      label: 'Source: ${source.name}, opens a web page',
+      onTap: open,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: open,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: AppSizes.minTouchTarget),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              source.name,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: p.primary,
+                decoration: TextDecoration.underline,
+                decorationColor: p.primary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ListenToAnswer extends ConsumerWidget {
   const _ListenToAnswer({required this.id, required this.parts});
 

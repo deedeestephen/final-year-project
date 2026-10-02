@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 
 import 'package:pca_mhealth/features/chat/application/voice_input.dart';
 import 'package:pca_mhealth/features/chat/presentation/chat_composer.dart';
+import 'package:pca_mhealth/features/chat/presentation/chat_screen.dart';
 import 'package:pca_mhealth/shared/widgets/assistant_avatar.dart';
 
 import '../../support/app_harness.dart';
@@ -98,6 +100,7 @@ void main() {
     List<String> roles = const ['PATIENT'],
     FakeConnectivity? connectivity,
     VoiceAvailability voice = VoiceAvailability.ready,
+    List<Override> overrides = const [],
   }) async {
     backend = backendFor(roles);
     store = InMemoryTokenStore();
@@ -110,6 +113,7 @@ void main() {
       connectivity: connectivity,
       speech: speech,
       reader: reader,
+      overrides: overrides,
     );
     await tester.enter('login.email', 'someone@demo.pca-mhealth.test');
     await tester.enter('login.password', 'a-password-1234');
@@ -142,12 +146,67 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Source'), findsOneWidget);
-    expect(find.textContaining('NHS: PSA testing'), findsOneWidget);
+    expect(find.text('NHS: PSA testing'), findsOneWidget);
+    // The address itself is not printed.
+    expect(find.textContaining('https://'), findsNothing);
     expect(
       find.textContaining('Content status: Draft for review'),
       findsOneWidget,
     );
     expect(find.textContaining('not medical advice'), findsOneWidget);
+  });
+
+  testWidgets('a source is a named link with a clear label; a tap opens it', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final opened = <Uri>[];
+    await openChat(
+      tester,
+      overrides: [
+        sourceLauncherProvider.overrideWithValue((uri) async {
+          opened.add(uri);
+          return true;
+        }),
+      ],
+    );
+    await tester.tapKey('chat.suggestion.0');
+    await tester.ensureVisible(find.text('NHS: PSA testing'));
+    await tester.pump();
+    final label = find.bySemanticsLabel(
+      'Source: NHS: PSA testing, opens a web page',
+    );
+    expect(label, findsOneWidget);
+    expect(
+      tester.getSize(find.byType(InkWell).last).height,
+      greaterThanOrEqualTo(48),
+    );
+    await tester.tap(find.text('NHS: PSA testing'));
+    expect(opened, [
+      Uri.parse('https://www.nhs.uk/conditions/prostate-cancer/psa-testing/'),
+    ]);
+    // The status line and the disclaimer stay.
+    expect(find.textContaining('Content status:'), findsOneWidget);
+    expect(find.textContaining('not medical advice'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('a source without a web address is plain text', (tester) async {
+    await openChat(tester);
+    backend.on(
+      'POST /chat/conversations/c-1/messages',
+      FakeResponse(
+        201,
+        _answer(
+          sources: [
+            {'name': 'Clinic leaflet', 'url': ''},
+          ],
+        ),
+      ),
+    );
+    await tester.tapKey('chat.suggestion.0');
+    expect(find.text('Clinic leaflet'), findsOneWidget);
+    expect(find.textContaining('opens a web page'), findsNothing);
   });
 
   testWidgets('typed questions are sent, and the conversation is reused', (
