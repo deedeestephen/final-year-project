@@ -330,6 +330,61 @@ describe('patients, clinical records and consent (real database)', () => {
         .send({ version: 1, accountUserId: clinicianUser.id })
         .expect(400);
     });
+
+    it('links like the admin website: the same NRC, never over another link, and the patient is told', async () => {
+      // Review 2026-10-02 (M-2): this route had none of these safeguards.
+      const idNumber = nrc();
+      const reg = await http()
+        .post('/api/v1/auth/register')
+        .send({
+          email: `nrc-${randomUUID().slice(0, 8)}@example.test`,
+          password: 'Synthetic-Register-Pass-42',
+          displayName: 'SYNTHETIC NRC Patient',
+          phone: '+260 97 7654321',
+          idDocumentType: 'NRC',
+          idNumber,
+        })
+        .expect(201);
+      const accountId = (reg.body as { id: string }).id;
+      const link = (patientId: string, version: number, userId: string) =>
+        http()
+          .patch(`/api/v1/patients/${patientId}`)
+          .set(as(clinicianA))
+          .send({ version, accountUserId: userId });
+
+      // Another man's record: its NRC differs from the account's.
+      const wrong = await createPatient(clinicianA);
+      const refused = await link(wrong.id, 1, accountId).expect(400);
+      expect((refused.body as ErrorBody).error.code).toBe('NRC_MISMATCH');
+
+      // His own record: linked, audited on its own, and announced to him.
+      const own = await createPatient(clinicianA, { nationalId: idNumber });
+      await link(own.id, 1, accountId).expect(200);
+      const audit = await prisma.auditLog.findFirst({
+        where: { action: 'patient_account.linked', entityId: own.id },
+      });
+      expect(audit?.details).toMatchObject({
+        userId: accountId,
+        matchedBy: 'NRC',
+      });
+      const notices = () =>
+        prisma.notification.count({
+          where: { userId: accountId, type: 'account.linked' },
+        });
+      expect(await notices()).toBe(1);
+      // Saving the same link again sends no second notice.
+      await link(own.id, 2, accountId).expect(200);
+      expect(await notices()).toBe(1);
+
+      // The record keeps its account: another one cannot take it over.
+      const other = await createUser(prisma, 'PATIENT', null);
+      const taken = await link(own.id, 3, other.id).expect(409);
+      expect((taken.body as ErrorBody).error.code).toBe('CONFLICT');
+      const record = await prisma.patient.findUniqueOrThrow({
+        where: { id: own.id },
+      });
+      expect(record.userId).toBe(accountId);
+    });
   });
 
   describe('clinical records', () => {
