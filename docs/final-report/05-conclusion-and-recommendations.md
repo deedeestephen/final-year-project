@@ -71,7 +71,7 @@ Comparing Figure 1.1 with Figure 1.2: of the proposal's nine phases, planning (1
 7. **Android only, mostly on an emulator.** No iOS build exists; speech recognition was not confirmed with a real voice; push was not tested with real Firebase.
 8. **Simulated integration.** SmartCare Pro was reached only through a stand-in, and receiving data was not built.
 9. **Small evaluation sets.** The assistant's thresholds were tuned on 65 developer-written questions and 10 section checks, which guard against regressions but do not prove quality. One section check is still wrong (9 of 10).
-10. **An internal security review**, not an independent penetration test, with eight residual risks open and some findings of the 2 October review (for example the account-linking rule and the lockout answer) still open for the owner.
+10. **An internal security review**, not an independent penetration test, with eight residual risks open and some findings of the 2 October review (for example the lockout answer that shows an account exists) still open for the owner.
 
 ## 5.7 Recommendations
 
