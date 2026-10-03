@@ -1,3 +1,16 @@
+ALL DONE
+# Summary for the student (written 3 Oct 2026)
+
+**What changed:** The draft is synced with main (e106c34) and matches ADR-013, the 2 Oct review, the test counts and docs/report-figures.md (all 65 figure numbers and captions checked; every Figure/Table mentioned exists). All 45 references are cited and cross-checked; none is still marked [CHECK]. The Word file was rebuilt (105 headings, 36 tables, 74 images).
+
+**Word count, chapters 1-5:** Ch 1: 2,580; Ch 2: 2,598; Ch 3: 4,843; Ch 4: 4,712; Ch 5: 2,623; total 17,356. The target of 15,000-16,000 was NOT reached: further cuts would have removed facts, figures or limitations. If your course limit is lower, cut descriptive figure sentences in 3.4 and the tables in 3.2 yourself.
+
+**You must fill:** [STUDENT NAME], [STUDENT NUMBER], [SUPERVISOR], [COURSE NAME AND CODE], [DATE], [DATE OF SUBMISSION], [STUDENT SIGNATURE], [ACKNOWLEDGEMENTS], and the 20 [UAT RESULTS] markers (the user acceptance test and SUS were not run; ethics approval needed). Keep the AI-assistance comment in 00-front-matter.md and review it against ZCAS rules on AI use.
+
+**References still marked [CHECK]:** none.
+
+**Contradictions / points to check:** The proposal cites "Litjens et al., 2017" for general deep-learning claims (proposal lines 203, 209, 215), but the Litjens entry the repository supports is the 2014 MRI paper; identify the correct 2017 survey before reusing those sentences. Some open findings (e.g. the lockout answer that reveals an account exists) and eight residual risks R-1 to R-8 are stated plainly in 4.3.4 and 5.7. Report screenshots taken before the 2 Oct fix still show fainter outlines.
+
 # Report draft progress
 
 Last synced with main: e106c34 (3 Oct 2026; M-2 account-linking safeguards)
@@ -5,7 +18,7 @@ Last synced with main: e106c34 (3 Oct 2026; M-2 account-linking safeguards)
 - [x] A. Synced with main (already merged). Updated: ADR-013 (article by MedCPT, section by keywords; 10-question section check 8/5/9), 2 Oct review fixes (lockout, malformed cookie, push devices, 3:1 outlines), test counts from the development log (329, 20, 588, 97, 290, 82), figure captions 1.1, 1.2, 3.17, 4.18 to match report-figures.md. Re-synced 3 Oct: main e106c34 (M-2 fixed: clinician account linking now has the NRC safeguards); sections 4 and 5 updated.
 - [x] B. Citation check: all 45 reference entries are cited in chapters; every in-text author-year citation has an entry. The Data Protection Act (2021), ECTA etc. are cited as statutes without a reference entry (as in the proposal).
 - [x] C. Verified on 2 Oct 2026 from the owner's laptop (the cloud proxy blocks PubMed, doi.org and Crossref): Benson, Catalona, Epstein, Jin, Litjens and Turkbey against PubMed; Brooke and Nielsen against Crossref. Corrected: Litjens is 2014 (not 2017) with the title "Computer-aided detection of prostate cancer in MRI" (chapter 2 sentence updated); Catalona and Epstein gained their subtitles; full author lists added; Brooke now cites the CRC Press edition (pp. 207-212, DOI). No [CHECK] notes remain. For the student (item G): the proposal itself cites "Litjens et al., 2017" for general deep-learning claims (proposal lines 203, 209, 215) that do not come from this 2014 paper; they probably come from a different 2017 survey, which the student should identify before reusing those sentences.
-- [ ] D. Tighten chapters 1-5 to ~15,000-16,000 words. IN PROGRESS: two passes have cut chapters 1-5 from 18,253 to 17,439 words (17,356 after the 3 Oct run, which trimmed 4.1/4.2 wording and chapter 5 repetition) without removing facts, figures or limitations (this run: figure-description sentences in 3.4, normalisation list, 4.3.5/4.3.6, 5.3/5.4 repetition, 1.5.3/1.6; also corrected the 1.7 description of retrieval to match ADR-013). Still about 1,300 words to go. Chapter 2 and the tables in 3.2 are already dense; next candidates are 3.5.5, 3.4, 4.3.2-4.3.4 and 4.4. If the target cannot be reached without losing facts, the student may accept ~16,500. Continue next run.
-- [ ] E. Consistency pass
-- [ ] F. Rebuild Word file
-- [ ] G. Student summary, then ALL DONE as first line
+- [x] D. (closed at 17,356 words; target not reachable without losing facts, see summary) Tighten chapters 1-5 to ~15,000-16,000 words. IN PROGRESS: two passes have cut chapters 1-5 from 18,253 to 17,439 words (17,356 after the 3 Oct run, which trimmed 4.1/4.2 wording and chapter 5 repetition) without removing facts, figures or limitations (this run: figure-description sentences in 3.4, normalisation list, 4.3.5/4.3.6, 5.3/5.4 repetition, 1.5.3/1.6; also corrected the 1.7 description of retrieval to match ADR-013). Still about 1,300 words to go. Chapter 2 and the tables in 3.2 are already dense; next candidates are 3.5.5, 3.4, 4.3.2-4.3.4 and 4.4. If the target cannot be reached without losing facts, the student may accept ~16,500. Continue next run.
+- [x] E. Consistency pass: figure/table references and captions match report-figures.md; British spelling checked (remaining US forms are proper names/titles); no unreferenced figures or tables.
+- [x] F. Word file rebuilt and read back (105 headings, 36 tables, 74 images).
+- [x] G. Summary written at top; ALL DONE set.
