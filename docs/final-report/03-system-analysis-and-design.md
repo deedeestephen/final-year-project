@@ -117,7 +117,7 @@ The proposal selected iterative prototyping, in which each iteration passes thro
 - **Internal testing.** A quality gate (Section 4.3.2) checked each part, and the same script ran in continuous integration. A phase could not close while the gate failed, and failing tests were fixed, not skipped.
 - **Evaluation.** The owner reviewed each phase on the emulator, in screen renders or through the manual test guide, and the owner's requests fed the next iteration: the separate administration website, the redesign, voice and read-aloud, and the closing of gaps found when the proposal was reread. Evaluation with clinicians and patients is prepared but was not held (Section 4.3.8).
 
-Two departures from the proposal's method should be noted. The iterations were build phases of varying length, not four-week time-boxes. And, as the development log and the security review record, the code, tests and documentation were written with an AI coding assistant (Claude) under the student's direction, with design choices recorded as the owner's decisions. This changed the pace of development but not the method, since every phase passed the same gate. The log recorded, for every phase, the objective, decisions, files changed, tests, errors with root causes and fixes, and known limitations.
+Two departures from the proposal's method should be noted. The iterations were build phases of varying length, not four-week time-boxes. And, as the development log and the security review record, the code, tests and documentation were written with an AI coding assistant (Claude) under the student's direction, with design choices recorded as the owner's decisions. This changed the pace of development but not the method, since every phase passed the same gate.
 
 ## 3.4 Data and Process Modelling
 
@@ -127,7 +127,7 @@ Figure 3.2 shows the platform as one process, with its users and the outside sys
 
 ![Figure 3.2: Context diagram (DFD level 0)](../report/figures/context-diagram.png)
 
-Figure 3.3 decomposes the platform into eight processes (1.0 authenticate users; 2.0 administer accounts and roles; 3.0 register patients and record screenings and consent; 4.0 manage scans and slides; 5.0 run AI analysis; 6.0 educate and answer questions; 7.0 export to SmartCare Pro; 8.0 audit and monitor) and eight data stores (D1 accounts and sessions; D2 patients, screenings and consents; D3 scan and slide files; D4 AI jobs and reports; D5 chat conversations; D6 the knowledge base; D7 the hash-chained audit log; D8 the phone's encrypted database and outbox). Two flows are central: process 3.0 writes to the phone first and reaches the server only through the outbox, and process 5.0 reads only consent, clinical values and de-identified copies of scans. Figure 3.4 details process 6.0.
+Figure 3.3 decomposes the platform into eight processes (1.0 authentication, 2.0 account administration, 3.0 patients, screenings and consent, 4.0 scans and slides, 5.0 AI analysis, 6.0 education and questions, 7.0 export to SmartCare Pro, 8.0 audit and monitoring) and eight data stores (D1 to D8, including the hash-chained audit log and the phone's encrypted database and outbox). Two flows are central: process 3.0 writes to the phone first and reaches the server only through the outbox, and process 5.0 reads only consent, clinical values and de-identified copies of scans. Figure 3.4 details process 6.0.
 
 ![Figure 3.3: Data flow diagram, level 1](../report/figures/dfd-level-1.png)
 
@@ -135,7 +135,7 @@ Figure 3.3 decomposes the platform into eight processes (1.0 authenticate users;
 
 ### 3.4.2 Use case models
 
-Figure 3.5 shows the use cases with their actors; partly built ones are yellow, and those left for later are grey and dashed. Figure 3.6 shows what each role can do in the app, with include and extend relations (saving and synchronising is included in registering a patient). Figure 3.7 shows the assistant: typed or spoken questions, the safety check, the kinds of answer, listening and chat management.
+Figure 3.5 shows the use cases with their actors; partly built ones are yellow, and those left for later are grey and dashed. Figure 3.6 shows what each role can do in the app, and Figure 3.7 the assistant's use cases.
 
 ![Figure 3.5: Use case diagram: the whole system (UC-01 to UC-12)](../report/figures/usecase-system.png)
 
@@ -145,7 +145,7 @@ Figure 3.5 shows the use cases with their actors; partly built ones are yellow, 
 
 ### 3.4.3 Activity models
 
-Figure 3.8 shows each decision in the assistant's answer (Section 3.5.7). Figure 3.9 shows the offline-first design of FR-03: saved on the phone, sent in batches with idempotency keys, and returned as applied, conflict or rejected. Figure 3.10 shows voice input and read-aloud, and Figure 3.11 the AI analysis request: consent, record and one-at-a-time checks, de-identified inputs, queue and labelled mock result.
+Figure 3.8 shows each decision in the assistant's answer (Section 3.5.7). Figure 3.9 shows the offline-first design of FR-03: saved on the phone, sent in batches with idempotency keys, and returned as applied, conflict or rejected. Figure 3.10 shows voice input and read-aloud, and Figure 3.11 the AI analysis request, ending in a labelled mock result.
 
 ![Figure 3.8: Activity diagram: how the assistant answers a message](../report/figures/activity-chat-answer.png)
 
@@ -157,7 +157,7 @@ Figure 3.8 shows each decision in the assistant's answer (Section 3.5.7). Figure
 
 ### 3.4.4 Sequence models
 
-Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token, and a refresh token replaced on every use, so that reuse of an old one reveals theft and ends the whole session family (Table 3.7). Figure 3.13 follows a question through the gateway guards, the chatbot service and the AI service to MongoDB and the audit log. Figure 3.14 shows the outbox, the batch, the per-operation results and the download of the facility's changes, and Figures 3.15 and 3.16 the AI analysis and the FHIR export with Safe Harbor de-identification. Figure 3.17 shows push notifications: the phone is registered after sign-in, the server's outbox claims each new notification and sends it through Firebase as text only, hidden on a locked phone, and sign-out removes the phone.
+Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token, and a refresh token replaced on every use, so that reuse of an old one reveals theft and ends the whole session family (Table 3.7). Figure 3.13 follows a question through the gateway guards, the chatbot service and the AI service to MongoDB and the audit log. Figure 3.14 shows the outbox, the batch and the download of the facility's changes, and Figures 3.15 and 3.16 the AI analysis and the FHIR export with Safe Harbor de-identification. Figure 3.17 shows push notifications: the server's outbox sends each new notification through Firebase as text only, hidden on a locked phone, and sign-out removes the phone.
 
 ![Figure 3.12: Sequence diagram: signing in and renewing the session](../report/figures/sequence-sign-in.png)
 
@@ -173,7 +173,7 @@ Figure 3.12 shows sign-in: lockout after five failures, a 15-minute access token
 
 ### 3.4.5 State models
 
-Figure 3.18 shows a change saved on the phone: pending ("Saved on device") until sent, then synced, back to pending after a network failure, or needing attention as a conflict or rejection. Figure 3.19 shows an AI job: queued, running, then succeeded, failed or timed out; a job interrupted by a restart is queued again or marked failed. Figure 3.20 shows the message box during voice input.
+Figure 3.18 shows a change saved on the phone: pending until sent, then synced, or needing attention as a conflict or rejection. Figure 3.19 shows an AI job: queued, running, then succeeded, failed or timed out. Figure 3.20 shows the message box during voice input.
 
 ![Figure 3.18: State diagram: a change saved on the phone](../report/figures/state-offline-change.png)
 
@@ -214,7 +214,7 @@ Four guards run on every route, in order, and a route is closed unless the code 
 
 ### 3.5.3 Class design
 
-Figure 3.24 shows the app's assistant, voice input and read-aloud, whose speech services sit behind small interfaces that tests can replace. Figure 3.25 shows the app's offline storage and synchronisation, and Figure 3.26 the server-side assistant: the backend's chatbot module and the AI service's retrieval, meaning search, knowledge base and optional Claude writer.
+Figure 3.24 shows the app's assistant, voice input and read-aloud, whose speech services sit behind small interfaces that tests can replace. Figure 3.25 shows the app's offline storage and synchronisation, and Figure 3.26 the server-side assistant.
 
 ![Figure 3.24: Class diagram: the app's assistant, voice input and read-aloud](../report/figures/class-app-chat-audio.png)
 
@@ -224,7 +224,7 @@ Figure 3.24 shows the app's assistant, voice input and read-aloud, whose speech 
 
 ### 3.5.4 API design
 
-The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. Every error uses one envelope with a stable code and a request identifier, and never contains stack traces, SQL or submitted values. Figure 3.27 maps all 75 routes with their permissions and default roles, and the AI service's internal API. The map is generated from the access matrix, itself generated from the code, and the quality gate fails if a route breaks a review rule, such as a clinical route open to administrators. Figure 3.28 shows the API explorer. The AI contract was frozen at version 0 in Phase 3, so that both sides could be built in parallel, and grew additively to version 0.4.
+The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. Every error uses one envelope with a stable code and a request identifier, and never contains stack traces or submitted values. Figure 3.27 maps all 75 routes with their permissions and default roles, and the AI service's internal API. The map is generated from the access matrix, itself generated from the code, and the quality gate fails if a route breaks a review rule, such as a clinical route open to administrators. Figure 3.28 shows the API explorer. The AI contract was frozen at version 0 in Phase 3, so that both sides could be built in parallel, and grew additively to version 0.4.
 
 ![Figure 3.27: API diagram: every route, its permission and its default roles](../report/figures/api-map.png)
 
@@ -247,9 +247,8 @@ The API follows REST conventions under `/api/v1` and is described in OpenAPI 3. 
 **Normalisation.** The schema follows third normal form, with exceptions.
 
 - *Keys.* Every table has a primary key, mostly a UUID `id`. The link tables `user_roles` (`user_id`, `role_id`) and `role_permissions` (`role_id`, `permission_id`) have composite keys, and `audit_logs` is keyed by a sequence number, `seq`. Unique constraints enforce alternate keys such as `users.email` and `push_devices.token`, so one phone is registered only once.
-- *First normal form.* Columns hold single values, and repeating groups, such as a patient's screening records, are child tables. Many-to-many relations between users and roles, and roles and permissions, are resolved by the two link tables.
-- *Second normal form.* The only composite keys are those of the link tables; `role_permissions` has no other column, and `user_roles.assigned_at` depends on the whole key.
-- *Third normal form.* Facility details are stored once in `facilities` and role names once in `roles`. PSA density and the free-to-total ratio are calculated when a record is read, not stored.
+- *First and second normal form.* Columns hold single values; repeating groups, such as a patient's screening records, are child tables, and the many-to-many relations are resolved by the two link tables. The only composite keys are those of the link tables, and `user_roles.assigned_at` depends on the whole key.
+- *Third normal form.* Facility details and role names are stored once. PSA density and the free-to-total ratio are calculated when a record is read, not stored.
 - *Exceptions.* Some columns hold JSON whose content varies and is read as a whole: `clinical_records.symptoms`, `ai_jobs.inputs`, `model_versions` and `input_notes`, `ai_models.evaluation`, `sync_operations.conflict_detail` and `audit_logs.details`. The ISUP grade group of a slide review is computed by the server and stored with the review, so that the review is a fixed record. AI reports, chats and scan details live in MongoDB, linked by identifier.
 
 **Integrity rules.** The database itself enforces 19 foreign keys (18 from the first migration and one added with the push phones), unique keys, and CHECK constraints on clinical values (non-negative PSA, free PSA not above total PSA, PI-RADS, Gleason patterns and grade groups between 1 and 5, positive prostate volume). A withdrawn consent must have a withdrawal time; every explanation record has either a stored file or a stated reason (NFR-09); every synchronisation result has a unique idempotency key.
@@ -283,7 +282,7 @@ The knowledge base holds the six Learn articles, each citing public sources (NHS
 
 ### 3.5.8 Interface design
 
-Figure 3.35 shows every screen and how each role moves between them. Patients have a tabbed app; clinicians and pathologists have a home screen with their work; administrators who sign in on a phone are told that administration is on the website.
+Figure 3.35 shows every screen and how each role moves between them. Administrators who sign in on a phone are told that administration is on the website.
 
 ![Figure 3.35: The app's screens and navigation](../report/figures/navigation-app.png)
 
@@ -297,7 +296,7 @@ Figure 3.36: Interface design: patient screens (sign-in; patient home on the emu
 
 Figure 3.37: Interface design: the assistant (empty chat; an answer with its sources; casual chat; past chats; speaking a question)
 
-The answer in Figure 3.37 is the AI service's real answer, quoted from the draft knowledge base, and the casual replies are the backend's real replies; in the recording picture, a stand-in plays the phone's speech service.
+The answer in Figure 3.37 is the AI service's real answer from the draft knowledge base; in the recording picture, a stand-in plays the phone's speech service.
 
 ![Figure 3.38: Interface design: clinician home](../report/img/app-clinician.jpg)
 

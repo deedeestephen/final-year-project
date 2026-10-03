@@ -99,17 +99,17 @@ Table 1.2: The build phases of the development plan
 | 17 | Performance and reliability | Load, stress and synchronisation tests against the targets |
 | 18 | Final quality audit | Traceability review, coverage minimums, accessibility tests |
 
-The phases were not completed strictly in number order; for example, the Flutter foundation (7) came before synchronisation (6), and the chatbot (13) after the security review (15). After Phase 18, the owner requested further work: a separate administration website, a redesign of the app, voice questions and read-aloud, a move to the database servers installed on the development computer, an operations manual, the report diagrams, the user acceptance testing kit, a biomedical meaning search for the assistant, and push notifications.
+The phases were not completed strictly in number order. After Phase 18, the owner requested further work: a separate administration website, a redesign of the app, voice questions and read-aloud, a move to the database servers installed on the development computer, an operations manual, the report diagrams, the user acceptance testing kit, a biomedical meaning search for the assistant, and push notifications.
 
 ### 1.5.3 The actual timeline
 
-Figure 1.2 shows the actual timeline, drawn from the Git history with one mark per commit. The history records the build from 23 September to 2 October 2026, in 47 commits on the main branch before this report was drafted, far less than the planned twelve months. Two reasons explain most of the difference. The phases that take most of the planned time (data collection, model training and user acceptance testing) could not be carried out, because they need data-sharing agreements, ethics approval and participants (Section 1.6). And the development log and security review record that the software was written with an AI coding assistant under the student's direction, which probably shortened the implementation. Chapter 5 compares plan and outcome.
+Figure 1.2 shows the actual timeline, drawn from the Git history with one mark per commit. The history records the build from 23 September to 2 October 2026, in 47 commits on the main branch before this report was drafted, far less than the planned twelve months. Two reasons explain most of the difference. Data collection, model training and user acceptance testing could not be carried out, because they need data-sharing agreements, ethics approval and participants (Section 1.6). And the software was written with an AI coding assistant under the student's direction, which probably shortened the implementation. Chapter 5 compares plan and outcome.
 
 ![Figure 1.2: Actual build timeline (from the Git history)](../report/figures/gantt-actual.png)
 
 ## 1.6 Scope and Delimitations
 
-The proposal scoped the study to design and methodology, leaving implementation and clinical evaluation to later phases. This project went further on implementation, testing a prototype of every layer, but not on clinical work. The prototype has these boundaries:
+The proposal scoped the study to design and methodology. This project went further on implementation, but not on clinical work. The prototype has these boundaries:
 
 - **Synthetic data only.** No real patient data was collected or used anywhere; all records are generated and labelled "SYNTHETIC".
 - **No trained AI models.** The five AI modules are labelled development mocks whose outputs come from a hash of the job identifier, not from patient data, and every result carries the label "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT." The pipeline around them is complete; the owner is training the models separately.
@@ -126,7 +126,7 @@ The geographic focus remains the Zambian health system, with the Cancer Diseases
 - **Clinical.** A validated version could shorten the diagnostic pathway, extend decision support to facilities without specialists, and support more consistent grading. The prototype does not yet deliver these benefits, but validated models can be placed into its infrastructure without changing the rest of the system.
 - **Health system.** Offline-first capture lets clinicians without reliable internet still record screenings, and the de-identified FHIR R4 export shows how the tool could feed SmartCare Pro rather than stand alone (Ministry of Health Zambia, 2022).
 - **Policy and ethics.** The prototype shows in working code how consent, de-identification, an append-only audit trail, labelled mock output and fairness checks can be built in from the start.
-- **Academic.** It contributes a tested reference architecture and documented design decisions for AI-supported mHealth in a low-resource setting, including the offline synchronisation design and a "keywords decide, meaning orders" retrieval design for a safe patient assistant.
+- **Academic.** It contributes a tested reference architecture and documented design decisions for AI-supported mHealth in a low-resource setting, including the offline synchronisation design and a retrieval design in which keywords decide whether a question is covered and the section, and meaning chooses the article for a safe patient assistant.
 
 ## 1.8 Definition of Key Terms
 
