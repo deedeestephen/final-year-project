@@ -1,6 +1,6 @@
 # Chapter 4: System Implementation and Testing
 
-This chapter describes the implemented system and its testing. Sections 4.1 and 4.2 condense the system guide and installation manual; the full versions are the project's operations manual (also available as a PDF) and a step-by-step manual test guide (Appendix D). Section 4.3 presents the testing plan and its output, and Section 4.4 the main function code for each objective.
+Sections 4.1 and 4.2 condense the system guide and installation manual; the full versions are the project's operations manual and a step-by-step manual test guide (Appendix D). Section 4.3 presents the testing plan and its output, and Section 4.4 the main function code for each objective.
 
 ## 4.1 System Guide
 
@@ -18,7 +18,7 @@ Table 4.1: The parts of the system on the development computer
 | MongoDB | AI reports, chats, scan details | MongoDB 8.3 | localhost:27017 |
 | Redis, MinIO, Qdrant | Shared rate limits; S3-style file storage; vector search (for later) | Docker containers | ports 6379; 9000–9001; 6333 |
 
-Every request from the app or the website passes through the backend's guards in a fixed order (Section 3.5.2), then validation and the service, which does the work and writes an audit entry. Only the backend talks to the databases and the AI service.
+Every request passes through the backend's guards in a fixed order (Section 3.5.2), then validation and the service, which does the work and writes an audit entry. Only the backend talks to the databases and the AI service.
 
 ### 4.1.2 Using the system
 
@@ -34,7 +34,7 @@ Every request from the app or the website passes through the backend's guards in
 
 ### 4.2.1 Requirements
 
-The system was developed on a Windows 11 laptop with an 11th-generation Intel Core i5 processor (4 cores, 8 threads) and 32 GB of memory. Table 4.2 lists the software versions in use on 30 September 2026.
+The system was developed on a Windows 11 laptop (11th-generation Intel Core i5, 4 cores, 8 threads, 32 GB of memory). Table 4.2 lists the software versions in use on 30 September 2026.
 
 Table 4.2: Software required
 
@@ -63,7 +63,7 @@ Table 4.2: Software required
 powershell -ExecutionPolicy Bypass -File 6-infrastructure\scripts\dev-up.ps1
 ```
 
-The script checks the settings, starts the databases and Docker containers, applies new migrations, adds the synthetic demonstration data, builds and starts the backend, and starts the website and the AI service in their own windows. It ends with READY. `dev-down.ps1` stops everything without losing data.
+The script checks the settings, starts the databases and containers, applies migrations, adds the synthetic demonstration data, and starts the backend, website and AI service. It ends with READY. `dev-down.ps1` stops everything without losing data.
 
 ### 4.2.3 Checking, signing in and running the app
 
@@ -87,7 +87,7 @@ On a USB-connected phone, `phone-usb.ps1` lets it reach the computer, and the ap
 
 ### 4.2.4 Switching on push notifications
 
-Push notifications are built but off, because they need a Firebase project in the owner's Google account. The owner creates a free project, adds an Android app (`zm.ac.zcas.pca_mhealth`) and generates a service-account key, a secret kept outside the project folder; its path goes in `FCM_SERVICE_ACCOUNT_FILE`. Four public identifiers go into a git-ignored `firebase-app.json` that the app reads at build time. After a restart, http://localhost:3000/api/v1/health/ready reports `"push":"on"`. Until then, the same messages remain in the app's Messages tab. The operations manual also has a troubleshooting table that maps symptoms to causes and fixes.
+Push notifications are built but off, because they need a Firebase project in the owner's Google account. The owner creates a free project, adds an Android app (`zm.ac.zcas.pca_mhealth`) and generates a service-account key, a secret kept outside the project folder; its path goes in `FCM_SERVICE_ACCOUNT_FILE`. Four public identifiers go into a git-ignored `firebase-app.json` that the app reads at build time. After a restart, http://localhost:3000/api/v1/health/ready reports `"push":"on"`. Until then, the same messages remain in the app's Messages tab.
 
 ## 4.3 Testing Plan and Test Output
 

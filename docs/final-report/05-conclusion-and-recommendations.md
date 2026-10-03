@@ -2,7 +2,7 @@
 
 ## 5.1 Introduction
 
-This chapter evaluates the project against the proposal's five objectives and four research questions, compares the plan with the outcome, states the limitations, and gives recommendations and future work. The evaluation uses only what was built and measured; where an objective depends on work that could not be done, such as model training or user testing, it says so.
+This chapter evaluates the project against the proposal's five objectives and four research questions, compares the plan with the outcome, states the limitations, and gives recommendations and future work. It uses only what was built and measured, and says where an objective depends on work that could not be done.
 
 ## 5.2 Summary of the Work
 
@@ -48,13 +48,13 @@ The technical part of this objective is met and tested; the formal part is not. 
 
 ## 5.4 Answers to the Research Questions
 
-**Research question 1: how can a multi-modal AI engine be designed for Zambia's constraints?** The prototype's answer is architectural. Isolate the engine in its own service behind a versioned contract, so that models can change without touching the rest of the system. Let a router run whatever modules the inputs allow, which suits a setting without mpMRI and with incomplete inputs. Run jobs through a queue with time-outs and one job per patient. De-identify inputs before they leave the backend, label every output with its provenance, and show no metric without a stored evaluation. This was demonstrated end to end at 545 ms at the 95th percentile; whether trained models would meet the clinical and latency targets on Zambian data remains open.
+**Research question 1: how can a multi-modal AI engine be designed for Zambia's constraints?** The prototype's answer is architectural. Isolate the engine in its own service behind a versioned contract, so that models can change without touching the rest of the system. Let a router run whatever modules the inputs allow, which suits a setting without mpMRI and with incomplete inputs. Run jobs through a queue with time-outs and one job per patient. De-identify inputs before they leave the backend, label every output with its provenance, and show no metric without a stored evaluation. Whether trained models would meet the clinical and latency targets on Zambian data remains open (Section 5.3.2).
 
 **Research question 2: which data strategies work best for scarce, misclassified and non-standard Zambian data?** The prototype cannot answer this empirically, because no data was collected and no model trained. The proposal's strategies remain the plan. The project contributes the specification of what a trained model must report, including per-group figures, so that the effect on subgroups will be visible.
 
-**Research question 3: how can an offline-capable architecture serve both connected and disconnected facilities?** This is answered most fully. Work is saved first in an encrypted database on the phone and queued in an outbox. Each change carries an idempotency key, so a change sent twice is applied once. Batches are sent with exponential back-off, edits based on an older version return as conflicts for the clinician to resolve, and files wait in an upload queue that survives lost connections and restarts. These behaviours were verified in tests, a live workflow and under load. Two limits remain: AI analysis and the assistant still need a connection, as the proposal acknowledged, and offline behaviour was tested on an emulator, not in a rural facility.
+**Research question 3: how can an offline-capable architecture serve both connected and disconnected facilities?** This is answered most fully. Work is saved first in an encrypted database on the phone and queued in an outbox. Each change carries an idempotency key, so a change sent twice is applied once. Batches are retried with exponential back-off, stale edits return as conflicts for the clinician to resolve, and files wait in an upload queue that survives lost connections and restarts. Tests, a live workflow and a load run verified this. Two limits remain: AI analysis and the assistant still need a connection, as the proposal acknowledged, and offline behaviour was tested on an emulator, not in a rural facility.
 
-**Research question 4: which ethical, fairness, explainability and regulatory measures are needed?** The prototype implements consent per purpose with withdrawal at any time; minimum necessary access; de-identification before data leaves the core system; a tamper-evident, hash-chained audit trail; provenance and a mock label on every AI output; evaluation-gated metrics with fairness gaps above 0.05 flagged; an explanation or stated reason for every AI output; no interpretation of results for patients; safety rules before any assistant answer; and a data-protection review for every outside processor. Only ethics and legal review, user testing and real data can show whether these suffice.
+**Research question 4: which ethical, fairness, explainability and regulatory measures are needed?** The prototype implements consent per purpose with withdrawal at any time; minimum necessary access; de-identification before data leaves the core system; a hash-chained audit trail; provenance and a mock label on every AI output; evaluation-gated metrics with fairness gaps above 0.05 flagged; an explanation or stated reason for every AI output; no interpretation of results for patients; safety rules before any assistant answer; and a data-protection review for every outside processor. Only ethics and legal review, user testing and real data can show whether these suffice.
 
 ## 5.5 Plan Versus Outcome
 
@@ -75,7 +75,7 @@ Comparing Figure 1.1 with Figure 1.2: of the proposal's nine phases, planning (1
 
 ## 5.7 Recommendations
 
-Before any use with real patients, the following are recommended; none is a programming task alone.
+Before any use with real patients, the following are recommended.
 
 1. **Obtain ethics approval** from the ZCAS Ethics Review Board and the NHRA, then **run the user acceptance test** with the prepared kit and report the SUS score per group against the target of 75.
 2. **Train and evaluate the models** with the proposal's methodology, integrate them through the integration guide with per-group evaluation figures, and re-run the performance tests with real inference.
