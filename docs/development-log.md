@@ -1460,4 +1460,8 @@ Then, on `main`:
 
 **Checks:** backend gate 329 unit and 20 end-to-end tests; database gate with Docker running, 46 suites and 588 tests; app 120 theme and accessibility tests; admin website 82 tests.
 
-**Left for the owner** (review §3 and §4): clinicians can link a patient account without the NRC match and notice that the admin path has (M-2); the lockout answers 423, which shows that an account exists (L-2); and five smaller design points. The report pictures still show the old, fainter outlines until they are taken again.
+**Linking accounts from the patient record (M-2, the owner chose "same safeguards as the admin page"):** an account registered with an NRC now links only to the record with the same NRC; a record already linked to another account is never taken over; a new link is audited and the patient is notified. Passport holders are still linked by their clinic, which checks the passport in person: the admin page cannot match them, so an NRC-only rule would have left them no way in. A new database test covers each rule.
+
+**Cloud routines (owner's request, 3 October 2026):** two routines on claude.ai run every 6 hours in Anthropic's cloud, from GitHub, while the laptop is off: one finishes the report draft on `cloud/report-draft`, one makes the small design fixes UX-2, UX-3 and UX-5 on `cloud/design-fixes`. They push to those branches only; their work is checked before it reaches `main`. The cloud's network blocks PubMed, doi.org and Crossref, so references are verified from the laptop.
+
+**Left for the owner** (review §3 and §4): the lockout answers 423, which shows that an account exists (L-2); the dashboard's emails under "counts only" (L-5); the floating assistant button (UX-4) and the "Coming later" section (UX-6). The report pictures still show the old, fainter outlines until they are taken again.
