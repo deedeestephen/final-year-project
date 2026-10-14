@@ -22,7 +22,7 @@ Every request passes through the backend's guards in a fixed order (Section 3.5.
 
 ### 4.1.2 Using the system
 
-**Clinicians** sign in on the phone and register patients and add screening records (PSA, free PSA, DRE finding, PI-RADS, prostate volume, biopsy and family history, symptoms), with or without a connection. Each item shows its state in words ("Saved on device", "Synced" or "Needs attention"); the Sync screen shows any conflict side by side for the clinician to resolve. A synchronised patient's page offers **Consent**, **Images and slides** (files wait in an upload queue until they can be sent) and **AI analysis**, which is disabled, with the reason shown, when the phone is offline, AI consent is missing or no screening has been synchronised. The report begins with the banner "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT." and then shows the values, the modules used and skipped, and each explanation or the reason there is none.
+**Clinicians** sign in on the phone and register patients and add screening records (PSA, free PSA, DRE finding, PI-RADS, prostate volume, earlier biopsy, family history of a father or brother, and seven yes/no symptoms), with or without a connection. Answers left out stay "not known" and are not sent to the AI analysis. These three items were added on 14 October 2026 (phone database schema v3, AI contract v0.6, an additive change), because the form had not captured what the contract already had room for. Each item shows its state in words ("Saved on device", "Synced" or "Needs attention"); the Sync screen shows any conflict side by side for the clinician to resolve. A synchronised patient's page offers **Consent**, **Images and slides** (files wait in an upload queue until they can be sent) and **AI analysis**, which is disabled, with the reason shown, when the phone is offline, AI consent is missing or no screening has been synchronised. The report begins with the banner "DEVELOPMENT MOCK DATA — NOT A CLINICAL RESULT." and then shows the values, the modules used and skipped, and each explanation or the reason there is none.
 
 **Pathologists** open the review queue, enter the primary and secondary Gleason patterns (3 to 5) for a slide and save; the server computes the ISUP grade group and allows one review per slide.
 
@@ -118,17 +118,17 @@ The quality gate (Figure 4.1) runs formatting, static analysis, type checking, t
 
 ![Figure 4.1: The quality gate](../report/figures/activity-quality-gate.png)
 
-Table 4.5 gives the test counts recorded on 2 October 2026, after the meaning search, push notifications and the review fixes of Section 4.3.4 were added. All tests passed.
+Table 4.5 gives the test counts from the development log: those of 2 October 2026 (after the meaning search, push notifications and the review fixes of Section 4.3.4) and, for the backend and the AI service, those of 14 October 2026 (after the screening form gained biopsy history, family history and symptoms). All tests passed. The log records the phone app's 14 October gate as passed but gives no new count, so the figure of 2 October is kept.
 
-Table 4.5: Automated tests and coverage on 2 October 2026
+Table 4.5: Automated tests and coverage (14 October 2026 for the backend and the AI service)
 
 | Part | Tests | Coverage |
 |---|---|---|
-| Backend unit tests | 329 | Coverage recorded on 1 October 2026 (all backend tests together): 94.7% of statements, 81.4% of branches |
+| Backend unit tests | 331 | Coverage recorded on 1 October 2026 (all backend tests together): 94.7% of statements, 81.4% of branches |
 | Backend end-to-end tests (in process) | 20 | (included above) |
-| Full database run (46 suites, with Docker) | 588 | (included above) |
-| AI service | 101 passed; 1 skipped (it would call the real Claude API); 3 more skipped when the MedCPT models are absent, as in CI | 98% |
-| Phone app | 290 | 91.1% of lines (recorded on 1 October 2026) |
+| Full database run (46 suites, with Docker) | 592 | (included above) |
+| AI service | 104 passed; 1 skipped (it would call the real Claude API); 3 more skipped when the MedCPT models are absent, as in CI | 98% |
+| Phone app | 290 (2 October) | 91.1% of lines (recorded on 1 October 2026) |
 | Admin website | 82 | Coverage recorded on 1 October 2026: 87.8% |
 
 At the final quality audit (Phase 18), every package was given an 80% minimum that fails the gate. The admin website was below it (78.6% of statements, 73.4% of branches) until eleven tests were added. Figure 4.2 shows the backend gate's output.
