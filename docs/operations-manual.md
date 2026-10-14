@@ -579,16 +579,21 @@ The content says *"Draft for review by a qualified clinician"* until a clinician
 
 Claude is **off** on this PC: the health check says `chat_writer: quotes`. To switch it on:
 
-1. Create an API key at console.anthropic.com.
-2. Open `.env` and put the key after `ANTHROPIC_API_KEY=`. Never put it in a chat, an email or the code.
-3. Restart the AI service. The health check then says `chat_writer: claude:claude-haiku-4-5-20251001`.
+1. Create an API key at console.anthropic.com (Settings → API keys), and add a little credit under Billing. A spending limit there caps the cost.
+2. Open the root `.env` and put the key after `ANTHROPIC_API_KEY=`, with no spaces or quotes. Never put it in a chat, an email or the code.
+3. Restart the services: `6-infrastructure\scripts\dev-down.ps1`, then `6-infrastructure\scripts\dev-up.ps1`.
+4. Open http://127.0.0.1:8000/v1/health. It should say `chat_writer: claude:claude-haiku-4-5-20251001`.
+5. Make one real call (costs a fraction of a cent). In `4-ai-intelligence-layeri-services`, run `$env:ANTHROPIC_API_KEY_LIVE_TEST = '1'; .venv\Scripts\python -m pytest tests	est_chat_claude.py -k live -q`. One test should pass.
+6. In the app, ask the assistant "What does a PSA test measure?". The answer should carry the label *"Written by AI (Claude) from the sources below"*. If it is quoted word for word instead, the call failed: check the key, the credit and the internet connection.
+
+To switch Claude off again, empty `ANTHROPIC_API_KEY=` and restart. Another model can be set with `CHAT_LLM_MODEL=` in `.env`. The request works with every current Claude model, but measure the speed again (ADR-010).
 
 What Claude is told:
 
 ![generate.py: the instructions](report/img/code-ai-claude-instructions.png)
 
 - Claude only receives the three best passages, the last three questions and answers, and the question. Email addresses, NRC numbers and phone numbers are removed first.
-- It must answer through a fixed form (`covered`, `answer`, `citations`). Only passages it cites become the sources.
+- It must answer in a fixed JSON form (`covered`, `answer`, `citations`), which the API enforces (structured output). Only passages it cites become the sources.
 - Limits: 8 seconds, no retries, at most `CHAT_LLM_DAILY_LIMIT` (2,000) answers a day. On any problem the passages are quoted instead, so the chat works without Claude.
 - Answers written by Claude are labelled *"Written by AI (Claude) from the sources below"*.
 - **Before real patients:** questions would be sent to Anthropic in the United States. That needs a data-protection review first (ADR-010).

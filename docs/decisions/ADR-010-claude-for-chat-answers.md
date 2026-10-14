@@ -7,7 +7,7 @@
 
 1. **Claude writes, the knowledge base decides.**
    - The AI service still finds the matching reviewed passages first.
-   - Claude then gets only the best three passages, the last three questions and answers, and the question. It writes the answer through a forced tool call (`give_answer`: `covered`, `answer`, `citations`).
+   - Claude then gets only the best three passages, the last three questions and answers, and the question. It writes the answer as structured output: JSON that the API holds to a fixed schema (`covered`, `answer`, `citations`). Until 2026-10-14 this was a forced tool call (`give_answer`); see the update below.
    - It must use only the passages, say when they do not cover the question (the app then shows "no reviewed information"), and never diagnose, interpret results or name medicines or doses.
    - Only the passages Claude cites become the answer's sources.
 2. **The server's safety rules still come first.** Emergencies, self-harm, doses and a patient's own results never reach Claude (`chat-safety.ts`). Claude's answer then goes through the same output check: a source is required, and no dose may appear.
@@ -22,6 +22,12 @@
    - Each Claude-written answer is labelled *"Written by AI (Claude) from the sources below"*.
    - The model is stored with the answer and in the audit log (never the text).
    - The key lives only in the git-ignored `.env`.
+
+## Update, 2026-10-14 (before the first real use)
+
+- **Bug found and fixed:** the installed Anthropic library (`anthropic` 1.x) no longer accepts `temperature`, so every call failed and the chat always quoted. The unit tests did not notice, because the fake client accepted any argument. The fake now checks every request against the real library's `messages.create` signature. The library is pinned to `anthropic>=1.9,<2`.
+- **Structured output instead of a forced tool call:** newer models (Claude Sonnet 5.5, Claude Opus 5.5) reject a forced tool call, so changing `CHAT_LLM_MODEL` would have quietly switched Claude off. The schema-enforced JSON answer works on Haiku 4.5 and on every current model. A refused or cut-off reply is quoted instead.
+- The default model stays `claude-haiku-4-5-20251001`.
 
 ## Consequences
 

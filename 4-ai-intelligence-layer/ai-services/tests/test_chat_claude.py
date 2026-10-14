@@ -1,5 +1,7 @@
 """Claude-written chat answers (ADR-010), tested with a fake Anthropic client."""
 
+import inspect
+import json
 import os
 from collections.abc import Iterator
 from datetime import date
@@ -7,10 +9,11 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from anthropic.resources.messages import Messages
 from fastapi.testclient import TestClient
 
 from app.chat.answer import ChatAnswerRequest, HistoryTurn, answer
-from app.chat.generate import ClaudeWriter, Turn, _messages, scrub
+from app.chat.generate import ANSWER_FORMAT, ClaudeWriter, Turn, _messages, scrub
 from app.chat.kb import KnowledgeBase, default_knowledge_base
 from app.config import Settings, get_settings, load_settings
 from app.main import app, get_writer
@@ -20,13 +23,18 @@ AUTH = {"Authorization": f"Bearer {TOKEN}"}
 MODEL = "claude-haiku-4-5-20251001"
 
 
-def tool_reply(covered: bool, text: str, citations: list[int]) -> SimpleNamespace:
-    block = SimpleNamespace(
-        type="tool_use",
-        name="give_answer",
-        input={"covered": covered, "answer": text, "citations": citations},
+def reply(text: str, stop_reason: str = "end_turn") -> SimpleNamespace:
+    return SimpleNamespace(
+        stop_reason=stop_reason, content=[SimpleNamespace(type="text", text=text)]
     )
-    return SimpleNamespace(content=[block])
+
+
+def json_reply(covered: bool, text: str, citations: list[int]) -> SimpleNamespace:
+    return reply(json.dumps({"covered": covered, "answer": text, "citations": citations}))
+
+
+#: The real SDK method: every request the writer makes must fit its signature.
+REAL_CREATE = inspect.signature(Messages.create)
 
 
 class FakeMessages:
@@ -37,6 +45,9 @@ class FakeMessages:
         self.calls: list[dict[str, Any]] = []
 
     def create(self, **kwargs: Any) -> object:
+        # The installed SDK raises TypeError for an argument it does not know (such as
+        # temperature in anthropic 1.x); the writer would then always quote.
+        REAL_CREATE.bind(None, **kwargs)
         self.calls.append(kwargs)
         if isinstance(self.reply, Exception):
             raise self.reply
@@ -76,7 +87,7 @@ def test_personal_details_are_removed_before_anything_leaves() -> None:
 
 def test_claude_writes_the_answer_from_the_cited_passages_only(kb: KnowledgeBase) -> None:
     fake = FakeMessages(
-        tool_reply(True, "PSA is a protein made by the prostate [1]. The test measures it.", [1])
+        json_reply(True, "PSA is a protein made by the prostate [1]. The test measures it.", [1])
     )
     writer = ClaudeWriter(fake, model=MODEL, daily_limit=10)
     result = ask(kb, writer, "What does a PSA test measure?")
@@ -90,7 +101,8 @@ def test_claude_writes_the_answer_from_the_cited_passages_only(kb: KnowledgeBase
 
     call = fake.calls[0]
     assert call["model"] == MODEL
-    assert call["tool_choice"] == {"type": "tool", "name": "give_answer"}
+    assert call["output_config"] == {"format": ANSWER_FORMAT}
+    assert "tool_choice" not in call and "temperature" not in call
     assert "reading age" in call["system"] and "Never diagnose" in call["system"]
     last = call["messages"][-1]
     assert last["role"] == "user"
@@ -99,7 +111,7 @@ def test_claude_writes_the_answer_from_the_cited_passages_only(kb: KnowledgeBase
 
 
 def test_clinicians_get_the_clinician_instructions(kb: KnowledgeBase) -> None:
-    fake = FakeMessages(tool_reply(True, "PI-RADS 4 means high likelihood.", [1]))
+    fake = FakeMessages(json_reply(True, "PI-RADS 4 means high likelihood.", [1]))
     ask(
         kb,
         ClaudeWriter(fake, model=MODEL, daily_limit=10),
@@ -110,7 +122,7 @@ def test_clinicians_get_the_clinician_instructions(kb: KnowledgeBase) -> None:
 
 
 def test_not_covered_means_no_reviewed_information(kb: KnowledgeBase) -> None:
-    fake = FakeMessages(tool_reply(False, "I do not have reviewed information about that.", []))
+    fake = FakeMessages(json_reply(False, "I do not have reviewed information about that.", []))
     result = ask(kb, ClaudeWriter(fake, model=MODEL, daily_limit=10), "What does a PSA test cost?")
     assert result.matched is False
     assert result.text is None
@@ -121,12 +133,14 @@ def test_not_covered_means_no_reviewed_information(kb: KnowledgeBase) -> None:
     "reply",
     [
         RuntimeError("API down"),
-        SimpleNamespace(content=[SimpleNamespace(type="text", text="plain text")]),
-        tool_reply(True, "An answer without a valid citation.", [9]),
-        tool_reply(True, "", [1]),
-        SimpleNamespace(
-            content=[SimpleNamespace(type="tool_use", name="give_answer", input={"answer": 1})]
-        ),
+        reply("plain text, not JSON"),
+        reply("[1, 2]"),
+        reply('{"answer": 1}'),
+        json_reply(True, "An answer without a valid citation.", [9]),
+        json_reply(True, "", [1]),
+        reply('{"covered": true, "answer": "PSA is', stop_reason="max_tokens"),
+        reply("", stop_reason="refusal"),
+        SimpleNamespace(stop_reason="end_turn", content=[]),
     ],
 )
 def test_anything_unusable_falls_back_to_quoting(kb: KnowledgeBase, reply: object) -> None:
@@ -139,7 +153,7 @@ def test_anything_unusable_falls_back_to_quoting(kb: KnowledgeBase, reply: objec
 
 
 def test_nothing_is_sent_when_no_passage_matches(kb: KnowledgeBase) -> None:
-    fake = FakeMessages(tool_reply(True, "x", [1]))
+    fake = FakeMessages(json_reply(True, "x", [1]))
     result = ask(kb, ClaudeWriter(fake, model=MODEL, daily_limit=10), "hello")
     assert result.matched is False
     assert fake.calls == []
@@ -147,7 +161,7 @@ def test_nothing_is_sent_when_no_passage_matches(kb: KnowledgeBase) -> None:
 
 def test_the_daily_budget_caps_calls_and_resets_the_next_day(kb: KnowledgeBase) -> None:
     today = [date(2026, 9, 29)]
-    fake = FakeMessages(tool_reply(True, "PSA is a protein.", [1]))
+    fake = FakeMessages(json_reply(True, "PSA is a protein.", [1]))
     writer = ClaudeWriter(fake, model=MODEL, daily_limit=2, today=lambda: today[0])
     modes = [ask(kb, writer, "What is a PSA test?").mode for _ in range(3)]
     assert modes == ["GENERATED", "GENERATED", "EXTRACTIVE"]
@@ -167,7 +181,7 @@ def test_follow_ups_use_the_conversation(kb: KnowledgeBase) -> None:
     assert follow_up.matched is True
     assert follow_up.passages[0].articleId == "dre"
 
-    fake = FakeMessages(tool_reply(True, "It may feel uncomfortable but should not hurt.", [1]))
+    fake = FakeMessages(json_reply(True, "It may feel uncomfortable but should not hurt.", [1]))
     ask(kb, ClaudeWriter(fake, model=MODEL, daily_limit=10), "Does it hurt?", history=history)
     roles = [m["role"] for m in fake.calls[0]["messages"]]
     assert roles == ["user", "assistant", "user"]
@@ -227,7 +241,7 @@ def test_without_a_key_the_service_quotes(client: TestClient) -> None:
 
 
 def test_with_a_writer_the_service_answers_with_claude(client: TestClient) -> None:
-    fake = FakeMessages(tool_reply(True, "PSA is a protein made by the prostate.", [1]))
+    fake = FakeMessages(json_reply(True, "PSA is a protein made by the prostate.", [1]))
     app.dependency_overrides[get_writer] = lambda: ClaudeWriter(fake, model=MODEL, daily_limit=5)
     assert client.get("/v1/health").json()["chat_writer"] == f"claude:{MODEL}"
     body = client.post(
