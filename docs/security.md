@@ -76,7 +76,7 @@ test demonstrates it (tracked in [requirements-traceability.md](requirements-tra
   - The model only ranks reviewed passages and can refuse an answer. It writes no text, so it cannot add content.
 - **Claude (when `ANTHROPIC_API_KEY` is set, ADR-010):**
   - Claude only gets the reviewed passages found for the question, the last three turns and the question, after e-mail addresses, NRC numbers, phone numbers and long digit strings are removed.
-  - It answers through a forced tool call. Safety rules run before it, and the output check runs after it.
+  - It answers in a fixed JSON form that the API enforces (structured output). Safety rules run before it, and the output check runs after it.
   - Every such answer is labelled "Written by AI (Claude)".
   - The key is only in the git-ignored `.env`.
   - Real use needs a data-protection review, because questions are sent to Anthropic in the United States.

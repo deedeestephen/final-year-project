@@ -1465,3 +1465,13 @@ Then, on `main`:
 **Cloud routines (owner's request, 3 October 2026):** two routines on claude.ai run every 6 hours in Anthropic's cloud, from GitHub, while the laptop is off: one finishes the report draft on `cloud/report-draft`, one makes the small design fixes UX-2, UX-3 and UX-5 on `cloud/design-fixes`. They push to those branches only; their work is checked before it reaches `main`. The cloud's network blocks PubMed, doi.org and Crossref, so references are verified from the laptop.
 
 **Left for the owner** (review §3 and §4): the lockout answers 423, which shows that an account exists (L-2); the dashboard's emails under "counts only" (L-5); the floating assistant button (UX-4) and the "Coming later" section (UX-6). The report pictures still show the old, fainter outlines until they are taken again.
+## 2026-10-14: Claude answers made ready to switch on
+
+The owner wants the assistant's answers written by AI (Claude, ADR-010), still only from the reviewed passages. A check before the key goes in found that Claude could never have answered:
+
+- **The bug:** the installed Anthropic library (`anthropic` 1.9) no longer accepts `temperature`. Every call raised an error, and the service quietly quoted the passages instead. The unit tests passed because their fake client accepted any argument.
+- **The fix:** `temperature` is gone, and the fake client now checks every request against the real library's `messages.create` signature, so such a change fails a test. The library is pinned to `anthropic>=1.9,<2`.
+- **Structured output:** Claude now answers with JSON that the API holds to the schema (`covered`, `answer`, `citations`), instead of a forced tool call. Newer models (Claude Sonnet 5.5, Claude Opus 5.5) reject forced tool calls, so `CHAT_LLM_MODEL` can now name any current model. A refused or cut-off reply is quoted. The default stays `claude-haiku-4-5-20251001`.
+- **Still off:** `.env` has no key. The owner adds it (operations manual §9.5), restarts, and runs the one live test.
+
+**Checks:** AI service gate: format, lint, typecheck, 101 tests passed, 1 skipped (the live Claude test), coverage 98%, pip-audit clean.
