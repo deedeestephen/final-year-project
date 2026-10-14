@@ -184,6 +184,9 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
           psaNgMl: 6.4,
           dreFinding: 'NORMAL',
           piradsScore: 3,
+          biopsyHistory: 'PRIOR_NEGATIVE',
+          familyHistory: true,
+          symptoms: { nocturia: true, weakStream: false },
         })
         .expect(201);
     }
@@ -338,6 +341,10 @@ describe('AI analysis jobs through the broker (real database, fake AI service)',
       psaNgMl: 6.4,
       dreFinding: 'NORMAL',
       piradsScore: 3,
+      biopsyHistory: 'PRIOR_NEGATIVE',
+      familyHistory: true,
+      // The screening form's yes/no answers reach the analysis (contract v0.6).
+      symptoms: { nocturia: true, weakStream: false },
     });
     // Only the de-identified copy is sent, never the original upload.
     expect(sent.body.inputs.imaging).toEqual([

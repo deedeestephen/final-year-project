@@ -66,9 +66,7 @@ void main() {
   }
 
   Future<void> choose(WidgetTester tester, String key, String option) async {
-    await tester.ensureVisible(find.byKey(Key(key)));
-    await tester.tap(find.byKey(Key(key)));
-    await settle(tester);
+    await tester.tapKey(key);
     await tester.tap(find.text(option).last);
     await settle(tester);
   }
@@ -195,6 +193,87 @@ void main() {
     expect(record.piradsScore, 4);
     expect(record.syncState, RowSync.synced);
   });
+
+  testWidgets('screening record: history and symptoms reach the server', (
+    tester,
+  ) async {
+    final sent = <Map<String, dynamic>>[];
+    final applied = respond;
+    respond = (ops) {
+      sent.addAll(ops);
+      return applied(ops);
+    };
+    await openPatients(tester);
+    await registerPatient(tester);
+    await tester.tapKey('patient.addRecord');
+
+    await choose(tester, 'record.dre', 'Normal');
+    await choose(tester, 'record.biopsy', 'Biopsy before, no cancer found');
+    await choose(tester, 'record.familyHistory', 'Yes, father or brother');
+    // The symptoms appear only once the clinician says they asked.
+    expect(find.byKey(const Key('record.symptom.nocturia')), findsNothing);
+    await tester.tapKey('record.symptomsAsked');
+    await tester.tapKey('record.symptom.nocturia');
+    await tester.tapKey('record.symptom.weakStream');
+    await tester.tapKey('record.save');
+
+    final record = (await db.select(db.localClinicalRecords).get()).single;
+    expect(record.biopsyHistory, 'PRIOR_NEGATIVE');
+    expect(record.familyHistory, isTrue);
+    expect(record.syncState, RowSync.synced);
+    final payload =
+        sent.singleWhere(
+              (op) => op['entityType'] == 'clinical_record',
+            )['payload']
+            as Map;
+    expect(payload['biopsyHistory'], 'PRIOR_NEGATIVE');
+    expect(payload['familyHistory'], isTrue);
+    // Every symptom asked is a yes or a no.
+    expect(payload['symptoms'], {
+      'nocturia': true,
+      'frequency': false,
+      'urgency': false,
+      'weakStream': true,
+      'haematuria': false,
+      'bonePain': false,
+      'weightLoss': false,
+    });
+
+    expect(find.text('Biopsy before, no cancer found'), findsOneWidget);
+    expect(find.text('Yes'), findsOneWidget);
+    expect(
+      find.text('Waking at night to pass urine, Weak or stop-start urine flow'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'screening record: unanswered history and symptoms are not sent',
+    (tester) async {
+      final sent = <Map<String, dynamic>>[];
+      final applied = respond;
+      respond = (ops) {
+        sent.addAll(ops);
+        return applied(ops);
+      };
+      await openPatients(tester);
+      await registerPatient(tester);
+      await tester.tapKey('patient.addRecord');
+      await choose(tester, 'record.dre', 'Normal');
+      await tester.tapKey('record.save');
+
+      final payload =
+          sent.singleWhere(
+                (op) => op['entityType'] == 'clinical_record',
+              )['payload']
+              as Map;
+      expect(payload.keys, isNot(contains('biopsyHistory')));
+      expect(payload.keys, isNot(contains('familyHistory')));
+      expect(payload.keys, isNot(contains('symptoms')));
+      expect(find.text('Family history'), findsNothing);
+      expect(find.text('Symptoms'), findsNothing);
+    },
+  );
 
   testWidgets('a change the server refuses can be discarded', (tester) async {
     respond = (ops) => [

@@ -131,6 +131,15 @@ class PatientDetailScreen extends ConsumerWidget {
               if (r.piradsScore != null) _Value('PI-RADS', '${r.piradsScore}'),
               if (r.prostateVolumeMl != null)
                 _Value('Volume', formatMeasurement(r.prostateVolumeMl, 'mL')),
+              if (r.biopsyHistory != null && r.biopsyHistory != 'UNKNOWN')
+                _Value(
+                  'Biopsy',
+                  biopsyLabels[r.biopsyHistory] ?? r.biopsyHistory!,
+                ),
+              if (r.familyHistory != null)
+                _Value('Family history', r.familyHistory! ? 'Yes' : 'No'),
+              if (symptomSummary(r.symptoms) case final symptoms?)
+                _Value('Symptoms', symptoms),
               if (r.notes != null) ...[
                 const SizedBox(height: AppSizes.xs),
                 Text(r.notes!, style: Theme.of(context).textTheme.bodyMedium),

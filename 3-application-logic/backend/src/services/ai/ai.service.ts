@@ -37,10 +37,12 @@ import {
   AiServiceError,
   type AiFailureKind,
 } from './ai-broker.service';
-import type {
-  ContractExplanation,
-  InferenceRequest,
-  InferenceResult,
+import {
+  AI_SYMPTOM_KEYS,
+  type AiSymptoms,
+  type ContractExplanation,
+  type InferenceRequest,
+  type InferenceResult,
 } from './ai-contract';
 import type {
   AiJobView,
@@ -91,6 +93,18 @@ const INVALID_IMAGE =
 
 const toNumber = (v: Prisma.Decimal | null): number | undefined =>
   v === null ? undefined : Number(v);
+
+/** Only the contract's yes/no keys; undefined when no symptom was recorded. */
+export function toAiSymptoms(
+  v: Prisma.JsonValue | null,
+): AiSymptoms | undefined {
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return undefined;
+  const out: AiSymptoms = {};
+  for (const key of AI_SYMPTOM_KEYS) {
+    if (typeof v[key] === 'boolean') out[key] = v[key];
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
 
 function toJobView(job: AiJob, report: AiReportView | null = null): AiJobView {
   return {
@@ -283,6 +297,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
           prostateVolumeMl: toNumber(record.prostateVolumeMl),
           biopsyHistory: record.biopsyHistory,
           familyHistory: record.familyHistory ?? undefined,
+          symptoms: toAiSymptoms(record.symptoms),
         },
         imaging: aiImaging.map((s) => ({
           storageKey: s.deidStorageKey!,

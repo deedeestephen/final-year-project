@@ -62,6 +62,9 @@ class RecordDraft {
     this.freePsaNgMl,
     this.piradsScore,
     this.prostateVolumeMl,
+    this.biopsyHistory,
+    this.familyHistory,
+    this.symptoms,
     this.notes,
   });
 
@@ -71,6 +74,15 @@ class RecordDraft {
   final double? freePsaNgMl;
   final int? piradsScore;
   final double? prostateVolumeMl;
+
+  /// NONE | PRIOR_NEGATIVE | PRIOR_POSITIVE; null when not known.
+  final String? biopsyHistory;
+
+  /// Null when not known.
+  final bool? familyHistory;
+
+  /// Every symptom asked about, true or false; null when none was asked.
+  final Map<String, bool>? symptoms;
   final String? notes;
 }
 
@@ -394,6 +406,11 @@ class LocalStore {
               dreFinding: d.dreFinding,
               piradsScore: Value(d.piradsScore),
               prostateVolumeMl: Value(d.prostateVolumeMl),
+              biopsyHistory: Value(d.biopsyHistory),
+              familyHistory: Value(d.familyHistory),
+              symptoms: Value(
+                d.symptoms == null ? null : jsonEncode(d.symptoms),
+              ),
               notes: Value(notes),
               syncState: RowSync.pending,
               createdAt: _now(),
@@ -412,6 +429,9 @@ class LocalStore {
           'freePsaNgMl': d.freePsaNgMl,
           'piradsScore': d.piradsScore,
           'prostateVolumeMl': d.prostateVolumeMl,
+          'biopsyHistory': d.biopsyHistory,
+          'familyHistory': d.familyHistory,
+          'symptoms': d.symptoms,
           'notes': notes,
         }),
       );
@@ -743,6 +763,11 @@ class LocalStore {
               piradsScore: Value(s['piradsScore'] as int?),
               prostateVolumeMl: Value(
                 (s['prostateVolumeMl'] as num?)?.toDouble(),
+              ),
+              biopsyHistory: Value(s['biopsyHistory'] as String?),
+              familyHistory: Value(s['familyHistory'] as bool?),
+              symptoms: Value(
+                s['symptoms'] is Map ? jsonEncode(s['symptoms']) : null,
               ),
               notes: Value(s['notes'] as String?),
               syncState: RowSync.synced,

@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pca_mhealth/app/routes.dart';
 import 'package:pca_mhealth/features/settings/appearance.dart';
 
 import '../support/app_harness.dart';
@@ -110,6 +114,19 @@ _screens = {
     (t) async {
       await t.tap(find.text('Patients').last);
       await settle(t);
+    },
+  ),
+  // The clinician's screening form, with the symptom questions open.
+  'screening record': (
+    ['CLINICIAN'],
+    (t) async {
+      unawaited(
+        GoRouter.of(
+          t.element(find.byType(Scaffold).first),
+        ).push(Routes.newRecord('p-1')),
+      );
+      await settle(t);
+      await t.tapKey('record.symptomsAsked');
     },
   ),
   // The assistant, voice messages and read-aloud (ADR-011, ADR-012).

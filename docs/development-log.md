@@ -1475,3 +1475,15 @@ The owner wants the assistant's answers written by AI (Claude, ADR-010), still o
 - **Still off:** `.env` has no key. The owner adds it (operations manual §9.5), restarts, and runs the one live test.
 
 **Checks:** AI service gate: format, lint, typecheck, 101 tests passed, 1 skipped (the live Claude test), coverage 98%, pip-audit clean.
+
+## 2026-10-14: History and symptoms on the screening form, sent to the AI analysis
+
+The owner asked where the patient data for the AI analysis is entered. It is entered by the clinician on the phone: register the patient, add a screening record, record AI consent, optionally upload scans, then **Request AI analysis**. The server then sends the latest screening record to the AI service. The form was missing three things the server and the AI contract already had room for, so the analysis never received them. The owner chose to add them:
+
+- **The form** (`add_record_screen.dart`) now asks about an earlier prostate biopsy (none, no cancer found, cancer found, not known) and family history (father or brother: yes, no, not known). After **I asked about symptoms** it shows seven tick boxes: waking at night to pass urine, passing urine often, sudden need, weak or stop-start flow, blood in the urine, bone pain, weight loss. Ticked means yes and unticked means no; when symptoms were not asked, nothing is sent. Answers left out stay "not known".
+- **Offline:** the phone's database is now schema v3. `local_clinical_records` gains `biopsy_history`, `family_history` and `symptoms`, added in place on update. Records saved before keep their values. The outbox sends the answers, and records downloaded from the server bring them back.
+- **The patient page** shows the answers on each record: biopsy, family history, and the symptoms answered yes (or "None").
+- **AI contract v0.6 (additive):** `ClinicalInputs.symptoms` holds the seven yes/no answers. The AI service accepts only real booleans (`StrictBool`) and no other keys. The backend sends only the contract's keys (`toAiSymptoms`). Biopsy history and family history were already sent.
+- **Tests:** two new app flows (answers saved, sent and shown; unanswered ones not sent); upgrade tests from v1 and v2 to v3; label helper tests; the screening form joins the accessibility checks (light, dark, 200% text); backend unit test for `toAiSymptoms`; the AI database test now checks the three answers reach the AI service; AI service contract tests. The test helper `tapKey` reveals its target again just before tapping, because a focused text field scrolls back into view on a long form.
+
+**Checks:** backend 331 unit and 20 end-to-end tests; database gate (Docker running) 46 suites, 592 tests; workflows 14; AI service 104 passed, 1 skipped; app gate passed (all tests, coverage, APK build). In the first database run after Docker started, two chatbot tests failed once; they passed alone and in two full runs after that.

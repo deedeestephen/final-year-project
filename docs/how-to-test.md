@@ -93,6 +93,9 @@ Tick each box when it works.
   → *"Free PSA cannot be higher than total PSA."* (The app checks numbers like a careful nurse.)
   Change Free PSA to `1.2`, choose DRE **Normal**, and save.
   → The record shows **PSA 4.5 ng/mL**.
+- [ ] **History and symptoms.** Add another screening record: DRE **Normal**, *Earlier prostate biopsy* **Biopsy before, no cancer found**, *Family history* **Yes, father or brother**. Turn on **I asked about symptoms** and tick **Waking at night to pass urine**. Save.
+  → The record shows *Biopsy: Biopsy before, no cancer found*, *Family history: Yes* and *Symptoms: Waking at night to pass urine*. These answers are also sent to the AI analysis.
+  → A record saved without these answers shows none of these lines (they stay "not known").
 - [ ] **Bad input is blocked.** Register another patient with the date of birth `2999-01-01`.
   → *"The date must be between 1900 and today."*
 
