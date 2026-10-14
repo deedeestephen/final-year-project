@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: PCa mHealth AI Services contract (Layer 4)
-  version: 0.5.0
+  version: 0.6.0
   description: |
     Internal contract between the backend AI broker (Layer 3) and ai-services (Layer 4).
     Frozen at v0 in Phase 3; implemented in Phases 11-13.
@@ -19,6 +19,9 @@ info:
     meaning is not given (ADR-013). The request and the result are unchanged; health reports
     `chat_retrieval`, and `chat_meaning_busy` (questions answered with keywords only because the
     meaning search was busy).
+    v0.6 (additive): `ClinicalInputs.symptoms` carries the yes/no symptom answers from the
+    screening record (urinary symptoms, blood in the urine, bone pain, weight loss). It is sent
+    only when the clinician recorded them.
 
     Rules that every implementation must follow:
     - Inputs are de-identified references (storage keys, record ids, clinical values). No names,
@@ -139,6 +142,19 @@ components:
         prostateVolumeMl: { type: number, exclusiveMinimum: true, minimum: 0 }
         biopsyHistory: { type: string, enum: [NONE, PRIOR_NEGATIVE, PRIOR_POSITIVE, UNKNOWN] }
         familyHistory: { type: boolean }
+        symptoms: { $ref: '#/components/schemas/Symptoms' }
+    Symptoms:
+      type: object
+      description: Yes/no answers from the screening record. A missing key was not recorded.
+      additionalProperties: false
+      properties:
+        nocturia: { type: boolean }
+        frequency: { type: boolean }
+        urgency: { type: boolean }
+        weakStream: { type: boolean }
+        haematuria: { type: boolean }
+        bonePain: { type: boolean }
+        weightLoss: { type: boolean }
     ImagingInput:
       type: object
       required: [storageKey, modality]

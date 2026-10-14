@@ -188,6 +188,10 @@ extension FormHelpers on WidgetTester {
     // Let page transitions finish: a route that is still animating in
     // ignores taps.
     await pump(const Duration(milliseconds: 400));
+    // A focused text field scrolls itself back into view meanwhile, which on
+    // a long form can push the target off the screen: reveal it again.
+    await ensureVisible(target);
+    await pump();
     await tap(target);
     await settle(this);
   }

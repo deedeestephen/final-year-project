@@ -32,6 +32,10 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   final _notes = TextEditingController();
   String? _dre;
   String? _pirads;
+  String? _biopsy;
+  String? _family;
+  bool _symptomsAsked = false;
+  final _symptoms = <String>{};
   bool _busy = false;
 
   @override
@@ -79,6 +83,15 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
               max: 500,
               decimals: 1,
             ).value,
+            biopsyHistory: _biopsy,
+            familyHistory: familyHistoryValue(_family),
+            // Every symptom asked is a yes or a no; unasked ones stay unknown.
+            symptoms: _symptomsAsked
+                ? {
+                    for (final key in symptomLabels.keys)
+                      key: _symptoms.contains(key),
+                  }
+                : null,
             notes: _notes.text,
           ),
         );
@@ -177,6 +190,47 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
                         decimals: 1,
                       ).error,
                     ),
+                    const SizedBox(height: AppSizes.md),
+                    LabelledDropdown(
+                      key: const Key('record.biopsy'),
+                      label: 'Earlier prostate biopsy (optional)',
+                      options: biopsyLabels,
+                      value: _biopsy,
+                      onChanged: (v) => setState(() => _biopsy = v),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+                    LabelledDropdown(
+                      key: const Key('record.familyHistory'),
+                      label: 'Family history (optional)',
+                      options: familyHistoryLabels,
+                      value: _family,
+                      onChanged: (v) => setState(() => _family = v),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+                    SwitchListTile(
+                      key: const Key('record.symptomsAsked'),
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('I asked about symptoms'),
+                      subtitle: const Text(
+                        'Tick each symptom the patient has. Unticked means no.',
+                      ),
+                      value: _symptomsAsked,
+                      onChanged: (v) => setState(() => _symptomsAsked = v),
+                    ),
+                    if (_symptomsAsked)
+                      for (final e in symptomLabels.entries)
+                        CheckboxListTile(
+                          key: Key('record.symptom.${e.key}'),
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: Text(e.value),
+                          value: _symptoms.contains(e.key),
+                          onChanged: (v) => setState(
+                            () => v == true
+                                ? _symptoms.add(e.key)
+                                : _symptoms.remove(e.key),
+                          ),
+                        ),
                     const SizedBox(height: AppSizes.md),
                     TextFormField(
                       key: const Key('record.notes'),

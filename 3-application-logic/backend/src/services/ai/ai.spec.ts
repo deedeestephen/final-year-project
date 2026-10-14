@@ -5,6 +5,7 @@ import {
   MOCK_DISCLAIMER,
 } from './ai-contract';
 import { InProcessJobQueue } from './job-queue';
+import { toAiSymptoms } from './ai.service';
 
 const result = (overrides: Record<string, unknown> = {}) => ({
   jobId: randomUUID(),
@@ -129,5 +130,25 @@ describe('InProcessJobQueue', () => {
     queue.enqueue('good');
     await queue.idle();
     expect(done).toEqual(['good']);
+  });
+});
+
+describe('symptoms sent to the AI service', () => {
+  it('keeps only the yes/no answers the contract knows', () => {
+    expect(
+      toAiSymptoms({
+        nocturia: true,
+        weakStream: false,
+        other: true,
+        urgency: 'yes',
+      }),
+    ).toEqual({ nocturia: true, weakStream: false });
+  });
+
+  it('sends nothing when no symptom was recorded', () => {
+    expect(toAiSymptoms(null)).toBeUndefined();
+    expect(toAiSymptoms({})).toBeUndefined();
+    expect(toAiSymptoms([true])).toBeUndefined();
+    expect(toAiSymptoms('nocturia')).toBeUndefined();
   });
 });

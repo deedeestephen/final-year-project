@@ -158,6 +158,8 @@ def test_no_usable_inputs_is_422(client: TestClient) -> None:
         request_body(imaging=[{"storageKey": "../etc/passwd", "modality": "MRI"}]),
         request_body(imaging=[{"storageKey": "imaging/a.dcm", "modality": "XRAY"}]),
         request_body(clinical=CLINICAL, name="SYNTHETIC Patient"),  # unexpected field
+        request_body(clinical={**CLINICAL, "symptoms": {"nocturia": "yes"}}),
+        request_body(clinical={**CLINICAL, "symptoms": {"painfulJoints": True}}),
         {"jobId": str(uuid4()), "patientRef": "Mwansa Banda", "inputs": {}},  # not a pseudonym
     ],
 )
@@ -165,3 +167,15 @@ def test_rejects_invalid_or_identifying_requests(
     client: TestClient, body: dict[str, object]
 ) -> None:
     assert client.post("/v1/infer", headers=AUTH, json=body).status_code == 422
+
+
+def test_screening_history_and_symptoms_are_accepted(client: TestClient) -> None:
+    clinical = {
+        **CLINICAL,
+        "biopsyHistory": "PRIOR_NEGATIVE",
+        "familyHistory": True,
+        "symptoms": {"nocturia": True, "weakStream": False, "haematuria": False},
+    }
+    res = client.post("/v1/infer", headers=AUTH, json=request_body(clinical=clinical))
+    assert res.status_code == 200
+    assert res.json()["provenance"] == "MOCK"

@@ -3,7 +3,7 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
 Provenance = Literal["MOCK", "RESEARCH_MODEL"]
 Architecture = Literal["UNET", "RESNET50", "ANN", "PATCH_CNN_MIL", "XGBOOST_FUSION"]
@@ -31,6 +31,18 @@ class ModelInfo(_Strict):
     evaluation: dict[str, object] | None = None
 
 
+class Symptoms(_Strict):
+    """Yes/no answers from the screening record; None means not recorded. No "yes" strings."""
+
+    nocturia: StrictBool | None = None
+    frequency: StrictBool | None = None
+    urgency: StrictBool | None = None
+    weakStream: StrictBool | None = None
+    haematuria: StrictBool | None = None
+    bonePain: StrictBool | None = None
+    weightLoss: StrictBool | None = None
+
+
 class ClinicalInputs(_Strict):
     ageYears: int | None = Field(default=None, ge=18, le=120)
     psaNgMl: float | None = Field(default=None, ge=0)
@@ -42,6 +54,7 @@ class ClinicalInputs(_Strict):
     prostateVolumeMl: float | None = Field(default=None, gt=0)
     biopsyHistory: Literal["NONE", "PRIOR_NEGATIVE", "PRIOR_POSITIVE", "UNKNOWN"] | None = None
     familyHistory: bool | None = None
+    symptoms: Symptoms | None = None
 
     def has_findings(self) -> bool:
         """True when there is at least one measurement the clinical module could use."""

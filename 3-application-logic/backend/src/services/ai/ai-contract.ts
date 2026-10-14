@@ -80,6 +80,20 @@ export const modelInfoSchema = z.object({
 
 export type ModelInfo = z.infer<typeof modelInfoSchema>;
 
+/** Yes/no symptom answers (contract v0.6); a missing key was not recorded. */
+export const AI_SYMPTOM_KEYS = [
+  'nocturia',
+  'frequency',
+  'urgency',
+  'weakStream',
+  'haematuria',
+  'bonePain',
+  'weightLoss',
+] as const;
+export type AiSymptoms = Partial<
+  Record<(typeof AI_SYMPTOM_KEYS)[number], boolean>
+>;
+
 /** What the backend sends: de-identified values and storage references only. */
 export interface InferenceRequest {
   jobId: string;
@@ -94,6 +108,7 @@ export interface InferenceRequest {
       prostateVolumeMl?: number;
       biopsyHistory?: string;
       familyHistory?: boolean;
+      symptoms?: AiSymptoms;
     };
     imaging: { storageKey: string; modality: string }[];
     histopathology: { storageKey: string; stain?: string }[];
