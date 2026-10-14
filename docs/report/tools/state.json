@@ -1,7 +1,7 @@
 {
  "code": {
-  "date": "2026-10-03",
-  "commit": "80e73e1",
+  "date": "2026-10-14",
+  "commit": "e106c34",
   "uncommitted": true,
   "shots": {
    "backend-main": {
@@ -114,8 +114,8 @@
    },
    "ai-claude-instructions": {
     "file": "4-ai-intelligence-layer/ai-services/app/chat/generate.py",
-    "first": 50,
-    "last": 64,
+    "first": 51,
+    "last": 65,
     "sha256": "4c00921d8b2d7001"
    },
    "ai-knowledge-base": {
@@ -235,12 +235,12 @@
   }
  },
  "pdf": {
-  "date": "2026-10-03",
-  "manual": "edca3c5869ffeb93"
+  "date": "2026-10-14",
+  "manual": "561e1dc07d35312e"
  },
  "html": {
-  "date": "2026-10-03",
-  "manual": "edca3c5869ffeb93"
+  "date": "2026-10-14",
+  "manual": "561e1dc07d35312e"
  },
  "diagrams": {
   "date": "2026-10-02",

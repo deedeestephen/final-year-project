@@ -124,7 +124,7 @@ footer { max-width: 78rem; margin-inline: auto; padding-inline: 1rem; padding-bl
   <h1>PCa mHealth: how it was built, and how to run it yourself</h1>
   <p>The backend, the databases, Docker, the AI service, the chatbot, the phone app and the admin website:
   how each was made, and how to start, check, change and repair it without an AI assistant.</p>
-  <div class="meta"><span>Made on 3 October 2026</span><span>Code pictures from commit 80e73e1 with uncommitted changes</span><span>Synthetic data only</span><span>Not a medical device</span></div>
+  <div class="meta"><span>Made on 14 October 2026</span><span>Code pictures from commit e106c34 with uncommitted changes</span><span>Synthetic data only</span><span>Not a medical device</span></div>
 </header>
 <div class="rule"></div>
 
@@ -978,15 +978,19 @@ node node_modules\jest\bin\jest.js src/services/chatbot
 <h3 id="95-claude-optional-costs-money">9.5 Claude (optional, costs money)</h3>
 <p>Claude is <strong>off</strong> on this PC: the health check says <code>chat_writer: quotes</code>. To switch it on:</p>
 <ol>
-<li>Create an API key at console.anthropic.com.</li>
-<li>Open <code>.env</code> and put the key after <code>ANTHROPIC_API_KEY=</code>. Never put it in a chat, an email or the code.</li>
-<li>Restart the AI service. The health check then says <code>chat_writer: claude:claude-haiku-4-5-20251001</code>.</li>
+<li>Create an API key at console.anthropic.com (Settings → API keys), and add a little credit under Billing. A spending limit there caps the cost.</li>
+<li>Open the root <code>.env</code> and put the key after <code>ANTHROPIC_API_KEY=</code>, with no spaces or quotes. Never put it in a chat, an email or the code.</li>
+<li>Restart the services: <code>6-infrastructure\scripts\dev-down.ps1</code>, then <code>6-infrastructure\scripts\dev-up.ps1</code>.</li>
+<li>Open http://127.0.0.1:8000/v1/health. It should say <code>chat_writer: claude:claude-haiku-4-5-20251001</code>.</li>
+<li>Make one real call (costs a fraction of a cent). In <code>4-ai-intelligence-layeri-services</code>, run <code>$env:ANTHROPIC_API_KEY_LIVE_TEST = '1'; .venv\Scripts\python -m pytest tests  est_chat_claude.py -k live -q</code>. One test should pass.</li>
+<li>In the app, ask the assistant "What does a PSA test measure?". The answer should carry the label <em>"Written by AI (Claude) from the sources below"</em>. If it is quoted word for word instead, the call failed: check the key, the credit and the internet connection.</li>
 </ol>
+<p>To switch Claude off again, empty <code>ANTHROPIC_API_KEY=</code> and restart. Another model can be set with <code>CHAT_LLM_MODEL=</code> in <code>.env</code>. The request works with every current Claude model, but measure the speed again (ADR-010).</p>
 <p>What Claude is told:</p>
 <figure class="wide"><img class="shot" loading="lazy" decoding="async" alt="generate.py: the instructions" src="img/code-ai-claude-instructions.png" /></figure>
 <ul>
 <li>Claude only receives the three best passages, the last three questions and answers, and the question. Email addresses, NRC numbers and phone numbers are removed first.</li>
-<li>It must answer through a fixed form (<code>covered</code>, <code>answer</code>, <code>citations</code>). Only passages it cites become the sources.</li>
+<li>It must answer in a fixed JSON form (<code>covered</code>, <code>answer</code>, <code>citations</code>), which the API enforces (structured output). Only passages it cites become the sources.</li>
 <li>Limits: 8 seconds, no retries, at most <code>CHAT_LLM_DAILY_LIMIT</code> (2,000) answers a day. On any problem the passages are quoted instead, so the chat works without Claude.</li>
 <li>Answers written by Claude are labelled <em>"Written by AI (Claude) from the sources below"</em>.</li>
 <li><strong>Before real patients:</strong> questions would be sent to Anthropic in the United States. That needs a data-protection review first (ADR-010).</li>

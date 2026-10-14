@@ -8,7 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "pydantic>=2.8",
     # Claude-written chat answers (ADR-010); used only when ANTHROPIC_API_KEY is set.
-    "anthropic>=0.40",
+    "anthropic>=1.9,<2",
     # The meaning search (ADR-013): MedCPT run with numpy, no PyTorch. The models
     # themselves are downloaded separately: python -m app.chat.embeddings download
     "numpy>=2",
