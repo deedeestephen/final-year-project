@@ -127,7 +127,7 @@ Table 4.5: Automated tests and coverage on 2 October 2026
 | Backend unit tests | 329 | Coverage recorded on 1 October 2026 (all backend tests together): 94.7% of statements, 81.4% of branches |
 | Backend end-to-end tests (in process) | 20 | (included above) |
 | Full database run (46 suites, with Docker) | 588 | (included above) |
-| AI service | 97 passed; 1 skipped (it would call the real Claude API); 3 more skipped when the MedCPT models are absent, as in CI | 98% |
+| AI service | 101 passed; 1 skipped (it would call the real Claude API); 3 more skipped when the MedCPT models are absent, as in CI | 98% |
 | Phone app | 290 | 91.1% of lines (recorded on 1 October 2026) |
 | Admin website | 82 | Coverage recorded on 1 October 2026: 87.8% |
 
