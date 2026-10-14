@@ -48,6 +48,15 @@ class LocalClinicalRecords extends Table {
   TextColumn get dreFinding => text()();
   IntColumn get piradsScore => integer().nullable()();
   RealColumn get prostateVolumeMl => real().nullable()();
+
+  /// NONE | PRIOR_NEGATIVE | PRIOR_POSITIVE | UNKNOWN; null when not asked.
+  TextColumn get biopsyHistory => text().nullable()();
+
+  /// Prostate cancer in a father or brother; null when not known.
+  BoolColumn get familyHistory => boolean().nullable()();
+
+  /// JSON of the yes/no symptom answers; null when symptoms were not asked.
+  TextColumn get symptoms => text().nullable()();
   TextColumn get notes => text().nullable()();
   TextColumn get syncState => text()();
   DateTimeColumn get createdAt => dateTime()();
@@ -137,14 +146,26 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   /// 1: Phase 6 (patients, records, outbox). 2: Phase 9 (upload queue).
+  /// 3: biopsy history, family history and symptoms on screening records.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(pendingUploads);
+      if (from < 3) {
+        await m.addColumn(
+          localClinicalRecords,
+          localClinicalRecords.biopsyHistory,
+        );
+        await m.addColumn(
+          localClinicalRecords,
+          localClinicalRecords.familyHistory,
+        );
+        await m.addColumn(localClinicalRecords, localClinicalRecords.symptoms);
+      }
     },
   );
 }

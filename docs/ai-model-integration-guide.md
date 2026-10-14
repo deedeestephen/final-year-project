@@ -24,11 +24,11 @@ For every model, save these four things. Keep them together in one folder per mo
 |---|---|---|---|
 | `unet_segmentation` | U-Net | MRI or TRUS image (DICOM). Write down: image size, channels, intensity normalisation, DICOM windowing, orientation | a prostate mask (PNG, same size as the input) |
 | `resnet50_imaging` | ResNet-50 (transfer learning) | the image (same preprocessing notes), and whether it uses the U-Net mask | probability of clinically significant cancer (0–1) |
-| `ann_clinical` | ANN | clinical values, **in this order**: age, PSA, free PSA, DRE finding, PI-RADS, prostate volume, biopsy history, family history. Write down the scaling (mean/std or min/max), how DRE and biopsy history are encoded, and **what the model does when a value is missing** | probability (0–1) |
+| `ann_clinical` | ANN | clinical values, **in this order**: age, PSA, free PSA, DRE finding, PI-RADS, prostate volume, biopsy history, family history, and the seven yes/no symptoms if the model uses them. Write down the scaling (mean/std or min/max), how DRE and biopsy history are encoded, and **what the model does when a value is missing** | probability (0–1) |
 | `patch_cnn_mil_histopathology` | Patch-CNN + MIL | whole-slide image (TIFF/SVS/NDPI). Write down: magnification (e.g. 20×), patch size, tissue detection, stain normalisation | ISUP grade group (1–5) and, if possible, the attention per patch |
 | `xgboost_fusion` | XGBoost | the other modules' outputs plus clinical values: list the exact feature names and order | final probability (0–1), and an uncertainty interval if you have one |
 
-The field names the backend already sends are in `ClinicalInputs` in the AI contract (`ageYears`, `psaNgMl`, `freePsaNgMl`, `dreFinding`, `piradsScore`, `prostateVolumeMl`, `biopsyHistory`, `familyHistory`).
+The field names the backend already sends are in `ClinicalInputs` in the AI contract (`ageYears`, `psaNgMl`, `freePsaNgMl`, `dreFinding`, `piradsScore`, `prostateVolumeMl`, `biopsyHistory`, `familyHistory`, and since v0.6 `symptoms`: `nocturia`, `frequency`, `urgency`, `weakStream`, `haematuria`, `bonePain`, `weightLoss`, each true, false or missing when not asked).
 
 ## 2. Explanations (Grad-CAM and SHAP)
 - **ResNet-50 → Grad-CAM:** note the name of the last convolutional layer. If you export to ONNX, also export that layer's output (activations) so the heatmap can be computed on the server.

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../core/db/app_database.dart';
 import '../../../shared/widgets/sync_status_badge.dart';
 
@@ -17,6 +19,54 @@ const dreLabels = {
   'INDURATED': 'Hard (indurated)',
   'NOT_PERFORMED': 'Not performed',
 };
+
+const biopsyLabels = {
+  'NONE': 'No biopsy before',
+  'PRIOR_NEGATIVE': 'Biopsy before, no cancer found',
+  'PRIOR_POSITIVE': 'Biopsy before, cancer found',
+  'UNKNOWN': 'Not known',
+};
+
+/// Prostate cancer in a father or brother.
+const familyHistoryLabels = {
+  'YES': 'Yes, father or brother',
+  'NO': 'No',
+  'UNKNOWN': 'Not known',
+};
+
+bool? familyHistoryValue(String? choice) => switch (choice) {
+  'YES' => true,
+  'NO' => false,
+  _ => null,
+};
+
+/// The API's symptom keys, in the order the form asks them.
+const symptomLabels = {
+  'nocturia': 'Waking at night to pass urine',
+  'frequency': 'Passing urine often',
+  'urgency': 'Sudden, strong need to pass urine',
+  'weakStream': 'Weak or stop-start urine flow',
+  'haematuria': 'Blood in the urine',
+  'bonePain': 'Bone pain',
+  'weightLoss': 'Weight loss without trying',
+};
+
+/// The symptoms answered "yes", for a record card: null when none were asked.
+String? symptomSummary(String? json) {
+  if (json == null) return null;
+  final Object? answers;
+  try {
+    answers = jsonDecode(json);
+  } on FormatException {
+    return null;
+  }
+  if (answers is! Map) return null;
+  final yes = [
+    for (final e in symptomLabels.entries)
+      if (answers[e.key] == true) e.value,
+  ];
+  return yes.isEmpty ? 'None' : yes.join(', ');
+}
 
 SyncStatus rowSyncStatus(String state) => switch (state) {
   RowSync.synced => const Synced(),

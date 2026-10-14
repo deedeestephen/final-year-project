@@ -19,7 +19,7 @@ Flutter replaces React Native (ADR-001). The colours are awareness blue and the 
     network/api_exception.dart backend error envelope → typed exception
     storage/token_store.dart   tokens in Android Keystore / iOS Keychain
     connectivity/              online/offline stream
-    db/                        Drift + SQLCipher database (schema v2), LocalStore
+    db/                        Drift + SQLCipher database (schema v3), LocalStore
     sync/                      outbox sync engine and scheduler
     uploads/upload_queue.dart  files waiting to upload (offline-safe, retried)
     providers.dart             dependency wiring (overridden in tests)
@@ -64,6 +64,7 @@ screen --> LocalStore (Drift + SQLCipher) --> outbox --> SyncEngine --> POST /sy
    +------------ watch() streams <-- mergePulled <-- GET /sync/changes
 ```
 
+- **The screening record** (`add_record_screen.dart`) asks for the visit date, PSA, free PSA, DRE, PI-RADS, prostate volume, an earlier prostate biopsy, family history (father or brother), the symptoms and notes. Only the DRE is required. Symptoms are asked only when the clinician turns on *I asked about symptoms*: then each of the seven is saved as yes (ticked) or no (unticked). Answers left out stay "not known" and are not sent. Schema v3 added the columns `biopsy_history`, `family_history` and `symptoms` (JSON) to `local_clinical_records`. The server passes these answers to the AI analysis (AI contract v0.6).
 - **Every change goes to the phone first.** A patient registration, a screening record or a details edit is written to the encrypted database, and at the same time an **outbox** operation is queued with a random idempotency key. The screen updates straight away, online or not.
 - **`SyncEngine`.** Only one sync runs at a time.
   - **When it syncs:** at sign-in, when the connection returns, when the app comes back to the foreground, every 5 minutes, and after each local save. "Sync now" skips the waiting time.
@@ -268,7 +269,7 @@ The app asks the phone for as little as possible (checked in the built APK's mer
 | `test/widget_test.dart` | full app against a scripted backend: validation, each sign-in error, role homes, forced password change, forgot password, sign-out, offline banner |
 | `test/shared/widgets_test.dart` | shared widgets (AI disclaimer and mock label, sync badge, async states) |
 | `test/core/upload_queue_test.dart` | upload queue: private copy, fields and file sent, backoff and `Retry-After`, refusal not retried, missing file, discard, sign-out deletes copies |
-| `test/core/migration_test.dart` | database v1 → v2 gives exactly the v2 schema and keeps saved patients |
+| `test/core/migration_test.dart` | database v1 or v2 → v3 gives exactly the v3 schema; saved patients and records are kept, and the new record columns start as unknown |
 | `test/features/clinical_server/clinical_server_test.dart` | consent record and withdraw, a file saved offline then uploaded once, AI disabled reasons, mock report (banner, skipped modules, unavailable explanations, no metrics), pathologist review |
 | `test/features/settings/settings_test.dart` | switching to dark from the menu, kept after sign-out, "Same as the phone" follows the phone, the choice saved and read back |
 | `test/live/` | **opt-in** check against a running backend: `LIVE_API_URL=http://localhost:3000 LIVE_API_PASSWORD=… flutter test test/live`. It never changes the demo password. |

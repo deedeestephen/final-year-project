@@ -6,7 +6,7 @@ ganttDiagram {
   milestone { BackGroundColor #1d4ed8 }
 }
 </style>
-title What was built, day by day: one diamond per commit (2026-09-23 to 2026-10-02)
+title What was built, day by day: one diamond per commit (2026-09-23 to 2026-10-14)
 printscale daily
 Project starts 2026-09-23
 saturday are open
@@ -55,4 +55,14 @@ hide footbox
 [User acceptance testing kit (proposal §3.8.2, NFR-04) (9104c32)] happens 2026-10-01
 [Meaning search with MedCPT next to the keyword search (ADR-013) (b3dd3d4)] happens 2026-10-01
 [Push notifications through Firebase Cloud Messaging (ADR-014) (41fd514)] happens 2026-10-02
+[Meaning chooses the article, keywords the section (ADR-013 fix) (3c1c619)] happens 2026-10-02
+[Check out text files with LF line endings on every platform (b304748)] happens 2026-10-02
+[Generate the Prisma client on install; validate without a database (8af29d1)] happens 2026-10-02
+[A lockout no longer ends sessions that are already signed in (a815f2f)] happens 2026-10-02
+[A malformed refresh cookie gets 401, not a server error (dc0fb06)] happens 2026-10-02
+[DB test: a lockout leaves open sessions working (4e22352)] happens 2026-10-02
+[Review of 2 October 2026: checks run, defects fixed, findings (80e73e1)] happens 2026-10-02
+[Review follow-up: pushes stop when sessions end; visible field outlines (d4467b4)] happens 2026-10-03
+[Linking an app account has the admin page's safeguards (M-2) (e106c34)] happens 2026-10-03
+[Claude chat answers work with anthropic 1.x (ADR-010) (575b547)] happens 2026-10-14
 @endgantt

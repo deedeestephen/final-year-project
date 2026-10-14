@@ -889,6 +889,42 @@ class $LocalClinicalRecordsTable extends LocalClinicalRecords
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _biopsyHistoryMeta = const VerificationMeta(
+    'biopsyHistory',
+  );
+  @override
+  late final GeneratedColumn<String> biopsyHistory = GeneratedColumn<String>(
+    'biopsy_history',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _familyHistoryMeta = const VerificationMeta(
+    'familyHistory',
+  );
+  @override
+  late final GeneratedColumn<bool> familyHistory = GeneratedColumn<bool>(
+    'family_history',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("family_history" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _symptomsMeta = const VerificationMeta(
+    'symptoms',
+  );
+  @override
+  late final GeneratedColumn<String> symptoms = GeneratedColumn<String>(
+    'symptoms',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -932,6 +968,9 @@ class $LocalClinicalRecordsTable extends LocalClinicalRecords
     dreFinding,
     piradsScore,
     prostateVolumeMl,
+    biopsyHistory,
+    familyHistory,
+    symptoms,
     notes,
     syncState,
     createdAt,
@@ -1028,6 +1067,30 @@ class $LocalClinicalRecordsTable extends LocalClinicalRecords
         ),
       );
     }
+    if (data.containsKey('biopsy_history')) {
+      context.handle(
+        _biopsyHistoryMeta,
+        biopsyHistory.isAcceptableOrUnknown(
+          data['biopsy_history']!,
+          _biopsyHistoryMeta,
+        ),
+      );
+    }
+    if (data.containsKey('family_history')) {
+      context.handle(
+        _familyHistoryMeta,
+        familyHistory.isAcceptableOrUnknown(
+          data['family_history']!,
+          _familyHistoryMeta,
+        ),
+      );
+    }
+    if (data.containsKey('symptoms')) {
+      context.handle(
+        _symptomsMeta,
+        symptoms.isAcceptableOrUnknown(data['symptoms']!, _symptomsMeta),
+      );
+    }
     if (data.containsKey('notes')) {
       context.handle(
         _notesMeta,
@@ -1099,6 +1162,18 @@ class $LocalClinicalRecordsTable extends LocalClinicalRecords
         DriftSqlType.double,
         data['${effectivePrefix}prostate_volume_ml'],
       ),
+      biopsyHistory: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}biopsy_history'],
+      ),
+      familyHistory: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}family_history'],
+      ),
+      symptoms: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symptoms'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -1134,6 +1209,15 @@ class LocalClinicalRecord extends DataClass
   final String dreFinding;
   final int? piradsScore;
   final double? prostateVolumeMl;
+
+  /// NONE | PRIOR_NEGATIVE | PRIOR_POSITIVE | UNKNOWN; null when not asked.
+  final String? biopsyHistory;
+
+  /// Prostate cancer in a father or brother; null when not known.
+  final bool? familyHistory;
+
+  /// JSON of the yes/no symptom answers; null when symptoms were not asked.
+  final String? symptoms;
   final String? notes;
   final String syncState;
   final DateTime createdAt;
@@ -1148,6 +1232,9 @@ class LocalClinicalRecord extends DataClass
     required this.dreFinding,
     this.piradsScore,
     this.prostateVolumeMl,
+    this.biopsyHistory,
+    this.familyHistory,
+    this.symptoms,
     this.notes,
     required this.syncState,
     required this.createdAt,
@@ -1176,6 +1263,15 @@ class LocalClinicalRecord extends DataClass
     }
     if (!nullToAbsent || prostateVolumeMl != null) {
       map['prostate_volume_ml'] = Variable<double>(prostateVolumeMl);
+    }
+    if (!nullToAbsent || biopsyHistory != null) {
+      map['biopsy_history'] = Variable<String>(biopsyHistory);
+    }
+    if (!nullToAbsent || familyHistory != null) {
+      map['family_history'] = Variable<bool>(familyHistory);
+    }
+    if (!nullToAbsent || symptoms != null) {
+      map['symptoms'] = Variable<String>(symptoms);
     }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
@@ -1209,6 +1305,15 @@ class LocalClinicalRecord extends DataClass
       prostateVolumeMl: prostateVolumeMl == null && nullToAbsent
           ? const Value.absent()
           : Value(prostateVolumeMl),
+      biopsyHistory: biopsyHistory == null && nullToAbsent
+          ? const Value.absent()
+          : Value(biopsyHistory),
+      familyHistory: familyHistory == null && nullToAbsent
+          ? const Value.absent()
+          : Value(familyHistory),
+      symptoms: symptoms == null && nullToAbsent
+          ? const Value.absent()
+          : Value(symptoms),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
@@ -1233,6 +1338,9 @@ class LocalClinicalRecord extends DataClass
       dreFinding: serializer.fromJson<String>(json['dreFinding']),
       piradsScore: serializer.fromJson<int?>(json['piradsScore']),
       prostateVolumeMl: serializer.fromJson<double?>(json['prostateVolumeMl']),
+      biopsyHistory: serializer.fromJson<String?>(json['biopsyHistory']),
+      familyHistory: serializer.fromJson<bool?>(json['familyHistory']),
+      symptoms: serializer.fromJson<String?>(json['symptoms']),
       notes: serializer.fromJson<String?>(json['notes']),
       syncState: serializer.fromJson<String>(json['syncState']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1252,6 +1360,9 @@ class LocalClinicalRecord extends DataClass
       'dreFinding': serializer.toJson<String>(dreFinding),
       'piradsScore': serializer.toJson<int?>(piradsScore),
       'prostateVolumeMl': serializer.toJson<double?>(prostateVolumeMl),
+      'biopsyHistory': serializer.toJson<String?>(biopsyHistory),
+      'familyHistory': serializer.toJson<bool?>(familyHistory),
+      'symptoms': serializer.toJson<String?>(symptoms),
       'notes': serializer.toJson<String?>(notes),
       'syncState': serializer.toJson<String>(syncState),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1269,6 +1380,9 @@ class LocalClinicalRecord extends DataClass
     String? dreFinding,
     Value<int?> piradsScore = const Value.absent(),
     Value<double?> prostateVolumeMl = const Value.absent(),
+    Value<String?> biopsyHistory = const Value.absent(),
+    Value<bool?> familyHistory = const Value.absent(),
+    Value<String?> symptoms = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     String? syncState,
     DateTime? createdAt,
@@ -1287,6 +1401,13 @@ class LocalClinicalRecord extends DataClass
     prostateVolumeMl: prostateVolumeMl.present
         ? prostateVolumeMl.value
         : this.prostateVolumeMl,
+    biopsyHistory: biopsyHistory.present
+        ? biopsyHistory.value
+        : this.biopsyHistory,
+    familyHistory: familyHistory.present
+        ? familyHistory.value
+        : this.familyHistory,
+    symptoms: symptoms.present ? symptoms.value : this.symptoms,
     notes: notes.present ? notes.value : this.notes,
     syncState: syncState ?? this.syncState,
     createdAt: createdAt ?? this.createdAt,
@@ -1315,6 +1436,13 @@ class LocalClinicalRecord extends DataClass
       prostateVolumeMl: data.prostateVolumeMl.present
           ? data.prostateVolumeMl.value
           : this.prostateVolumeMl,
+      biopsyHistory: data.biopsyHistory.present
+          ? data.biopsyHistory.value
+          : this.biopsyHistory,
+      familyHistory: data.familyHistory.present
+          ? data.familyHistory.value
+          : this.familyHistory,
+      symptoms: data.symptoms.present ? data.symptoms.value : this.symptoms,
       notes: data.notes.present ? data.notes.value : this.notes,
       syncState: data.syncState.present ? data.syncState.value : this.syncState,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -1334,6 +1462,9 @@ class LocalClinicalRecord extends DataClass
           ..write('dreFinding: $dreFinding, ')
           ..write('piradsScore: $piradsScore, ')
           ..write('prostateVolumeMl: $prostateVolumeMl, ')
+          ..write('biopsyHistory: $biopsyHistory, ')
+          ..write('familyHistory: $familyHistory, ')
+          ..write('symptoms: $symptoms, ')
           ..write('notes: $notes, ')
           ..write('syncState: $syncState, ')
           ..write('createdAt: $createdAt')
@@ -1353,6 +1484,9 @@ class LocalClinicalRecord extends DataClass
     dreFinding,
     piradsScore,
     prostateVolumeMl,
+    biopsyHistory,
+    familyHistory,
+    symptoms,
     notes,
     syncState,
     createdAt,
@@ -1371,6 +1505,9 @@ class LocalClinicalRecord extends DataClass
           other.dreFinding == this.dreFinding &&
           other.piradsScore == this.piradsScore &&
           other.prostateVolumeMl == this.prostateVolumeMl &&
+          other.biopsyHistory == this.biopsyHistory &&
+          other.familyHistory == this.familyHistory &&
+          other.symptoms == this.symptoms &&
           other.notes == this.notes &&
           other.syncState == this.syncState &&
           other.createdAt == this.createdAt);
@@ -1388,6 +1525,9 @@ class LocalClinicalRecordsCompanion
   final Value<String> dreFinding;
   final Value<int?> piradsScore;
   final Value<double?> prostateVolumeMl;
+  final Value<String?> biopsyHistory;
+  final Value<bool?> familyHistory;
+  final Value<String?> symptoms;
   final Value<String?> notes;
   final Value<String> syncState;
   final Value<DateTime> createdAt;
@@ -1403,6 +1543,9 @@ class LocalClinicalRecordsCompanion
     this.dreFinding = const Value.absent(),
     this.piradsScore = const Value.absent(),
     this.prostateVolumeMl = const Value.absent(),
+    this.biopsyHistory = const Value.absent(),
+    this.familyHistory = const Value.absent(),
+    this.symptoms = const Value.absent(),
     this.notes = const Value.absent(),
     this.syncState = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1419,6 +1562,9 @@ class LocalClinicalRecordsCompanion
     required String dreFinding,
     this.piradsScore = const Value.absent(),
     this.prostateVolumeMl = const Value.absent(),
+    this.biopsyHistory = const Value.absent(),
+    this.familyHistory = const Value.absent(),
+    this.symptoms = const Value.absent(),
     this.notes = const Value.absent(),
     required String syncState,
     required DateTime createdAt,
@@ -1440,6 +1586,9 @@ class LocalClinicalRecordsCompanion
     Expression<String>? dreFinding,
     Expression<int>? piradsScore,
     Expression<double>? prostateVolumeMl,
+    Expression<String>? biopsyHistory,
+    Expression<bool>? familyHistory,
+    Expression<String>? symptoms,
     Expression<String>? notes,
     Expression<String>? syncState,
     Expression<DateTime>? createdAt,
@@ -1456,6 +1605,9 @@ class LocalClinicalRecordsCompanion
       if (dreFinding != null) 'dre_finding': dreFinding,
       if (piradsScore != null) 'pirads_score': piradsScore,
       if (prostateVolumeMl != null) 'prostate_volume_ml': prostateVolumeMl,
+      if (biopsyHistory != null) 'biopsy_history': biopsyHistory,
+      if (familyHistory != null) 'family_history': familyHistory,
+      if (symptoms != null) 'symptoms': symptoms,
       if (notes != null) 'notes': notes,
       if (syncState != null) 'sync_state': syncState,
       if (createdAt != null) 'created_at': createdAt,
@@ -1474,6 +1626,9 @@ class LocalClinicalRecordsCompanion
     Value<String>? dreFinding,
     Value<int?>? piradsScore,
     Value<double?>? prostateVolumeMl,
+    Value<String?>? biopsyHistory,
+    Value<bool?>? familyHistory,
+    Value<String?>? symptoms,
     Value<String?>? notes,
     Value<String>? syncState,
     Value<DateTime>? createdAt,
@@ -1490,6 +1645,9 @@ class LocalClinicalRecordsCompanion
       dreFinding: dreFinding ?? this.dreFinding,
       piradsScore: piradsScore ?? this.piradsScore,
       prostateVolumeMl: prostateVolumeMl ?? this.prostateVolumeMl,
+      biopsyHistory: biopsyHistory ?? this.biopsyHistory,
+      familyHistory: familyHistory ?? this.familyHistory,
+      symptoms: symptoms ?? this.symptoms,
       notes: notes ?? this.notes,
       syncState: syncState ?? this.syncState,
       createdAt: createdAt ?? this.createdAt,
@@ -1530,6 +1688,15 @@ class LocalClinicalRecordsCompanion
     if (prostateVolumeMl.present) {
       map['prostate_volume_ml'] = Variable<double>(prostateVolumeMl.value);
     }
+    if (biopsyHistory.present) {
+      map['biopsy_history'] = Variable<String>(biopsyHistory.value);
+    }
+    if (familyHistory.present) {
+      map['family_history'] = Variable<bool>(familyHistory.value);
+    }
+    if (symptoms.present) {
+      map['symptoms'] = Variable<String>(symptoms.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -1558,6 +1725,9 @@ class LocalClinicalRecordsCompanion
           ..write('dreFinding: $dreFinding, ')
           ..write('piradsScore: $piradsScore, ')
           ..write('prostateVolumeMl: $prostateVolumeMl, ')
+          ..write('biopsyHistory: $biopsyHistory, ')
+          ..write('familyHistory: $familyHistory, ')
+          ..write('symptoms: $symptoms, ')
           ..write('notes: $notes, ')
           ..write('syncState: $syncState, ')
           ..write('createdAt: $createdAt, ')
@@ -4245,6 +4415,9 @@ typedef $$LocalClinicalRecordsTableCreateCompanionBuilder =
       required String dreFinding,
       Value<int?> piradsScore,
       Value<double?> prostateVolumeMl,
+      Value<String?> biopsyHistory,
+      Value<bool?> familyHistory,
+      Value<String?> symptoms,
       Value<String?> notes,
       required String syncState,
       required DateTime createdAt,
@@ -4262,6 +4435,9 @@ typedef $$LocalClinicalRecordsTableUpdateCompanionBuilder =
       Value<String> dreFinding,
       Value<int?> piradsScore,
       Value<double?> prostateVolumeMl,
+      Value<String?> biopsyHistory,
+      Value<bool?> familyHistory,
+      Value<String?> symptoms,
       Value<String?> notes,
       Value<String> syncState,
       Value<DateTime> createdAt,
@@ -4324,6 +4500,21 @@ class $$LocalClinicalRecordsTableFilterComposer
 
   ColumnFilters<double> get prostateVolumeMl => $composableBuilder(
     column: $table.prostateVolumeMl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get biopsyHistory => $composableBuilder(
+    column: $table.biopsyHistory,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get familyHistory => $composableBuilder(
+    column: $table.familyHistory,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symptoms => $composableBuilder(
+    column: $table.symptoms,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4402,6 +4593,21 @@ class $$LocalClinicalRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get biopsyHistory => $composableBuilder(
+    column: $table.biopsyHistory,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get familyHistory => $composableBuilder(
+    column: $table.familyHistory,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symptoms => $composableBuilder(
+    column: $table.symptoms,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get notes => $composableBuilder(
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
@@ -4469,6 +4675,19 @@ class $$LocalClinicalRecordsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get biopsyHistory => $composableBuilder(
+    column: $table.biopsyHistory,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get familyHistory => $composableBuilder(
+    column: $table.familyHistory,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get symptoms =>
+      $composableBuilder(column: $table.symptoms, builder: (column) => column);
+
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
@@ -4532,6 +4751,9 @@ class $$LocalClinicalRecordsTableTableManager
                 Value<String> dreFinding = const Value.absent(),
                 Value<int?> piradsScore = const Value.absent(),
                 Value<double?> prostateVolumeMl = const Value.absent(),
+                Value<String?> biopsyHistory = const Value.absent(),
+                Value<bool?> familyHistory = const Value.absent(),
+                Value<String?> symptoms = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String> syncState = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -4547,6 +4769,9 @@ class $$LocalClinicalRecordsTableTableManager
                 dreFinding: dreFinding,
                 piradsScore: piradsScore,
                 prostateVolumeMl: prostateVolumeMl,
+                biopsyHistory: biopsyHistory,
+                familyHistory: familyHistory,
+                symptoms: symptoms,
                 notes: notes,
                 syncState: syncState,
                 createdAt: createdAt,
@@ -4564,6 +4789,9 @@ class $$LocalClinicalRecordsTableTableManager
                 required String dreFinding,
                 Value<int?> piradsScore = const Value.absent(),
                 Value<double?> prostateVolumeMl = const Value.absent(),
+                Value<String?> biopsyHistory = const Value.absent(),
+                Value<bool?> familyHistory = const Value.absent(),
+                Value<String?> symptoms = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required String syncState,
                 required DateTime createdAt,
@@ -4579,6 +4807,9 @@ class $$LocalClinicalRecordsTableTableManager
                 dreFinding: dreFinding,
                 piradsScore: piradsScore,
                 prostateVolumeMl: prostateVolumeMl,
+                biopsyHistory: biopsyHistory,
+                familyHistory: familyHistory,
+                symptoms: symptoms,
                 notes: notes,
                 syncState: syncState,
                 createdAt: createdAt,

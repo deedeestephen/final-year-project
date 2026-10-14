@@ -1,7 +1,7 @@
 {
  "code": {
   "date": "2026-10-14",
-  "commit": "e106c34",
+  "commit": "575b547",
   "uncommitted": true,
   "shots": {
    "backend-main": {
@@ -204,8 +204,8 @@
    },
    "backend-ai-request": {
     "file": "3-application-logic/backend/src/services/ai/ai.service.ts",
-    "first": 204,
-    "last": 242,
+    "first": 218,
+    "last": 256,
     "sha256": "3c3a2847d6a940e7"
    },
    "ai-router": {
@@ -243,7 +243,7 @@
   "manual": "561e1dc07d35312e"
  },
  "diagrams": {
-  "date": "2026-10-02",
+  "date": "2026-10-14",
   "sources": {
    "docs/report/diagrams/activity-ai-analysis.puml": "c4dd124aa41762e1",
    "docs/report/diagrams/activity-chat-answer.puml": "20b0c8e419b1cc82",
@@ -280,11 +280,11 @@
   "inputs": {
    "3-application-logic/backend/prisma/schema.prisma": "f3d7420ad20c3d65",
    "docs/access-matrix.md": "31a5194ba93da4e0",
-   "2-api-gateway/openapi/ai-contract.yaml": "523fba36657a6a75"
+   "2-api-gateway/openapi/ai-contract.yaml": "8a2e75e913a31504"
   }
  },
  "figures": {
-  "date": "2026-10-03",
+  "date": "2026-10-14",
   "document": "4002c0229d50d82d"
  },
  "uat": {
